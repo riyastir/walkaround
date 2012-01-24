@@ -161,6 +161,16 @@ message ImportWaveletTask {
     optional string local_id = 2;
   }
   repeated ImportedAttachment attachment = 5;
+
+  // If present, a slob ID that should not be considered an existing
+  // import.  This is set to implement re-import in a way that
+  // preserves idempotence of the task: If the same re-import runs
+  // twice, only one execution will succeed, since its
+  // existing_slob_id_to_ignore matches the existing imported slob id;
+  // the second execution will re-use the slob created in the first
+  // re-import, since its id is different from the id the task
+  // ignores.
+  optional string existing_slob_id_to_ignore = 6;
 }
 
 message FetchAttachmentsAndImportWaveletTask {

@@ -76,8 +76,8 @@ message Delta {
   required federation.ProtocolWaveletOperation operation = 3;
 }
 
-// Non-model metadata for a UDW.
-message UdwMetadata {
+// Obsolete non-model metadata for a UDW.
+message ObsoleteUdwMetadata {
   // The object id of the conversation object that this UDW is (intended to be)
   // associated with.  The UserDataWaveletDirectory is authoritative, however;
   // if it points to another UDW for this conversation wavelet and owner, then
@@ -88,15 +88,41 @@ message UdwMetadata {
   // reserved tags that should not be re-used: 3 (1 was apparently never used)
 }
 
-// Non-model metadata for a wavelet.
-message WaveletMetadata {
+// Obsolete non-model metadata for a wavelet.  This is stored with the
+// obsolete MutationLog.putMetadata() mechanism.
+message ObsoleteWaveletMetadata {
   enum Type {
     CONV = 0;
     UDW = 1;
   }
+  // This is obsolete because the type is already indicated by the entity kind.
   required Type type = 1;
   // Only set if type is UDW.
-  optional UdwMetadata udw_metadata = 2;
+  //
+  // This should be made obsolete by performing the slob creation and
+  // the write to the UDW directory in one XG transaction.
+  optional ObsoleteUdwMetadata udw_metadata = 2;
+}
+
+// Import-related information about a wavelet.
+message ImportMetadata {
+  required string source_instance = 1;
+  required string remote_wave_id = 2;
+  required string remote_wavelet_id = 3;
+  // Stable user id of importing user.
+  required string original_importer = 4;
+  // Timestamp the import of this wavelet began.
+  required int64 import_begin_time_millis = 5;
+  // If false, wavelet is still in a locked state where it's inaccessible.
+  required bool import_finished = 6;
+}
+
+// Non-model metadata for a conv wavelet.  This is stored in the same
+// entity group as the slob, but in an entity kind that is not under
+// the slob layer's control.
+message ConvMetadata {
+  // Only set for wavelets that have been or are being imported.
+  optional ImportMetadata import_metadata = 1;
 }
 
 // Information required to access an object.  SignedObjectSession adds

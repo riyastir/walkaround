@@ -217,13 +217,16 @@ public class PerUserTable {
     }
     Map<Key, Entity> existingEntities = tx.get(keys);
     Map<Key, Entity> entitiesToPut = Maps.newHashMapWithExpectedSize(convWavelets.size());
+    int newCount = 0;
+    int unchangedCount = 0;
+    int updatedCount = 0;
     for (RemoteConvWavelet convWavelet : convWavelets) {
       Key key =
           makeWaveletKey(userId, convWavelet.getSourceInstance(), getWaveletName(convWavelet));
       Entity existingEntity = existingEntities.get(key);
       if (existingEntity == null) {
-        log.info("New wavelet: " + key);
         entitiesToPut.put(key, serializeWavelet(userId, convWavelet));
+        newCount++;
       } else {
         RemoteConvWavelet existing = parseWaveletEntity(existingEntity);
         Assert.check(convWavelet.getSourceInstance().equals(existing.getSourceInstance())
@@ -235,20 +238,22 @@ public class PerUserTable {
             existing.getPrivateLocalId(),
             existing.getSharedLocalId());
         if (merged.equals(existing)) {
-          log.info("Wavelet unchanged, not putting: " + key + " " + convWavelet + " "
-              + convWavelet.getDigest().getTitle());
+          // Wavelet unchanged, do nothing.
+          unchangedCount++;
         } else {
           // TODO(ohler): Fix PST protobuf toString() method to be meaningful.
           log.info("Updating existing wavelet " + key + ": " + existing
               + " updated with " + convWavelet + " becomes " + merged);
           entitiesToPut.put(key, serializeWavelet(userId, merged));
+          updatedCount++;
         }
       }
     }
     if (entitiesToPut.isEmpty()) {
       return false;
     }
-    log.info("Putting " + entitiesToPut.size() + " entities: "
+    log.info(newCount + " new, " + updatedCount + " updated, "
+        + unchangedCount + " unchanged; putting " + entitiesToPut.size() + " entities: "
         + ValueUtils.abbrev("" + entitiesToPut, 500));
     tx.put(entitiesToPut.values());
     return true;

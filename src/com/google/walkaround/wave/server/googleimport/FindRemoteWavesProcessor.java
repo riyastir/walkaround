@@ -247,10 +247,12 @@ public class FindRemoteWavesProcessor {
     long onOrAfterDays = task.getOnOrAfterDays();
     long beforeDays = task.getBeforeDays();
     List<RobotSearchDigest> results = searchBetween(instance, onOrAfterDays, beforeDays);
+    List<RemoteConvWavelet> wavelets = expandPrivateReplies(instance, results);
+    log.info("Search found " + results.size() + " waves, " + wavelets.size() + " wavelets");
     if (results.isEmpty()) {
       return ImmutableList.of();
     }
-    storeResults(expandPrivateReplies(instance, results));
+    storeResults(wavelets);
     if (results.size() >= MAX_RESULTS) {
       // Result list is most likely truncated, repeat with smaller intervals.
       log.info("Got " + results.size() + " results between "  + onOrAfterDays + " and " + beforeDays

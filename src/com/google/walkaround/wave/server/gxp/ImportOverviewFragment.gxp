@@ -143,38 +143,12 @@
                 </gxp:if>
               </td>
               <td>
-                <gxp:if cond='record.isPrivateImportInProgress()'>
-                  <gxp:msg>importing</gxp:msg>
-                  <call:ImportWaveletButtonFragment
-                     label='re-import' sharingMode='private'
-                     expr:token='token' expr:record='record'/>
-                  <gxp:elif cond='record.getPrivateImportedLink() == null'/>
-                  <call:ImportWaveletButtonFragment
-                     label='private import' sharingMode='private'
-                     expr:token='token' expr:record='record'/>
-                  <gxp:else/>
-                  <a expr:href='record.getPrivateImportedLink()' target='_blank'>
-                    <gxp:msg>imported</gxp:msg>
-                  </a>
-                  <call:ImportWaveletButtonFragment
-                     label='re-import' sharingMode='private'
-                     expr:token='token' expr:record='record'/>
-                </gxp:if>
+                <call:ImportWaveletButtonFragment
+                   isPrivate='true' expr:token='token' expr:record='record'/>
               </td>
               <td>
-                <gxp:if cond='record.getSharedImportedLink() == null'>
-                  <gxp:if cond='record.isSharedImportInProgress()'>
-                    <gxp:msg>importing</gxp:msg>
-                    <gxp:else/>
-                    <call:ImportWaveletButtonFragment
-                       label='shared import' sharingMode='shared'
-                       expr:token='token' expr:record='record'/>
-                  </gxp:if>
-                  <gxp:else/>
-                  <a expr:href='record.getSharedImportedLink()' target='_blank'>
-                    <gxp:msg>imported</gxp:msg>
-                  </a>
-                </gxp:if>
+                <call:ImportWaveletButtonFragment
+                   isPrivate='false' expr:token='token' expr:record='record'/>
               </td>
             </tr>
           </gxp:loop>

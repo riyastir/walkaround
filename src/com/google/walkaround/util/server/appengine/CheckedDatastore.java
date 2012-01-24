@@ -30,12 +30,14 @@ import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.QueryResultIterator;
 import com.google.appengine.api.datastore.Transaction;
+import com.google.appengine.api.datastore.TransactionOptions;
 import com.google.appengine.api.taskqueue.InternalFailureException;
 import com.google.appengine.api.taskqueue.Queue;
 import com.google.appengine.api.taskqueue.TaskHandle;
 import com.google.appengine.api.taskqueue.TaskOptions;
 import com.google.appengine.api.taskqueue.TransientFailureException;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
 import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
@@ -236,13 +238,22 @@ public class CheckedDatastore {
     boolean isActive();
     /** Shorthand for {@code if (isActive()) rollback();}. */
     void close();
+    void runAfterCommit(Runnable r);
   }
 
   private class CheckedTransactionImpl implements CheckedTransaction {
     private final Transaction transaction;
+    private final List<Runnable> postCommitRunnables = Lists.newArrayList();
 
     CheckedTransactionImpl(Transaction transaction) {
       this.transaction = transaction;
+    }
+
+    @Override
+    public String toString() {
+      return "CheckedTransactionImpl(" + transaction
+          + String.format(" (%s@%x)", transaction.getClass(), System.identityHashCode(transaction))
+          + ")";
     }
 
     @Override
@@ -355,6 +366,9 @@ public class CheckedDatastore {
           return null;
         }
       });
+      for (Runnable r : postCommitRunnables) {
+        r.run();
+      }
     }
 
     @Override
@@ -370,10 +384,8 @@ public class CheckedDatastore {
     }
 
     @Override
-    public String toString() {
-      return "CheckedTransactionImpl(" + transaction
-          + String.format(" (%s@%x)", transaction.getClass(), System.identityHashCode(transaction))
-          + ")";
+    public void runAfterCommit(Runnable r) {
+      postCommitRunnables.add(r);
     }
   }
 
@@ -384,10 +396,11 @@ public class CheckedDatastore {
     this.datastore = datastore;
   }
 
-  public CheckedTransaction beginTransaction() throws PermanentFailure, RetryableFailure {
+  private CheckedTransaction beginTransaction(final TransactionOptions options)
+      throws PermanentFailure, RetryableFailure {
     return safeRun(new Evaluater<CheckedTransaction>() {
       @Override public CheckedTransaction run() {
-        Transaction rawTransaction = datastore.beginTransaction();
+        Transaction rawTransaction = datastore.beginTransaction(options);
         // NOTE(ohler): Calling rawTransaction.getId() forces TransactionImpl to
         // wait for the result of the beginTransaction RPC.  We do this here to
         // get the DatastoreTimeoutException (in the case of a timeout) right
@@ -419,6 +432,14 @@ public class CheckedDatastore {
         return checkedTransaction;
       }
     });
+  }
+
+  public CheckedTransaction beginTransactionXG() throws PermanentFailure, RetryableFailure {
+    return beginTransaction(TransactionOptions.Builder.withXG(true));
+  }
+
+  public CheckedTransaction beginTransaction() throws PermanentFailure, RetryableFailure {
+    return beginTransaction(TransactionOptions.Builder.withDefaults());
   }
 
   public CheckedPreparedQuery prepareNontransactionalQuery(Query q) {

@@ -38,8 +38,10 @@ public final class ImportWaveletDisplayRecord {
   private final String title;
   private final String lastModifiedDate;
   private final boolean privateImportInProgress;
+  @Nullable private final String privateImportedSlobId;
   @Nullable private final String privateImportedLink;
   private final boolean sharedImportInProgress;
+  @Nullable private final String sharedImportedSlobId;
   @Nullable private final String sharedImportedLink;
 
   public ImportWaveletDisplayRecord(SourceInstance instance,
@@ -49,8 +51,10 @@ public final class ImportWaveletDisplayRecord {
       String title,
       String lastModifiedDate,
       boolean privateImportInProgress,
+      @Nullable String privateImportedSlobId,
       @Nullable String privateImportedLink,
       boolean sharedImportInProgress,
+      @Nullable String sharedImportedSlobId,
       @Nullable String sharedImportedLink) {
     this.instance = checkNotNull(instance, "Null instance");
     this.waveletName = checkNotNull(waveletName, "Null waveletName");
@@ -59,8 +63,10 @@ public final class ImportWaveletDisplayRecord {
     this.title = checkNotNull(title, "Null title");
     this.lastModifiedDate = checkNotNull(lastModifiedDate, "Null lastModifiedDate");
     this.privateImportInProgress = privateImportInProgress;
+    this.privateImportedSlobId = privateImportedSlobId;
     this.privateImportedLink = privateImportedLink;
     this.sharedImportInProgress = sharedImportInProgress;
+    this.sharedImportedSlobId = sharedImportedSlobId;
     this.sharedImportedLink = sharedImportedLink;
   }
 
@@ -92,12 +98,20 @@ public final class ImportWaveletDisplayRecord {
     return privateImportInProgress;
   }
 
+  @Nullable public String getPrivateImportedSlobId() {
+    return privateImportedSlobId;
+  }
+
   @Nullable public String getPrivateImportedLink() {
     return privateImportedLink;
   }
 
   public boolean isSharedImportInProgress() {
     return sharedImportInProgress;
+  }
+
+  @Nullable public String getSharedImportedSlobId() {
+    return sharedImportedSlobId;
   }
 
   @Nullable public String getSharedImportedLink() {
@@ -113,8 +127,10 @@ public final class ImportWaveletDisplayRecord {
         + title + ", "
         + lastModifiedDate + ", "
         + privateImportInProgress + ", "
+        + privateImportedSlobId + ", "
         + privateImportedLink + ", "
         + sharedImportInProgress + ", "
+        + sharedImportedSlobId + ", "
         + sharedImportedLink
         + ")";
   }
@@ -131,13 +147,16 @@ public final class ImportWaveletDisplayRecord {
         && Objects.equal(creator, other.creator)
         && Objects.equal(title, other.title)
         && Objects.equal(lastModifiedDate, other.lastModifiedDate)
+        && Objects.equal(privateImportedSlobId, other.privateImportedSlobId)
         && Objects.equal(privateImportedLink, other.privateImportedLink)
+        && Objects.equal(sharedImportedSlobId, other.sharedImportedSlobId)
         && Objects.equal(sharedImportedLink, other.sharedImportedLink);
   }
 
   @Override public final int hashCode() {
     return Objects.hashCode(instance, waveletName, linkToOriginal, creator, title, lastModifiedDate,
-        privateImportInProgress, privateImportedLink, sharedImportInProgress, sharedImportedLink);
+        privateImportInProgress, privateImportedSlobId, privateImportedLink,
+        sharedImportInProgress, sharedImportedSlobId, sharedImportedLink);
   }
 
 }

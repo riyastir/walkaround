@@ -22,9 +22,8 @@ import com.google.walkaround.slob.shared.SlobId;
 import java.io.Serializable;
 
 /**
- * An entry in WaveletDirectory.  Currently, this is just an SlobId, but we
- * could add something else later (e.g., legacy WaveletName, perhaps wavelet
- * type).
+ * An entry in WaveletDirectory.  This is just an SlobId.  TODO(ohler): simplify
+ * this away.
  *
  * @author danilatos@google.com (Daniel Danilatos)
  */

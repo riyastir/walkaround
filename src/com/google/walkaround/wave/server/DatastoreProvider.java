@@ -16,7 +16,16 @@
 
 package com.google.walkaround.wave.server;
 
-import com.google.appengine.api.datastore.*;
+import com.google.appengine.api.datastore.DatastoreService;
+import com.google.appengine.api.datastore.DatastoreServiceConfig;
+import com.google.appengine.api.datastore.DatastoreServiceFactory;
+import com.google.appengine.api.datastore.ImplicitTransactionManagementPolicy;
+import com.google.appengine.api.datastore.ReadPolicy;
+import com.google.appengine.api.utils.SystemProperty;
+import com.google.apphosting.api.ApiProxy;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * Provides datastore instance to use.
@@ -26,6 +35,39 @@ import com.google.appengine.api.datastore.*;
 public class DatastoreProvider {
 
   private DatastoreProvider() {}
+
+  static {
+    // Weird contortions to get XG transactions to work when running locally.
+    // TODO(ohler): Figure out if there's a better way.
+    if (SystemProperty.environment.value() == SystemProperty.Environment.Value.Development) {
+      // We use reflection to avoid having to depend on testing jars.
+      Object apiProxy = ApiProxy.getDelegate();
+      @SuppressWarnings("rawtypes")
+      Class[] paramTypes = new Class[] { String.class, String.class };
+      Method setProperty;
+      try {
+        setProperty = apiProxy.getClass().getMethod("setProperty", paramTypes);
+      } catch (SecurityException e) {
+        throw new RuntimeException(e);
+      } catch (NoSuchMethodException e) {
+        throw new RuntimeException(e);
+      }
+      setProperty.setAccessible(true);
+      try {
+        setProperty.invoke(apiProxy,
+            // This string literal is from
+            // DefaultHighRepJobPolicy.UNAPPLIED_JOB_PERCENTAGE_PROPERTY
+            // but we inline it here to avoid depending on the local development
+            // JARs that contain that class.
+            "datastore.default_high_rep_job_policy_unapplied_job_pct",
+            "30");
+      } catch (InvocationTargetException e) {
+        throw new RuntimeException(e);
+      } catch (IllegalAccessException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
 
   private static final DatastoreService STRONG_READS =
       DatastoreServiceFactory.getDatastoreService(DatastoreServiceConfig.Builder

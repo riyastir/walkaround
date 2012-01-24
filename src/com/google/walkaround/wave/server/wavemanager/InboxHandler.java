@@ -138,7 +138,7 @@ public class InboxHandler extends AbstractHandler {
     }
     String action = requireParameter(req, "action");
     if ("newwave".equals(action)) {
-      SlobId newWaveId = waveletCreator.newConvWithGeneratedId(null);
+      SlobId newWaveId = waveletCreator.newConvWithGeneratedId(null, null, false);
       // TODO(ohler): Send 303, not 302.  See
       // http://en.wikipedia.org/wiki/Post/Redirect/Get .
       resp.sendRedirect(makeWaveLink(newWaveId));

@@ -368,7 +368,7 @@ public class MutationLog {
    * needed.
    *
    * Deltas and snapshots are staged in memory and added to the underlying
-   * transaction only when {@link Appender#flush()} is called.
+   * transaction only when {@link Appender#finish()} is called.
    */
   public class Appender {
     private final StateAndVersion state;
@@ -377,6 +377,7 @@ public class MutationLog {
     private long estimatedBytesStaged = 0;
     private long mostRecentSnapshotBytes;
     private long totalDeltaBytesSinceSnapshot;
+    private boolean finished = false;
 
     private Appender(StateAndVersion state,
         long mostRecentSnapshotBytes,
@@ -386,10 +387,15 @@ public class MutationLog {
       this.totalDeltaBytesSinceSnapshot = totalDeltaBytesSinceSnapshot;
     }
 
+    private void checkNotFinished() {
+      Preconditions.checkState(!finished, "%s: already finished", this);
+    }
+
     /**
      * Stages a delta for writing, verifying that it is valid (applies cleanly).
      */
     public void append(ChangeData<String> delta) throws ChangeRejected {
+      checkNotFinished();
       appendAll(ImmutableList.of(delta));
     }
 
@@ -399,6 +405,7 @@ public class MutationLog {
      * {@link ChangeRejected}.
      */
     public void appendAll(List<ChangeData<String>> deltas) throws ChangeRejected {
+      checkNotFinished();
       if (deltas.isEmpty()) {
         // For now, this is a no-op; if we want this to potentially append a
         // snapshot, we'll need a justification for that.
@@ -493,24 +500,24 @@ public class MutationLog {
     }
 
     /**
-     * Calls {@code put()} on all staged deltas and snapshots.
+     * Calls {@code put()} on all staged deltas and snapshots, etc.
      */
-    public void flush() throws PermanentFailure, RetryableFailure {
+    public void finish() throws PermanentFailure, RetryableFailure {
+      checkNotFinished();
+      finished = true;
       log.info("Flushing " + stagedDeltaEntries.size() + " deltas and "
           + stagedSnapshotEntries.size() + " snapshots");
       put(tx, stagedDeltaEntries, stagedSnapshotEntries);
+      tx.runAfterCommit(new Runnable() {
+          @Override public void run() {
+            stateCache.currentStates.put(Pair.of(entityGroupKind, objectId),
+                new CacheEntry(state.getVersion(), state.getState().snapshot(),
+                    mostRecentSnapshotBytes, totalDeltaBytesSinceSnapshot));
+          }
+        });
       stagedDeltaEntries.clear();
       stagedSnapshotEntries.clear();
       estimatedBytesStaged = 0;
-    }
-
-    /**
-     * Invoke after successful commit to update in-memory cache.
-     */
-    public void postCommit() {
-      stateCache.currentStates.put(Pair.of(entityGroupKind, objectId),
-          new CacheEntry(state.getVersion(), state.getState().snapshot(),
-              mostRecentSnapshotBytes, totalDeltaBytesSinceSnapshot));
     }
   }
 
@@ -880,7 +887,7 @@ public class MutationLog {
     tx.put(entities);
   }
 
-  private SnapshotEntry getSnapshotEntryAtOrBefore(@Nullable Long atOrBeforeVersion)
+  @Nullable private SnapshotEntry getSnapshotEntryAtOrBefore(@Nullable Long atOrBeforeVersion)
       throws RetryableFailure, PermanentFailure {
     Query q = new Query(snapshotEntityKind)
         .setAncestor(makeRootEntityKey(objectId))
@@ -940,19 +947,18 @@ public class MutationLog {
   // TODO(ohler): eliminate; PreCommitHook should be enough
   @Nullable public String getMetadata() throws RetryableFailure, PermanentFailure {
     Key key = makeRootEntityKey(objectId);
-    log.info("Looking up metadata " + key);
-    Entity result = tx.get(key);
+    Entity entity = tx.get(key);
+    @Nullable String result = entity == null ? null
+        : DatastoreUtil.getExistingProperty(entity, METADATA_PROPERTY, Text.class).getValue();
     log.info("Got " + result);
-    return result == null ? null
-        : DatastoreUtil.getExistingProperty(result, METADATA_PROPERTY, Text.class).getValue();
+    return result;
   }
 
   // TODO(ohler): eliminate; PreCommitHook should be enough
   public void putMetadata(String metadata) throws RetryableFailure, PermanentFailure {
-    Key key = makeRootEntityKey(objectId);
-    Entity e = new Entity(key);
+    Entity e = new Entity(makeRootEntityKey(objectId));
     DatastoreUtil.setNonNullUnindexedProperty(e, METADATA_PROPERTY, new Text(metadata));
-    log.info("Writing metadata: " + e);
+    log.info("Writing metadata: " + metadata);
     tx.put(e);
   }
 

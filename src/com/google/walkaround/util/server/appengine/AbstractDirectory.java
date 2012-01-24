@@ -69,14 +69,23 @@ public abstract class AbstractDirectory<T, I> {
     return KeyFactory.createKey(entityKind, serializeId(id));
   }
 
-  @Nullable public T get(I id) throws IOException {
+  @Nullable public T get(CheckedTransaction tx, I id) throws PermanentFailure, RetryableFailure {
     Key key = makeKey(id);
-    Entity result;
+    Entity result = tx.get(key);
+    if (result != null) {
+      log.info("Looked up " + key + ", found " + result);
+      return parse(result);
+    } else {
+      log.info("Looked up " + key + ", not found");
+      return null;
+    }
+  }
+
+  @Nullable public T getWithoutTx(I id) throws IOException {
     try {
-      log.info("Looking up " + key);
       CheckedTransaction tx = datastore.beginTransaction();
       try {
-        result = tx.get(key);
+        return get(tx, id);
       } finally {
         tx.rollback();
       }
@@ -87,13 +96,38 @@ public abstract class AbstractDirectory<T, I> {
       log.log(Level.SEVERE, "Failed to look up " + id, e);
       throw new IOException(e);
     }
+  }
 
-    if (result != null) {
-      log.info("Looked up " + key + ": " + result);
-      return parse(result);
-    } else {
-      log.info("Looked up " + key + ": not found");
-      return null;
+  public void put(CheckedTransaction tx, T newEntry) throws PermanentFailure, RetryableFailure {
+    Preconditions.checkNotNull(tx, "Null tx");
+    Preconditions.checkNotNull(newEntry, "Null newEntry");
+    Key key = makeKey(getId(newEntry));
+    Entity newEntity = new Entity(key);
+    populateEntity(newEntry, newEntity);
+    // For now, we verify that it parses with no exceptions.  We can turn
+    // this off if it's too expensive.
+    parse(newEntity);
+    log.info("Putting " + newEntity + " in " + tx);
+    tx.put(newEntity);
+  }
+
+  public void putWithoutTx(final T newEntry) throws IOException {
+    Preconditions.checkNotNull(newEntry, "Null newEntry");
+    try {
+      new RetryHelper().run(new RetryHelper.VoidBody() {
+        @Override public void run() throws RetryableFailure, PermanentFailure {
+          CheckedTransaction tx = datastore.beginTransaction();
+          try {
+            put(tx, newEntry);
+            tx.commit();
+            log.info("Committed " + tx);
+          } finally {
+            tx.close();
+          }
+        }
+      });
+    } catch (PermanentFailure e) {
+      throw new IOException(e);
     }
   }
 
@@ -107,29 +141,22 @@ public abstract class AbstractDirectory<T, I> {
   // does not exist in the datastore, because megastore transactions run in parallel
   // and just fail on commit (there is no locking).
   // Instead, use get() and then getOrAdd() if get returns null.
+
+  // Is this method worthwhile, given that a caller can just use get() and put()
+  // and manage their own transaction?
   @Nullable public T getOrAdd(final T newEntry) throws IOException {
     Preconditions.checkNotNull(newEntry, "Null newEntry");
-
-    final Key key = makeKey(getId(newEntry));
-    RetryHelper r = new RetryHelper();
-
     try {
-      return r.run(new RetryHelper.Body<T>() {
+      return new RetryHelper().run(new RetryHelper.Body<T>() {
         @Override public T run() throws RetryableFailure, PermanentFailure {
           CheckedTransaction tx = datastore.beginTransaction();
           try {
-            Entity existing = tx.get(key);
+            Entity existing = tx.get(makeKey(getId(newEntry)));
             if (existing != null) {
               log.info("Read " + existing + " in " + tx);
               return parse(existing);
             } else {
-              Entity newEntity = new Entity(key);
-              populateEntity(newEntry, newEntity);
-              // For now, we verify that it parses with no exceptions.  We can turn
-              // this off if it's too expensive.
-              parse(newEntity);
-              log.info("About to put " + newEntity + " in " + tx);
-              tx.put(newEntity);
+              put(tx, newEntry);
               tx.commit();
               log.info("Committed " + tx);
               return null;
@@ -142,14 +169,6 @@ public abstract class AbstractDirectory<T, I> {
     } catch (PermanentFailure e) {
       throw new IOException(e);
     }
-  }
-
-  public List<T> hackReadAllEntries() {
-    ImmutableList.Builder<T> b = ImmutableList.builder();
-    for (Entity e : datastore.unsafe().prepare(new Query(entityKind)).asIterable()) {
-      b.add(parse(e));
-    }
-    return b.build();
   }
 
 }

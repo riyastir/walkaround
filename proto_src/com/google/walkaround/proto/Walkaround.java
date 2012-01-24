@@ -1866,31 +1866,31 @@ public final class Walkaround {
     // @@protoc_insertion_point(class_scope:proto.Delta)
   }
   
-  public static final class UdwMetadata extends
+  public static final class ObsoleteUdwMetadata extends
       com.google.protobuf.GeneratedMessage {
-    // Use UdwMetadata.newBuilder() to construct.
-    private UdwMetadata() {
+    // Use ObsoleteUdwMetadata.newBuilder() to construct.
+    private ObsoleteUdwMetadata() {
       initFields();
     }
-    private UdwMetadata(boolean noInit) {}
+    private ObsoleteUdwMetadata(boolean noInit) {}
     
-    private static final UdwMetadata defaultInstance;
-    public static UdwMetadata getDefaultInstance() {
+    private static final ObsoleteUdwMetadata defaultInstance;
+    public static ObsoleteUdwMetadata getDefaultInstance() {
       return defaultInstance;
     }
     
-    public UdwMetadata getDefaultInstanceForType() {
+    public ObsoleteUdwMetadata getDefaultInstanceForType() {
       return defaultInstance;
     }
     
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.google.walkaround.proto.Walkaround.internal_static_proto_UdwMetadata_descriptor;
+      return com.google.walkaround.proto.Walkaround.internal_static_proto_ObsoleteUdwMetadata_descriptor;
     }
     
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.google.walkaround.proto.Walkaround.internal_static_proto_UdwMetadata_fieldAccessorTable;
+      return com.google.walkaround.proto.Walkaround.internal_static_proto_ObsoleteUdwMetadata_fieldAccessorTable;
     }
     
     // required string associated_conv_id = 2;
@@ -1946,41 +1946,41 @@ public final class Walkaround {
       return size;
     }
     
-    public static com.google.walkaround.proto.Walkaround.UdwMetadata parseFrom(
+    public static com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return newBuilder().mergeFrom(data).buildParsed();
     }
-    public static com.google.walkaround.proto.Walkaround.UdwMetadata parseFrom(
+    public static com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return newBuilder().mergeFrom(data, extensionRegistry)
                .buildParsed();
     }
-    public static com.google.walkaround.proto.Walkaround.UdwMetadata parseFrom(byte[] data)
+    public static com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return newBuilder().mergeFrom(data).buildParsed();
     }
-    public static com.google.walkaround.proto.Walkaround.UdwMetadata parseFrom(
+    public static com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return newBuilder().mergeFrom(data, extensionRegistry)
                .buildParsed();
     }
-    public static com.google.walkaround.proto.Walkaround.UdwMetadata parseFrom(java.io.InputStream input)
+    public static com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return newBuilder().mergeFrom(input).buildParsed();
     }
-    public static com.google.walkaround.proto.Walkaround.UdwMetadata parseFrom(
+    public static com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return newBuilder().mergeFrom(input, extensionRegistry)
                .buildParsed();
     }
-    public static com.google.walkaround.proto.Walkaround.UdwMetadata parseDelimitedFrom(java.io.InputStream input)
+    public static com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       Builder builder = newBuilder();
       if (builder.mergeDelimitedFrom(input)) {
@@ -1989,7 +1989,7 @@ public final class Walkaround {
         return null;
       }
     }
-    public static com.google.walkaround.proto.Walkaround.UdwMetadata parseDelimitedFrom(
+    public static com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -2000,12 +2000,12 @@ public final class Walkaround {
         return null;
       }
     }
-    public static com.google.walkaround.proto.Walkaround.UdwMetadata parseFrom(
+    public static com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return newBuilder().mergeFrom(input).buildParsed();
     }
-    public static com.google.walkaround.proto.Walkaround.UdwMetadata parseFrom(
+    public static com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -2015,25 +2015,25 @@ public final class Walkaround {
     
     public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.google.walkaround.proto.Walkaround.UdwMetadata prototype) {
+    public static Builder newBuilder(com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata prototype) {
       return newBuilder().mergeFrom(prototype);
     }
     public Builder toBuilder() { return newBuilder(this); }
     
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder> {
-      private com.google.walkaround.proto.Walkaround.UdwMetadata result;
+      private com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata result;
       
-      // Construct using com.google.walkaround.proto.Walkaround.UdwMetadata.newBuilder()
+      // Construct using com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata.newBuilder()
       private Builder() {}
       
       private static Builder create() {
         Builder builder = new Builder();
-        builder.result = new com.google.walkaround.proto.Walkaround.UdwMetadata();
+        builder.result = new com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata();
         return builder;
       }
       
-      protected com.google.walkaround.proto.Walkaround.UdwMetadata internalGetResult() {
+      protected com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata internalGetResult() {
         return result;
       }
       
@@ -2042,7 +2042,7 @@ public final class Walkaround {
           throw new IllegalStateException(
             "Cannot call clear() after build().");
         }
-        result = new com.google.walkaround.proto.Walkaround.UdwMetadata();
+        result = new com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata();
         return this;
       }
       
@@ -2052,24 +2052,24 @@ public final class Walkaround {
       
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return com.google.walkaround.proto.Walkaround.UdwMetadata.getDescriptor();
+        return com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata.getDescriptor();
       }
       
-      public com.google.walkaround.proto.Walkaround.UdwMetadata getDefaultInstanceForType() {
-        return com.google.walkaround.proto.Walkaround.UdwMetadata.getDefaultInstance();
+      public com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata getDefaultInstanceForType() {
+        return com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata.getDefaultInstance();
       }
       
       public boolean isInitialized() {
         return result.isInitialized();
       }
-      public com.google.walkaround.proto.Walkaround.UdwMetadata build() {
+      public com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata build() {
         if (result != null && !isInitialized()) {
           throw newUninitializedMessageException(result);
         }
         return buildPartial();
       }
       
-      private com.google.walkaround.proto.Walkaround.UdwMetadata buildParsed()
+      private com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata buildParsed()
           throws com.google.protobuf.InvalidProtocolBufferException {
         if (!isInitialized()) {
           throw newUninitializedMessageException(
@@ -2078,27 +2078,27 @@ public final class Walkaround {
         return buildPartial();
       }
       
-      public com.google.walkaround.proto.Walkaround.UdwMetadata buildPartial() {
+      public com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata buildPartial() {
         if (result == null) {
           throw new IllegalStateException(
             "build() has already been called on this Builder.");
         }
-        com.google.walkaround.proto.Walkaround.UdwMetadata returnMe = result;
+        com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata returnMe = result;
         result = null;
         return returnMe;
       }
       
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.google.walkaround.proto.Walkaround.UdwMetadata) {
-          return mergeFrom((com.google.walkaround.proto.Walkaround.UdwMetadata)other);
+        if (other instanceof com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata) {
+          return mergeFrom((com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
       
-      public Builder mergeFrom(com.google.walkaround.proto.Walkaround.UdwMetadata other) {
-        if (other == com.google.walkaround.proto.Walkaround.UdwMetadata.getDefaultInstance()) return this;
+      public Builder mergeFrom(com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata other) {
+        if (other == com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata.getDefaultInstance()) return this;
         if (other.hasAssociatedConvId()) {
           setAssociatedConvId(other.getAssociatedConvId());
         }
@@ -2185,43 +2185,43 @@ public final class Walkaround {
         return this;
       }
       
-      // @@protoc_insertion_point(builder_scope:proto.UdwMetadata)
+      // @@protoc_insertion_point(builder_scope:proto.ObsoleteUdwMetadata)
     }
     
     static {
-      defaultInstance = new UdwMetadata(true);
+      defaultInstance = new ObsoleteUdwMetadata(true);
       com.google.walkaround.proto.Walkaround.internalForceInit();
       defaultInstance.initFields();
     }
     
-    // @@protoc_insertion_point(class_scope:proto.UdwMetadata)
+    // @@protoc_insertion_point(class_scope:proto.ObsoleteUdwMetadata)
   }
   
-  public static final class WaveletMetadata extends
+  public static final class ObsoleteWaveletMetadata extends
       com.google.protobuf.GeneratedMessage {
-    // Use WaveletMetadata.newBuilder() to construct.
-    private WaveletMetadata() {
+    // Use ObsoleteWaveletMetadata.newBuilder() to construct.
+    private ObsoleteWaveletMetadata() {
       initFields();
     }
-    private WaveletMetadata(boolean noInit) {}
+    private ObsoleteWaveletMetadata(boolean noInit) {}
     
-    private static final WaveletMetadata defaultInstance;
-    public static WaveletMetadata getDefaultInstance() {
+    private static final ObsoleteWaveletMetadata defaultInstance;
+    public static ObsoleteWaveletMetadata getDefaultInstance() {
       return defaultInstance;
     }
     
-    public WaveletMetadata getDefaultInstanceForType() {
+    public ObsoleteWaveletMetadata getDefaultInstanceForType() {
       return defaultInstance;
     }
     
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.google.walkaround.proto.Walkaround.internal_static_proto_WaveletMetadata_descriptor;
+      return com.google.walkaround.proto.Walkaround.internal_static_proto_ObsoleteWaveletMetadata_descriptor;
     }
     
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.google.walkaround.proto.Walkaround.internal_static_proto_WaveletMetadata_fieldAccessorTable;
+      return com.google.walkaround.proto.Walkaround.internal_static_proto_ObsoleteWaveletMetadata_fieldAccessorTable;
     }
     
     public enum Type
@@ -2263,7 +2263,7 @@ public final class Walkaround {
       }
       public static final com.google.protobuf.Descriptors.EnumDescriptor
           getDescriptor() {
-        return com.google.walkaround.proto.Walkaround.WaveletMetadata.getDescriptor().getEnumTypes().get(0);
+        return com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata.getDescriptor().getEnumTypes().get(0);
       }
       
       private static final Type[] VALUES = {
@@ -2288,26 +2288,26 @@ public final class Walkaround {
         com.google.walkaround.proto.Walkaround.getDescriptor();
       }
       
-      // @@protoc_insertion_point(enum_scope:proto.WaveletMetadata.Type)
+      // @@protoc_insertion_point(enum_scope:proto.ObsoleteWaveletMetadata.Type)
     }
     
-    // required .proto.WaveletMetadata.Type type = 1;
+    // required .proto.ObsoleteWaveletMetadata.Type type = 1;
     public static final int TYPE_FIELD_NUMBER = 1;
     private boolean hasType;
-    private com.google.walkaround.proto.Walkaround.WaveletMetadata.Type type_;
+    private com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata.Type type_;
     public boolean hasType() { return hasType; }
-    public com.google.walkaround.proto.Walkaround.WaveletMetadata.Type getType() { return type_; }
+    public com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata.Type getType() { return type_; }
     
-    // optional .proto.UdwMetadata udw_metadata = 2;
+    // optional .proto.ObsoleteUdwMetadata udw_metadata = 2;
     public static final int UDW_METADATA_FIELD_NUMBER = 2;
     private boolean hasUdwMetadata;
-    private com.google.walkaround.proto.Walkaround.UdwMetadata udwMetadata_;
+    private com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata udwMetadata_;
     public boolean hasUdwMetadata() { return hasUdwMetadata; }
-    public com.google.walkaround.proto.Walkaround.UdwMetadata getUdwMetadata() { return udwMetadata_; }
+    public com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata getUdwMetadata() { return udwMetadata_; }
     
     private void initFields() {
-      type_ = com.google.walkaround.proto.Walkaround.WaveletMetadata.Type.CONV;
-      udwMetadata_ = com.google.walkaround.proto.Walkaround.UdwMetadata.getDefaultInstance();
+      type_ = com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata.Type.CONV;
+      udwMetadata_ = com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata.getDefaultInstance();
     }
     public final boolean isInitialized() {
       if (!hasType) return false;
@@ -2348,41 +2348,41 @@ public final class Walkaround {
       return size;
     }
     
-    public static com.google.walkaround.proto.Walkaround.WaveletMetadata parseFrom(
+    public static com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return newBuilder().mergeFrom(data).buildParsed();
     }
-    public static com.google.walkaround.proto.Walkaround.WaveletMetadata parseFrom(
+    public static com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return newBuilder().mergeFrom(data, extensionRegistry)
                .buildParsed();
     }
-    public static com.google.walkaround.proto.Walkaround.WaveletMetadata parseFrom(byte[] data)
+    public static com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return newBuilder().mergeFrom(data).buildParsed();
     }
-    public static com.google.walkaround.proto.Walkaround.WaveletMetadata parseFrom(
+    public static com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return newBuilder().mergeFrom(data, extensionRegistry)
                .buildParsed();
     }
-    public static com.google.walkaround.proto.Walkaround.WaveletMetadata parseFrom(java.io.InputStream input)
+    public static com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return newBuilder().mergeFrom(input).buildParsed();
     }
-    public static com.google.walkaround.proto.Walkaround.WaveletMetadata parseFrom(
+    public static com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return newBuilder().mergeFrom(input, extensionRegistry)
                .buildParsed();
     }
-    public static com.google.walkaround.proto.Walkaround.WaveletMetadata parseDelimitedFrom(java.io.InputStream input)
+    public static com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       Builder builder = newBuilder();
       if (builder.mergeDelimitedFrom(input)) {
@@ -2391,7 +2391,7 @@ public final class Walkaround {
         return null;
       }
     }
-    public static com.google.walkaround.proto.Walkaround.WaveletMetadata parseDelimitedFrom(
+    public static com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -2402,12 +2402,12 @@ public final class Walkaround {
         return null;
       }
     }
-    public static com.google.walkaround.proto.Walkaround.WaveletMetadata parseFrom(
+    public static com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return newBuilder().mergeFrom(input).buildParsed();
     }
-    public static com.google.walkaround.proto.Walkaround.WaveletMetadata parseFrom(
+    public static com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -2417,25 +2417,25 @@ public final class Walkaround {
     
     public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.google.walkaround.proto.Walkaround.WaveletMetadata prototype) {
+    public static Builder newBuilder(com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata prototype) {
       return newBuilder().mergeFrom(prototype);
     }
     public Builder toBuilder() { return newBuilder(this); }
     
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder> {
-      private com.google.walkaround.proto.Walkaround.WaveletMetadata result;
+      private com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata result;
       
-      // Construct using com.google.walkaround.proto.Walkaround.WaveletMetadata.newBuilder()
+      // Construct using com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata.newBuilder()
       private Builder() {}
       
       private static Builder create() {
         Builder builder = new Builder();
-        builder.result = new com.google.walkaround.proto.Walkaround.WaveletMetadata();
+        builder.result = new com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata();
         return builder;
       }
       
-      protected com.google.walkaround.proto.Walkaround.WaveletMetadata internalGetResult() {
+      protected com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata internalGetResult() {
         return result;
       }
       
@@ -2444,7 +2444,7 @@ public final class Walkaround {
           throw new IllegalStateException(
             "Cannot call clear() after build().");
         }
-        result = new com.google.walkaround.proto.Walkaround.WaveletMetadata();
+        result = new com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata();
         return this;
       }
       
@@ -2454,24 +2454,24 @@ public final class Walkaround {
       
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return com.google.walkaround.proto.Walkaround.WaveletMetadata.getDescriptor();
+        return com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata.getDescriptor();
       }
       
-      public com.google.walkaround.proto.Walkaround.WaveletMetadata getDefaultInstanceForType() {
-        return com.google.walkaround.proto.Walkaround.WaveletMetadata.getDefaultInstance();
+      public com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata getDefaultInstanceForType() {
+        return com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata.getDefaultInstance();
       }
       
       public boolean isInitialized() {
         return result.isInitialized();
       }
-      public com.google.walkaround.proto.Walkaround.WaveletMetadata build() {
+      public com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata build() {
         if (result != null && !isInitialized()) {
           throw newUninitializedMessageException(result);
         }
         return buildPartial();
       }
       
-      private com.google.walkaround.proto.Walkaround.WaveletMetadata buildParsed()
+      private com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata buildParsed()
           throws com.google.protobuf.InvalidProtocolBufferException {
         if (!isInitialized()) {
           throw newUninitializedMessageException(
@@ -2480,27 +2480,27 @@ public final class Walkaround {
         return buildPartial();
       }
       
-      public com.google.walkaround.proto.Walkaround.WaveletMetadata buildPartial() {
+      public com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata buildPartial() {
         if (result == null) {
           throw new IllegalStateException(
             "build() has already been called on this Builder.");
         }
-        com.google.walkaround.proto.Walkaround.WaveletMetadata returnMe = result;
+        com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata returnMe = result;
         result = null;
         return returnMe;
       }
       
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof com.google.walkaround.proto.Walkaround.WaveletMetadata) {
-          return mergeFrom((com.google.walkaround.proto.Walkaround.WaveletMetadata)other);
+        if (other instanceof com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata) {
+          return mergeFrom((com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
       
-      public Builder mergeFrom(com.google.walkaround.proto.Walkaround.WaveletMetadata other) {
-        if (other == com.google.walkaround.proto.Walkaround.WaveletMetadata.getDefaultInstance()) return this;
+      public Builder mergeFrom(com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata other) {
+        if (other == com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata.getDefaultInstance()) return this;
         if (other.hasType()) {
           setType(other.getType());
         }
@@ -2534,7 +2534,7 @@ public final class Walkaround {
             }
             case 8: {
               int rawValue = input.readEnum();
-              com.google.walkaround.proto.Walkaround.WaveletMetadata.Type value = com.google.walkaround.proto.Walkaround.WaveletMetadata.Type.valueOf(rawValue);
+              com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata.Type value = com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata.Type.valueOf(rawValue);
               if (value == null) {
                 unknownFields.mergeVarintField(1, rawValue);
               } else {
@@ -2543,7 +2543,7 @@ public final class Walkaround {
               break;
             }
             case 18: {
-              com.google.walkaround.proto.Walkaround.UdwMetadata.Builder subBuilder = com.google.walkaround.proto.Walkaround.UdwMetadata.newBuilder();
+              com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata.Builder subBuilder = com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata.newBuilder();
               if (hasUdwMetadata()) {
                 subBuilder.mergeFrom(getUdwMetadata());
               }
@@ -2556,14 +2556,14 @@ public final class Walkaround {
       }
       
       
-      // required .proto.WaveletMetadata.Type type = 1;
+      // required .proto.ObsoleteWaveletMetadata.Type type = 1;
       public boolean hasType() {
         return result.hasType();
       }
-      public com.google.walkaround.proto.Walkaround.WaveletMetadata.Type getType() {
+      public com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata.Type getType() {
         return result.getType();
       }
-      public Builder setType(com.google.walkaround.proto.Walkaround.WaveletMetadata.Type value) {
+      public Builder setType(com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata.Type value) {
         if (value == null) {
           throw new NullPointerException();
         }
@@ -2573,18 +2573,18 @@ public final class Walkaround {
       }
       public Builder clearType() {
         result.hasType = false;
-        result.type_ = com.google.walkaround.proto.Walkaround.WaveletMetadata.Type.CONV;
+        result.type_ = com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata.Type.CONV;
         return this;
       }
       
-      // optional .proto.UdwMetadata udw_metadata = 2;
+      // optional .proto.ObsoleteUdwMetadata udw_metadata = 2;
       public boolean hasUdwMetadata() {
         return result.hasUdwMetadata();
       }
-      public com.google.walkaround.proto.Walkaround.UdwMetadata getUdwMetadata() {
+      public com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata getUdwMetadata() {
         return result.getUdwMetadata();
       }
-      public Builder setUdwMetadata(com.google.walkaround.proto.Walkaround.UdwMetadata value) {
+      public Builder setUdwMetadata(com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata value) {
         if (value == null) {
           throw new NullPointerException();
         }
@@ -2592,16 +2592,16 @@ public final class Walkaround {
         result.udwMetadata_ = value;
         return this;
       }
-      public Builder setUdwMetadata(com.google.walkaround.proto.Walkaround.UdwMetadata.Builder builderForValue) {
+      public Builder setUdwMetadata(com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata.Builder builderForValue) {
         result.hasUdwMetadata = true;
         result.udwMetadata_ = builderForValue.build();
         return this;
       }
-      public Builder mergeUdwMetadata(com.google.walkaround.proto.Walkaround.UdwMetadata value) {
+      public Builder mergeUdwMetadata(com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata value) {
         if (result.hasUdwMetadata() &&
-            result.udwMetadata_ != com.google.walkaround.proto.Walkaround.UdwMetadata.getDefaultInstance()) {
+            result.udwMetadata_ != com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata.getDefaultInstance()) {
           result.udwMetadata_ =
-            com.google.walkaround.proto.Walkaround.UdwMetadata.newBuilder(result.udwMetadata_).mergeFrom(value).buildPartial();
+            com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata.newBuilder(result.udwMetadata_).mergeFrom(value).buildPartial();
         } else {
           result.udwMetadata_ = value;
         }
@@ -2610,20 +2610,829 @@ public final class Walkaround {
       }
       public Builder clearUdwMetadata() {
         result.hasUdwMetadata = false;
-        result.udwMetadata_ = com.google.walkaround.proto.Walkaround.UdwMetadata.getDefaultInstance();
+        result.udwMetadata_ = com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata.getDefaultInstance();
         return this;
       }
       
-      // @@protoc_insertion_point(builder_scope:proto.WaveletMetadata)
+      // @@protoc_insertion_point(builder_scope:proto.ObsoleteWaveletMetadata)
     }
     
     static {
-      defaultInstance = new WaveletMetadata(true);
+      defaultInstance = new ObsoleteWaveletMetadata(true);
       com.google.walkaround.proto.Walkaround.internalForceInit();
       defaultInstance.initFields();
     }
     
-    // @@protoc_insertion_point(class_scope:proto.WaveletMetadata)
+    // @@protoc_insertion_point(class_scope:proto.ObsoleteWaveletMetadata)
+  }
+  
+  public static final class ImportMetadata extends
+      com.google.protobuf.GeneratedMessage {
+    // Use ImportMetadata.newBuilder() to construct.
+    private ImportMetadata() {
+      initFields();
+    }
+    private ImportMetadata(boolean noInit) {}
+    
+    private static final ImportMetadata defaultInstance;
+    public static ImportMetadata getDefaultInstance() {
+      return defaultInstance;
+    }
+    
+    public ImportMetadata getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+    
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.google.walkaround.proto.Walkaround.internal_static_proto_ImportMetadata_descriptor;
+    }
+    
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.google.walkaround.proto.Walkaround.internal_static_proto_ImportMetadata_fieldAccessorTable;
+    }
+    
+    // required string source_instance = 1;
+    public static final int SOURCE_INSTANCE_FIELD_NUMBER = 1;
+    private boolean hasSourceInstance;
+    private java.lang.String sourceInstance_ = "";
+    public boolean hasSourceInstance() { return hasSourceInstance; }
+    public java.lang.String getSourceInstance() { return sourceInstance_; }
+    
+    // required string remote_wave_id = 2;
+    public static final int REMOTE_WAVE_ID_FIELD_NUMBER = 2;
+    private boolean hasRemoteWaveId;
+    private java.lang.String remoteWaveId_ = "";
+    public boolean hasRemoteWaveId() { return hasRemoteWaveId; }
+    public java.lang.String getRemoteWaveId() { return remoteWaveId_; }
+    
+    // required string remote_wavelet_id = 3;
+    public static final int REMOTE_WAVELET_ID_FIELD_NUMBER = 3;
+    private boolean hasRemoteWaveletId;
+    private java.lang.String remoteWaveletId_ = "";
+    public boolean hasRemoteWaveletId() { return hasRemoteWaveletId; }
+    public java.lang.String getRemoteWaveletId() { return remoteWaveletId_; }
+    
+    // required string original_importer = 4;
+    public static final int ORIGINAL_IMPORTER_FIELD_NUMBER = 4;
+    private boolean hasOriginalImporter;
+    private java.lang.String originalImporter_ = "";
+    public boolean hasOriginalImporter() { return hasOriginalImporter; }
+    public java.lang.String getOriginalImporter() { return originalImporter_; }
+    
+    // required int64 import_begin_time_millis = 5;
+    public static final int IMPORT_BEGIN_TIME_MILLIS_FIELD_NUMBER = 5;
+    private boolean hasImportBeginTimeMillis;
+    private long importBeginTimeMillis_ = 0L;
+    public boolean hasImportBeginTimeMillis() { return hasImportBeginTimeMillis; }
+    public long getImportBeginTimeMillis() { return importBeginTimeMillis_; }
+    
+    // required bool import_finished = 6;
+    public static final int IMPORT_FINISHED_FIELD_NUMBER = 6;
+    private boolean hasImportFinished;
+    private boolean importFinished_ = false;
+    public boolean hasImportFinished() { return hasImportFinished; }
+    public boolean getImportFinished() { return importFinished_; }
+    
+    private void initFields() {
+    }
+    public final boolean isInitialized() {
+      if (!hasSourceInstance) return false;
+      if (!hasRemoteWaveId) return false;
+      if (!hasRemoteWaveletId) return false;
+      if (!hasOriginalImporter) return false;
+      if (!hasImportBeginTimeMillis) return false;
+      if (!hasImportFinished) return false;
+      return true;
+    }
+    
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (hasSourceInstance()) {
+        output.writeString(1, getSourceInstance());
+      }
+      if (hasRemoteWaveId()) {
+        output.writeString(2, getRemoteWaveId());
+      }
+      if (hasRemoteWaveletId()) {
+        output.writeString(3, getRemoteWaveletId());
+      }
+      if (hasOriginalImporter()) {
+        output.writeString(4, getOriginalImporter());
+      }
+      if (hasImportBeginTimeMillis()) {
+        output.writeInt64(5, getImportBeginTimeMillis());
+      }
+      if (hasImportFinished()) {
+        output.writeBool(6, getImportFinished());
+      }
+      getUnknownFields().writeTo(output);
+    }
+    
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+    
+      size = 0;
+      if (hasSourceInstance()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeStringSize(1, getSourceInstance());
+      }
+      if (hasRemoteWaveId()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeStringSize(2, getRemoteWaveId());
+      }
+      if (hasRemoteWaveletId()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeStringSize(3, getRemoteWaveletId());
+      }
+      if (hasOriginalImporter()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeStringSize(4, getOriginalImporter());
+      }
+      if (hasImportBeginTimeMillis()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(5, getImportBeginTimeMillis());
+      }
+      if (hasImportFinished()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(6, getImportFinished());
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+    
+    public static com.google.walkaround.proto.Walkaround.ImportMetadata parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return newBuilder().mergeFrom(data).buildParsed();
+    }
+    public static com.google.walkaround.proto.Walkaround.ImportMetadata parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return newBuilder().mergeFrom(data, extensionRegistry)
+               .buildParsed();
+    }
+    public static com.google.walkaround.proto.Walkaround.ImportMetadata parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return newBuilder().mergeFrom(data).buildParsed();
+    }
+    public static com.google.walkaround.proto.Walkaround.ImportMetadata parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return newBuilder().mergeFrom(data, extensionRegistry)
+               .buildParsed();
+    }
+    public static com.google.walkaround.proto.Walkaround.ImportMetadata parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return newBuilder().mergeFrom(input).buildParsed();
+    }
+    public static com.google.walkaround.proto.Walkaround.ImportMetadata parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return newBuilder().mergeFrom(input, extensionRegistry)
+               .buildParsed();
+    }
+    public static com.google.walkaround.proto.Walkaround.ImportMetadata parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      Builder builder = newBuilder();
+      if (builder.mergeDelimitedFrom(input)) {
+        return builder.buildParsed();
+      } else {
+        return null;
+      }
+    }
+    public static com.google.walkaround.proto.Walkaround.ImportMetadata parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      Builder builder = newBuilder();
+      if (builder.mergeDelimitedFrom(input, extensionRegistry)) {
+        return builder.buildParsed();
+      } else {
+        return null;
+      }
+    }
+    public static com.google.walkaround.proto.Walkaround.ImportMetadata parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return newBuilder().mergeFrom(input).buildParsed();
+    }
+    public static com.google.walkaround.proto.Walkaround.ImportMetadata parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return newBuilder().mergeFrom(input, extensionRegistry)
+               .buildParsed();
+    }
+    
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(com.google.walkaround.proto.Walkaround.ImportMetadata prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+    
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> {
+      private com.google.walkaround.proto.Walkaround.ImportMetadata result;
+      
+      // Construct using com.google.walkaround.proto.Walkaround.ImportMetadata.newBuilder()
+      private Builder() {}
+      
+      private static Builder create() {
+        Builder builder = new Builder();
+        builder.result = new com.google.walkaround.proto.Walkaround.ImportMetadata();
+        return builder;
+      }
+      
+      protected com.google.walkaround.proto.Walkaround.ImportMetadata internalGetResult() {
+        return result;
+      }
+      
+      public Builder clear() {
+        if (result == null) {
+          throw new IllegalStateException(
+            "Cannot call clear() after build().");
+        }
+        result = new com.google.walkaround.proto.Walkaround.ImportMetadata();
+        return this;
+      }
+      
+      public Builder clone() {
+        return create().mergeFrom(result);
+      }
+      
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.google.walkaround.proto.Walkaround.ImportMetadata.getDescriptor();
+      }
+      
+      public com.google.walkaround.proto.Walkaround.ImportMetadata getDefaultInstanceForType() {
+        return com.google.walkaround.proto.Walkaround.ImportMetadata.getDefaultInstance();
+      }
+      
+      public boolean isInitialized() {
+        return result.isInitialized();
+      }
+      public com.google.walkaround.proto.Walkaround.ImportMetadata build() {
+        if (result != null && !isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return buildPartial();
+      }
+      
+      private com.google.walkaround.proto.Walkaround.ImportMetadata buildParsed()
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        if (!isInitialized()) {
+          throw newUninitializedMessageException(
+            result).asInvalidProtocolBufferException();
+        }
+        return buildPartial();
+      }
+      
+      public com.google.walkaround.proto.Walkaround.ImportMetadata buildPartial() {
+        if (result == null) {
+          throw new IllegalStateException(
+            "build() has already been called on this Builder.");
+        }
+        com.google.walkaround.proto.Walkaround.ImportMetadata returnMe = result;
+        result = null;
+        return returnMe;
+      }
+      
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.google.walkaround.proto.Walkaround.ImportMetadata) {
+          return mergeFrom((com.google.walkaround.proto.Walkaround.ImportMetadata)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+      
+      public Builder mergeFrom(com.google.walkaround.proto.Walkaround.ImportMetadata other) {
+        if (other == com.google.walkaround.proto.Walkaround.ImportMetadata.getDefaultInstance()) return this;
+        if (other.hasSourceInstance()) {
+          setSourceInstance(other.getSourceInstance());
+        }
+        if (other.hasRemoteWaveId()) {
+          setRemoteWaveId(other.getRemoteWaveId());
+        }
+        if (other.hasRemoteWaveletId()) {
+          setRemoteWaveletId(other.getRemoteWaveletId());
+        }
+        if (other.hasOriginalImporter()) {
+          setOriginalImporter(other.getOriginalImporter());
+        }
+        if (other.hasImportBeginTimeMillis()) {
+          setImportBeginTimeMillis(other.getImportBeginTimeMillis());
+        }
+        if (other.hasImportFinished()) {
+          setImportFinished(other.getImportFinished());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+      
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder(
+            this.getUnknownFields());
+        while (true) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              this.setUnknownFields(unknownFields.build());
+              return this;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                this.setUnknownFields(unknownFields.build());
+                return this;
+              }
+              break;
+            }
+            case 10: {
+              setSourceInstance(input.readString());
+              break;
+            }
+            case 18: {
+              setRemoteWaveId(input.readString());
+              break;
+            }
+            case 26: {
+              setRemoteWaveletId(input.readString());
+              break;
+            }
+            case 34: {
+              setOriginalImporter(input.readString());
+              break;
+            }
+            case 40: {
+              setImportBeginTimeMillis(input.readInt64());
+              break;
+            }
+            case 48: {
+              setImportFinished(input.readBool());
+              break;
+            }
+          }
+        }
+      }
+      
+      
+      // required string source_instance = 1;
+      public boolean hasSourceInstance() {
+        return result.hasSourceInstance();
+      }
+      public java.lang.String getSourceInstance() {
+        return result.getSourceInstance();
+      }
+      public Builder setSourceInstance(java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  result.hasSourceInstance = true;
+        result.sourceInstance_ = value;
+        return this;
+      }
+      public Builder clearSourceInstance() {
+        result.hasSourceInstance = false;
+        result.sourceInstance_ = getDefaultInstance().getSourceInstance();
+        return this;
+      }
+      
+      // required string remote_wave_id = 2;
+      public boolean hasRemoteWaveId() {
+        return result.hasRemoteWaveId();
+      }
+      public java.lang.String getRemoteWaveId() {
+        return result.getRemoteWaveId();
+      }
+      public Builder setRemoteWaveId(java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  result.hasRemoteWaveId = true;
+        result.remoteWaveId_ = value;
+        return this;
+      }
+      public Builder clearRemoteWaveId() {
+        result.hasRemoteWaveId = false;
+        result.remoteWaveId_ = getDefaultInstance().getRemoteWaveId();
+        return this;
+      }
+      
+      // required string remote_wavelet_id = 3;
+      public boolean hasRemoteWaveletId() {
+        return result.hasRemoteWaveletId();
+      }
+      public java.lang.String getRemoteWaveletId() {
+        return result.getRemoteWaveletId();
+      }
+      public Builder setRemoteWaveletId(java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  result.hasRemoteWaveletId = true;
+        result.remoteWaveletId_ = value;
+        return this;
+      }
+      public Builder clearRemoteWaveletId() {
+        result.hasRemoteWaveletId = false;
+        result.remoteWaveletId_ = getDefaultInstance().getRemoteWaveletId();
+        return this;
+      }
+      
+      // required string original_importer = 4;
+      public boolean hasOriginalImporter() {
+        return result.hasOriginalImporter();
+      }
+      public java.lang.String getOriginalImporter() {
+        return result.getOriginalImporter();
+      }
+      public Builder setOriginalImporter(java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  result.hasOriginalImporter = true;
+        result.originalImporter_ = value;
+        return this;
+      }
+      public Builder clearOriginalImporter() {
+        result.hasOriginalImporter = false;
+        result.originalImporter_ = getDefaultInstance().getOriginalImporter();
+        return this;
+      }
+      
+      // required int64 import_begin_time_millis = 5;
+      public boolean hasImportBeginTimeMillis() {
+        return result.hasImportBeginTimeMillis();
+      }
+      public long getImportBeginTimeMillis() {
+        return result.getImportBeginTimeMillis();
+      }
+      public Builder setImportBeginTimeMillis(long value) {
+        result.hasImportBeginTimeMillis = true;
+        result.importBeginTimeMillis_ = value;
+        return this;
+      }
+      public Builder clearImportBeginTimeMillis() {
+        result.hasImportBeginTimeMillis = false;
+        result.importBeginTimeMillis_ = 0L;
+        return this;
+      }
+      
+      // required bool import_finished = 6;
+      public boolean hasImportFinished() {
+        return result.hasImportFinished();
+      }
+      public boolean getImportFinished() {
+        return result.getImportFinished();
+      }
+      public Builder setImportFinished(boolean value) {
+        result.hasImportFinished = true;
+        result.importFinished_ = value;
+        return this;
+      }
+      public Builder clearImportFinished() {
+        result.hasImportFinished = false;
+        result.importFinished_ = false;
+        return this;
+      }
+      
+      // @@protoc_insertion_point(builder_scope:proto.ImportMetadata)
+    }
+    
+    static {
+      defaultInstance = new ImportMetadata(true);
+      com.google.walkaround.proto.Walkaround.internalForceInit();
+      defaultInstance.initFields();
+    }
+    
+    // @@protoc_insertion_point(class_scope:proto.ImportMetadata)
+  }
+  
+  public static final class ConvMetadata extends
+      com.google.protobuf.GeneratedMessage {
+    // Use ConvMetadata.newBuilder() to construct.
+    private ConvMetadata() {
+      initFields();
+    }
+    private ConvMetadata(boolean noInit) {}
+    
+    private static final ConvMetadata defaultInstance;
+    public static ConvMetadata getDefaultInstance() {
+      return defaultInstance;
+    }
+    
+    public ConvMetadata getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+    
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.google.walkaround.proto.Walkaround.internal_static_proto_ConvMetadata_descriptor;
+    }
+    
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.google.walkaround.proto.Walkaround.internal_static_proto_ConvMetadata_fieldAccessorTable;
+    }
+    
+    // optional .proto.ImportMetadata import_metadata = 1;
+    public static final int IMPORT_METADATA_FIELD_NUMBER = 1;
+    private boolean hasImportMetadata;
+    private com.google.walkaround.proto.Walkaround.ImportMetadata importMetadata_;
+    public boolean hasImportMetadata() { return hasImportMetadata; }
+    public com.google.walkaround.proto.Walkaround.ImportMetadata getImportMetadata() { return importMetadata_; }
+    
+    private void initFields() {
+      importMetadata_ = com.google.walkaround.proto.Walkaround.ImportMetadata.getDefaultInstance();
+    }
+    public final boolean isInitialized() {
+      if (hasImportMetadata()) {
+        if (!getImportMetadata().isInitialized()) return false;
+      }
+      return true;
+    }
+    
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (hasImportMetadata()) {
+        output.writeMessage(1, getImportMetadata());
+      }
+      getUnknownFields().writeTo(output);
+    }
+    
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+    
+      size = 0;
+      if (hasImportMetadata()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(1, getImportMetadata());
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+    
+    public static com.google.walkaround.proto.Walkaround.ConvMetadata parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return newBuilder().mergeFrom(data).buildParsed();
+    }
+    public static com.google.walkaround.proto.Walkaround.ConvMetadata parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return newBuilder().mergeFrom(data, extensionRegistry)
+               .buildParsed();
+    }
+    public static com.google.walkaround.proto.Walkaround.ConvMetadata parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return newBuilder().mergeFrom(data).buildParsed();
+    }
+    public static com.google.walkaround.proto.Walkaround.ConvMetadata parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return newBuilder().mergeFrom(data, extensionRegistry)
+               .buildParsed();
+    }
+    public static com.google.walkaround.proto.Walkaround.ConvMetadata parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return newBuilder().mergeFrom(input).buildParsed();
+    }
+    public static com.google.walkaround.proto.Walkaround.ConvMetadata parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return newBuilder().mergeFrom(input, extensionRegistry)
+               .buildParsed();
+    }
+    public static com.google.walkaround.proto.Walkaround.ConvMetadata parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      Builder builder = newBuilder();
+      if (builder.mergeDelimitedFrom(input)) {
+        return builder.buildParsed();
+      } else {
+        return null;
+      }
+    }
+    public static com.google.walkaround.proto.Walkaround.ConvMetadata parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      Builder builder = newBuilder();
+      if (builder.mergeDelimitedFrom(input, extensionRegistry)) {
+        return builder.buildParsed();
+      } else {
+        return null;
+      }
+    }
+    public static com.google.walkaround.proto.Walkaround.ConvMetadata parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return newBuilder().mergeFrom(input).buildParsed();
+    }
+    public static com.google.walkaround.proto.Walkaround.ConvMetadata parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return newBuilder().mergeFrom(input, extensionRegistry)
+               .buildParsed();
+    }
+    
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(com.google.walkaround.proto.Walkaround.ConvMetadata prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+    
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> {
+      private com.google.walkaround.proto.Walkaround.ConvMetadata result;
+      
+      // Construct using com.google.walkaround.proto.Walkaround.ConvMetadata.newBuilder()
+      private Builder() {}
+      
+      private static Builder create() {
+        Builder builder = new Builder();
+        builder.result = new com.google.walkaround.proto.Walkaround.ConvMetadata();
+        return builder;
+      }
+      
+      protected com.google.walkaround.proto.Walkaround.ConvMetadata internalGetResult() {
+        return result;
+      }
+      
+      public Builder clear() {
+        if (result == null) {
+          throw new IllegalStateException(
+            "Cannot call clear() after build().");
+        }
+        result = new com.google.walkaround.proto.Walkaround.ConvMetadata();
+        return this;
+      }
+      
+      public Builder clone() {
+        return create().mergeFrom(result);
+      }
+      
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.google.walkaround.proto.Walkaround.ConvMetadata.getDescriptor();
+      }
+      
+      public com.google.walkaround.proto.Walkaround.ConvMetadata getDefaultInstanceForType() {
+        return com.google.walkaround.proto.Walkaround.ConvMetadata.getDefaultInstance();
+      }
+      
+      public boolean isInitialized() {
+        return result.isInitialized();
+      }
+      public com.google.walkaround.proto.Walkaround.ConvMetadata build() {
+        if (result != null && !isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return buildPartial();
+      }
+      
+      private com.google.walkaround.proto.Walkaround.ConvMetadata buildParsed()
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        if (!isInitialized()) {
+          throw newUninitializedMessageException(
+            result).asInvalidProtocolBufferException();
+        }
+        return buildPartial();
+      }
+      
+      public com.google.walkaround.proto.Walkaround.ConvMetadata buildPartial() {
+        if (result == null) {
+          throw new IllegalStateException(
+            "build() has already been called on this Builder.");
+        }
+        com.google.walkaround.proto.Walkaround.ConvMetadata returnMe = result;
+        result = null;
+        return returnMe;
+      }
+      
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.google.walkaround.proto.Walkaround.ConvMetadata) {
+          return mergeFrom((com.google.walkaround.proto.Walkaround.ConvMetadata)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+      
+      public Builder mergeFrom(com.google.walkaround.proto.Walkaround.ConvMetadata other) {
+        if (other == com.google.walkaround.proto.Walkaround.ConvMetadata.getDefaultInstance()) return this;
+        if (other.hasImportMetadata()) {
+          mergeImportMetadata(other.getImportMetadata());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+      
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder(
+            this.getUnknownFields());
+        while (true) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              this.setUnknownFields(unknownFields.build());
+              return this;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                this.setUnknownFields(unknownFields.build());
+                return this;
+              }
+              break;
+            }
+            case 10: {
+              com.google.walkaround.proto.Walkaround.ImportMetadata.Builder subBuilder = com.google.walkaround.proto.Walkaround.ImportMetadata.newBuilder();
+              if (hasImportMetadata()) {
+                subBuilder.mergeFrom(getImportMetadata());
+              }
+              input.readMessage(subBuilder, extensionRegistry);
+              setImportMetadata(subBuilder.buildPartial());
+              break;
+            }
+          }
+        }
+      }
+      
+      
+      // optional .proto.ImportMetadata import_metadata = 1;
+      public boolean hasImportMetadata() {
+        return result.hasImportMetadata();
+      }
+      public com.google.walkaround.proto.Walkaround.ImportMetadata getImportMetadata() {
+        return result.getImportMetadata();
+      }
+      public Builder setImportMetadata(com.google.walkaround.proto.Walkaround.ImportMetadata value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        result.hasImportMetadata = true;
+        result.importMetadata_ = value;
+        return this;
+      }
+      public Builder setImportMetadata(com.google.walkaround.proto.Walkaround.ImportMetadata.Builder builderForValue) {
+        result.hasImportMetadata = true;
+        result.importMetadata_ = builderForValue.build();
+        return this;
+      }
+      public Builder mergeImportMetadata(com.google.walkaround.proto.Walkaround.ImportMetadata value) {
+        if (result.hasImportMetadata() &&
+            result.importMetadata_ != com.google.walkaround.proto.Walkaround.ImportMetadata.getDefaultInstance()) {
+          result.importMetadata_ =
+            com.google.walkaround.proto.Walkaround.ImportMetadata.newBuilder(result.importMetadata_).mergeFrom(value).buildPartial();
+        } else {
+          result.importMetadata_ = value;
+        }
+        result.hasImportMetadata = true;
+        return this;
+      }
+      public Builder clearImportMetadata() {
+        result.hasImportMetadata = false;
+        result.importMetadata_ = com.google.walkaround.proto.Walkaround.ImportMetadata.getDefaultInstance();
+        return this;
+      }
+      
+      // @@protoc_insertion_point(builder_scope:proto.ConvMetadata)
+    }
+    
+    static {
+      defaultInstance = new ConvMetadata(true);
+      com.google.walkaround.proto.Walkaround.internalForceInit();
+      defaultInstance.initFields();
+    }
+    
+    // @@protoc_insertion_point(class_scope:proto.ConvMetadata)
   }
   
   public static final class ObjectSessionProto extends
@@ -6806,15 +7615,25 @@ public final class Walkaround {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_proto_Delta_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_proto_UdwMetadata_descriptor;
+    internal_static_proto_ObsoleteUdwMetadata_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_proto_UdwMetadata_fieldAccessorTable;
+      internal_static_proto_ObsoleteUdwMetadata_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_proto_WaveletMetadata_descriptor;
+    internal_static_proto_ObsoleteWaveletMetadata_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_proto_WaveletMetadata_fieldAccessorTable;
+      internal_static_proto_ObsoleteWaveletMetadata_fieldAccessorTable;
+  private static com.google.protobuf.Descriptors.Descriptor
+    internal_static_proto_ImportMetadata_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_proto_ImportMetadata_fieldAccessorTable;
+  private static com.google.protobuf.Descriptors.Descriptor
+    internal_static_proto_ConvMetadata_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_proto_ConvMetadata_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
     internal_static_proto_ObjectSessionProto_descriptor;
   private static
@@ -6893,45 +7712,52 @@ public final class Walkaround {
       "t\030\006 \002(\0132%.federation.ProtocolDocumentOpe" +
       "ration\"j\n\005Delta\022\016\n\006author\030\001 \002(\t\022\030\n\020times" +
       "tamp_millis\030\002 \002(\003\0227\n\toperation\030\003 \002(\0132$.f" +
-      "ederation.ProtocolWaveletOperation\"8\n\013Ud",
-      "wMetadata\022\032\n\022associated_conv_id\030\002 \002(\t\022\r\n" +
-      "\005owner\030\004 \002(\t\"\201\001\n\017WaveletMetadata\022)\n\004type" +
-      "\030\001 \002(\0162\033.proto.WaveletMetadata.Type\022(\n\014u" +
-      "dw_metadata\030\002 \001(\0132\022.proto.UdwMetadata\"\031\n" +
-      "\004Type\022\010\n\004CONV\020\000\022\007\n\003UDW\020\001\"N\n\022ObjectSessio" +
-      "nProto\022\021\n\tobject_id\030\001 \002(\t\022\021\n\tclient_id\030\002" +
-      " \002(\t\022\022\n\nstore_type\030\003 \002(\t\"T\n\023SignedObject" +
-      "Session\022*\n\007session\030\001 \002(\0132\031.proto.ObjectS" +
-      "essionProto\022\021\n\tsignature\030\002 \002(\t\"\223\001\n\017Conne" +
-      "ctResponse\0222\n\016signed_session\030\001 \002(\0132\032.pro",
-      "to.SignedObjectSession\022\035\n\025signed_session" +
-      "_string\030c \002(\t\022\025\n\rchannel_token\030\002 \001(\t\022\026\n\016" +
-      "object_version\030\003 \002(\003\"\367\005\n\nClientVars\022:\n\020l" +
-      "ive_client_vars\030\001 \001(\0132 .proto.ClientVars" +
-      ".LiveClientVars\022/\n\nerror_vars\030\002 \001(\0132\033.pr" +
-      "oto.ClientVars.ErrorVars\022>\n\022static_clien" +
-      "t_vars\030\003 \001(\0132\".proto.ClientVars.StaticCl" +
-      "ientVars\032s\n\013UdwLoadData\0220\n\020connect_respo" +
-      "nse\030\001 \002(\0132\026.proto.ConnectResponse\0222\n\010sna" +
-      "pshot\030\002 \002(\0132 .proto.WalkaroundWaveletSna",
-      "pshot\032\200\002\n\016LiveClientVars\022\026\n\016client_versi" +
-      "on\030\001 \002(\005\022\023\n\013random_seed\030\002 \002(\005\022\022\n\nuser_em" +
-      "ail\030\003 \002(\t\022\030\n\020have_oauth_token\030\004 \002(\010\0225\n\025c" +
-      "onv_connect_response\030\n \002(\0132\026.proto.Conne" +
-      "ctResponse\0220\n\rconv_snapshot\030\013 \002(\0132\031.diff" +
-      ".WaveletDiffSnapshot\022*\n\003udw\030\024 \001(\0132\035.prot" +
-      "o.ClientVars.UdwLoadData\032\237\001\n\020StaticClien" +
-      "tVars\022\023\n\013random_seed\030\002 \002(\005\022\022\n\nuser_email" +
-      "\030\003 \002(\t\022\030\n\020have_oauth_token\030\004 \002(\010\022\026\n\016conv" +
-      "_object_id\030\n \002(\t\0220\n\rconv_snapshot\030\013 \002(\0132",
-      "\031.diff.WaveletDiffSnapshot\032\"\n\tErrorVars\022" +
-      "\025\n\rerror_message\030\001 \002(\t\"c\n\023ServerMutateRe" +
-      "quest\022*\n\007session\030\001 \002(\0132\031.proto.ObjectSes" +
-      "sionProto\022\017\n\007version\030\002 \002(\003\022\017\n\007payload\030\003 " +
-      "\003(\t\"]\n\024ServerMutateResponse\022\031\n\021resulting" +
-      "_version\030\001 \002(\003\022\026\n\016broadcast_data\030\002 \002(\t\022\022" +
-      "\n\nindex_data\030\003 \002(\tB)\n\033com.google.walkaro" +
-      "und.protoB\nWalkaround"
+      "ederation.ProtocolWaveletOperation\"@\n\023Ob",
+      "soleteUdwMetadata\022\032\n\022associated_conv_id\030" +
+      "\002 \002(\t\022\r\n\005owner\030\004 \002(\t\"\231\001\n\027ObsoleteWavelet" +
+      "Metadata\0221\n\004type\030\001 \002(\0162#.proto.ObsoleteW" +
+      "aveletMetadata.Type\0220\n\014udw_metadata\030\002 \001(" +
+      "\0132\032.proto.ObsoleteUdwMetadata\"\031\n\004Type\022\010\n" +
+      "\004CONV\020\000\022\007\n\003UDW\020\001\"\262\001\n\016ImportMetadata\022\027\n\017s" +
+      "ource_instance\030\001 \002(\t\022\026\n\016remote_wave_id\030\002" +
+      " \002(\t\022\031\n\021remote_wavelet_id\030\003 \002(\t\022\031\n\021origi" +
+      "nal_importer\030\004 \002(\t\022 \n\030import_begin_time_" +
+      "millis\030\005 \002(\003\022\027\n\017import_finished\030\006 \002(\010\">\n",
+      "\014ConvMetadata\022.\n\017import_metadata\030\001 \001(\0132\025" +
+      ".proto.ImportMetadata\"N\n\022ObjectSessionPr" +
+      "oto\022\021\n\tobject_id\030\001 \002(\t\022\021\n\tclient_id\030\002 \002(" +
+      "\t\022\022\n\nstore_type\030\003 \002(\t\"T\n\023SignedObjectSes" +
+      "sion\022*\n\007session\030\001 \002(\0132\031.proto.ObjectSess" +
+      "ionProto\022\021\n\tsignature\030\002 \002(\t\"\223\001\n\017ConnectR" +
+      "esponse\0222\n\016signed_session\030\001 \002(\0132\032.proto." +
+      "SignedObjectSession\022\035\n\025signed_session_st" +
+      "ring\030c \002(\t\022\025\n\rchannel_token\030\002 \001(\t\022\026\n\016obj" +
+      "ect_version\030\003 \002(\003\"\367\005\n\nClientVars\022:\n\020live",
+      "_client_vars\030\001 \001(\0132 .proto.ClientVars.Li" +
+      "veClientVars\022/\n\nerror_vars\030\002 \001(\0132\033.proto" +
+      ".ClientVars.ErrorVars\022>\n\022static_client_v" +
+      "ars\030\003 \001(\0132\".proto.ClientVars.StaticClien" +
+      "tVars\032s\n\013UdwLoadData\0220\n\020connect_response" +
+      "\030\001 \002(\0132\026.proto.ConnectResponse\0222\n\010snapsh" +
+      "ot\030\002 \002(\0132 .proto.WalkaroundWaveletSnapsh" +
+      "ot\032\200\002\n\016LiveClientVars\022\026\n\016client_version\030" +
+      "\001 \002(\005\022\023\n\013random_seed\030\002 \002(\005\022\022\n\nuser_email" +
+      "\030\003 \002(\t\022\030\n\020have_oauth_token\030\004 \002(\010\0225\n\025conv",
+      "_connect_response\030\n \002(\0132\026.proto.ConnectR" +
+      "esponse\0220\n\rconv_snapshot\030\013 \002(\0132\031.diff.Wa" +
+      "veletDiffSnapshot\022*\n\003udw\030\024 \001(\0132\035.proto.C" +
+      "lientVars.UdwLoadData\032\237\001\n\020StaticClientVa" +
+      "rs\022\023\n\013random_seed\030\002 \002(\005\022\022\n\nuser_email\030\003 " +
+      "\002(\t\022\030\n\020have_oauth_token\030\004 \002(\010\022\026\n\016conv_ob" +
+      "ject_id\030\n \002(\t\0220\n\rconv_snapshot\030\013 \002(\0132\031.d" +
+      "iff.WaveletDiffSnapshot\032\"\n\tErrorVars\022\025\n\r" +
+      "error_message\030\001 \002(\t\"c\n\023ServerMutateReque" +
+      "st\022*\n\007session\030\001 \002(\0132\031.proto.ObjectSessio",
+      "nProto\022\017\n\007version\030\002 \002(\003\022\017\n\007payload\030\003 \003(\t" +
+      "\"]\n\024ServerMutateResponse\022\031\n\021resulting_ve" +
+      "rsion\030\001 \002(\003\022\026\n\016broadcast_data\030\002 \002(\t\022\022\n\ni" +
+      "ndex_data\030\003 \002(\tB)\n\033com.google.walkaround" +
+      ".protoB\nWalkaround"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -6970,24 +7796,40 @@ public final class Walkaround {
               new java.lang.String[] { "Author", "TimestampMillis", "Operation", },
               com.google.walkaround.proto.Walkaround.Delta.class,
               com.google.walkaround.proto.Walkaround.Delta.Builder.class);
-          internal_static_proto_UdwMetadata_descriptor =
+          internal_static_proto_ObsoleteUdwMetadata_descriptor =
             getDescriptor().getMessageTypes().get(4);
-          internal_static_proto_UdwMetadata_fieldAccessorTable = new
+          internal_static_proto_ObsoleteUdwMetadata_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_proto_UdwMetadata_descriptor,
+              internal_static_proto_ObsoleteUdwMetadata_descriptor,
               new java.lang.String[] { "AssociatedConvId", "Owner", },
-              com.google.walkaround.proto.Walkaround.UdwMetadata.class,
-              com.google.walkaround.proto.Walkaround.UdwMetadata.Builder.class);
-          internal_static_proto_WaveletMetadata_descriptor =
+              com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata.class,
+              com.google.walkaround.proto.Walkaround.ObsoleteUdwMetadata.Builder.class);
+          internal_static_proto_ObsoleteWaveletMetadata_descriptor =
             getDescriptor().getMessageTypes().get(5);
-          internal_static_proto_WaveletMetadata_fieldAccessorTable = new
+          internal_static_proto_ObsoleteWaveletMetadata_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_proto_WaveletMetadata_descriptor,
+              internal_static_proto_ObsoleteWaveletMetadata_descriptor,
               new java.lang.String[] { "Type", "UdwMetadata", },
-              com.google.walkaround.proto.Walkaround.WaveletMetadata.class,
-              com.google.walkaround.proto.Walkaround.WaveletMetadata.Builder.class);
-          internal_static_proto_ObjectSessionProto_descriptor =
+              com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata.class,
+              com.google.walkaround.proto.Walkaround.ObsoleteWaveletMetadata.Builder.class);
+          internal_static_proto_ImportMetadata_descriptor =
             getDescriptor().getMessageTypes().get(6);
+          internal_static_proto_ImportMetadata_fieldAccessorTable = new
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+              internal_static_proto_ImportMetadata_descriptor,
+              new java.lang.String[] { "SourceInstance", "RemoteWaveId", "RemoteWaveletId", "OriginalImporter", "ImportBeginTimeMillis", "ImportFinished", },
+              com.google.walkaround.proto.Walkaround.ImportMetadata.class,
+              com.google.walkaround.proto.Walkaround.ImportMetadata.Builder.class);
+          internal_static_proto_ConvMetadata_descriptor =
+            getDescriptor().getMessageTypes().get(7);
+          internal_static_proto_ConvMetadata_fieldAccessorTable = new
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+              internal_static_proto_ConvMetadata_descriptor,
+              new java.lang.String[] { "ImportMetadata", },
+              com.google.walkaround.proto.Walkaround.ConvMetadata.class,
+              com.google.walkaround.proto.Walkaround.ConvMetadata.Builder.class);
+          internal_static_proto_ObjectSessionProto_descriptor =
+            getDescriptor().getMessageTypes().get(8);
           internal_static_proto_ObjectSessionProto_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_proto_ObjectSessionProto_descriptor,
@@ -6995,7 +7837,7 @@ public final class Walkaround {
               com.google.walkaround.proto.Walkaround.ObjectSessionProto.class,
               com.google.walkaround.proto.Walkaround.ObjectSessionProto.Builder.class);
           internal_static_proto_SignedObjectSession_descriptor =
-            getDescriptor().getMessageTypes().get(7);
+            getDescriptor().getMessageTypes().get(9);
           internal_static_proto_SignedObjectSession_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_proto_SignedObjectSession_descriptor,
@@ -7003,7 +7845,7 @@ public final class Walkaround {
               com.google.walkaround.proto.Walkaround.SignedObjectSession.class,
               com.google.walkaround.proto.Walkaround.SignedObjectSession.Builder.class);
           internal_static_proto_ConnectResponse_descriptor =
-            getDescriptor().getMessageTypes().get(8);
+            getDescriptor().getMessageTypes().get(10);
           internal_static_proto_ConnectResponse_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_proto_ConnectResponse_descriptor,
@@ -7011,7 +7853,7 @@ public final class Walkaround {
               com.google.walkaround.proto.Walkaround.ConnectResponse.class,
               com.google.walkaround.proto.Walkaround.ConnectResponse.Builder.class);
           internal_static_proto_ClientVars_descriptor =
-            getDescriptor().getMessageTypes().get(9);
+            getDescriptor().getMessageTypes().get(11);
           internal_static_proto_ClientVars_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_proto_ClientVars_descriptor,
@@ -7051,7 +7893,7 @@ public final class Walkaround {
               com.google.walkaround.proto.Walkaround.ClientVars.ErrorVars.class,
               com.google.walkaround.proto.Walkaround.ClientVars.ErrorVars.Builder.class);
           internal_static_proto_ServerMutateRequest_descriptor =
-            getDescriptor().getMessageTypes().get(10);
+            getDescriptor().getMessageTypes().get(12);
           internal_static_proto_ServerMutateRequest_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_proto_ServerMutateRequest_descriptor,
@@ -7059,7 +7901,7 @@ public final class Walkaround {
               com.google.walkaround.proto.Walkaround.ServerMutateRequest.class,
               com.google.walkaround.proto.Walkaround.ServerMutateRequest.Builder.class);
           internal_static_proto_ServerMutateResponse_descriptor =
-            getDescriptor().getMessageTypes().get(11);
+            getDescriptor().getMessageTypes().get(13);
           internal_static_proto_ServerMutateResponse_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_proto_ServerMutateResponse_descriptor,

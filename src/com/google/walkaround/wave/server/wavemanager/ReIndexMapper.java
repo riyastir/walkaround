@@ -20,8 +20,8 @@ import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.tools.mapreduce.AppEngineMapper;
 import com.google.inject.Inject;
-import com.google.walkaround.proto.WaveletMetadata;
-import com.google.walkaround.proto.gson.WaveletMetadataGsonImpl;
+import com.google.walkaround.proto.ObsoleteWaveletMetadata;
+import com.google.walkaround.proto.gson.ObsoleteWaveletMetadataGsonImpl;
 import com.google.walkaround.slob.server.GsonProto;
 import com.google.walkaround.slob.server.MutationLog;
 import com.google.walkaround.slob.server.SlobFacilities;
@@ -66,11 +66,10 @@ public class ReIndexMapper extends AppEngineMapper<Key, Entity, NullWritable, Nu
               SlobId objectId = facilities.parseRootEntityKey(key);
               MutationLog mutationLog = facilities.getMutationLogFactory().create(tx, objectId);
               try {
-                WaveletMetadata metadata = GsonProto.fromGson(
-                    new WaveletMetadataGsonImpl(), mutationLog.getMetadata());
-                if (metadata.getType() == WaveletMetadata.Type.UDW) {
-                  log.info("Skipping UDW " + objectId);
-                  return;
+                ObsoleteWaveletMetadata metadata = GsonProto.fromGson(
+                    new ObsoleteWaveletMetadataGsonImpl(), mutationLog.getMetadata());
+                if (metadata.getType() != ObsoleteWaveletMetadata.Type.CONV) {
+                  throw new RuntimeException(objectId + ": Not CONV: " + metadata);
                 }
               } catch (MessageException e) {
                 throw new RuntimeException("Failed to parse metadata for " + objectId, e);

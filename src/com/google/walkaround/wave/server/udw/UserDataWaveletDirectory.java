@@ -169,7 +169,7 @@ public class UserDataWaveletDirectory {
   @Nullable public SlobId getUdwId(SlobId convObjectId, StableUserId userId) throws IOException {
     Preconditions.checkNotNull(convObjectId, "Null convObjectId");
     Preconditions.checkNotNull(userId, "Null userId");
-    Entry e = directory.get(new Key(convObjectId, userId));
+    Entry e = directory.getWithoutTx(new Key(convObjectId, userId));
     return e == null ? null : e.getUdwId();
   }
 

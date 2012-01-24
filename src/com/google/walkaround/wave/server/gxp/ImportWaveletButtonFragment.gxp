@@ -27,22 +27,56 @@
   <gxp:import class='com.google.walkaround.wave.server.gxp.ImportWaveletDisplayRecord'/>
   <gxp:import class='org.waveprotocol.wave.model.id.WaveletName'/>
 
-  <gxp:param name='label' type='String'/>
   <gxp:param name='token' type='String'/>
   <gxp:param name='record' type='ImportWaveletDisplayRecord'/>
-  <gxp:param name='sharingMode' type='String'/>
+  <gxp:param name='isPrivate' type='Boolean'/>
 
-  <form method='post' action='import'>
-    <input type='hidden' name='action' value='importwavelet'/>
-    <input type='hidden' name='instance'
-           expr:value='record.getInstance().serialize()'/>
-    <input type='hidden' name='waveid'
-           expr:value='record.getWaveletName().waveId.serialise()'/>
-    <input type='hidden' name='waveletid'
-           expr:value='record.getWaveletName().waveletId.serialise()'/>
-    <input type='hidden' name='sharingmode' expr:value='sharingMode'/>
-    <input type='hidden' name='token' expr:value='token'/>
-    <input type='submit' expr:value='label'/>
-  </form>
+  <gxp:if cond='(isPrivate &amp;&amp; record.isPrivateImportInProgress())
+          || (!isPrivate &amp;&amp; record.isSharedImportInProgress())'>
+    <gxp:msg>importing</gxp:msg>
+    <gxp:else/>
+    <gxp:if cond='isPrivate'>
+      <gxp:if cond='record.getPrivateImportedLink() != null'>
+        <a expr:href='record.getPrivateImportedLink()' target='_blank'>
+          <gxp:msg>imported</gxp:msg>
+        </a>
+      </gxp:if>
+      <gxp:else/>
+      <gxp:if cond='record.getSharedImportedLink() != null'>
+        <a expr:href='record.getSharedImportedLink()' target='_blank'>
+          <gxp:msg>imported</gxp:msg>
+        </a>
+      </gxp:if>
+    </gxp:if>
+    <form method='post' action='import'>
+      <input type='hidden' name='action' value='importwavelet'/>
+      <input type='hidden' name='token' expr:value='token'/>
+      <input type='hidden' name='instance'
+             expr:value='record.getInstance().serialize()'/>
+      <input type='hidden' name='waveid'
+             expr:value='record.getWaveletName().waveId.serialise()'/>
+      <input type='hidden' name='waveletid'
+             expr:value='record.getWaveletName().waveletId.serialise()'/>
+      <gxp:if cond='isPrivate'>
+        <input type='hidden' name='sharingmode' value='private'/>
+        <gxp:if cond='record.getPrivateImportedSlobId() == null'>
+          <input type='submit' value='private import'/>
+          <gxp:else/>
+          <input type='hidden' name='ignoreexisting'
+                 expr:value='record.getPrivateImportedSlobId()'/>
+          <input type='submit' value='import again'/>
+        </gxp:if>
+        <gxp:else/>
+        <input type='hidden' name='sharingmode' value='shared'/>
+        <gxp:if cond='record.getSharedImportedSlobId() == null'>
+          <input type='submit' value='shared import'/>
+          <gxp:else/>
+          <input type='hidden' name='ignoreexisting'
+                 expr:value='record.getSharedImportedSlobId()'/>
+          <input type='submit' value='import again'/>
+        </gxp:if>
+      </gxp:if>
+    </form>
+  </gxp:if>
 
 </gxp:template>

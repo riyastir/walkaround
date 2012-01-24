@@ -183,6 +183,11 @@ public class MutationLogTest extends TestCase {
         public void close() {
           throw new AssertionError("Not implemented");
         }
+
+        @Override
+        public void runAfterCommit(Runnable r) {
+          throw new AssertionError("Not implemented");
+        }
       };
 
     SlobId objectId = new SlobId(OBJECT_ID);

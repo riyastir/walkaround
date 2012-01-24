@@ -29,7 +29,6 @@ import com.google.walkaround.util.server.appengine.MemcacheTable;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.List;
 import java.util.logging.Logger;
 
 import javax.annotation.Nullable;
@@ -46,9 +45,8 @@ import javax.annotation.Nullable;
  * @author ohler@google.com (Christian Ohler)
  */
 // Like WaveletMapping, this class is rather degenerate right now: The directory
-// is nothing but a set of ObjectIds, and the memcache is rather pointless.
-// However, once we add the mapping of legacy WaveletName to SlobId, we'll
-// have a bit more logic in here again.
+// is nothing but a set of SlobIds, and all the memcache does is avoid datastore
+// lookups for wavelets that we know don't exist.
 public class WaveletDirectory {
 
   @SuppressWarnings("unused")
@@ -155,7 +153,7 @@ public class WaveletDirectory {
     if (cached != null) {
       return cached.getCached();
     }
-    WaveletMapping result = directory.get(objectId);
+    WaveletMapping result = directory.getWithoutTx(objectId);
     if (result != null) {
       cache.put(objectId, new CacheEntry(result));
       return result;
@@ -191,10 +189,6 @@ public class WaveletDirectory {
           + " (cached = " + cached + ")");
     }
     cache.put(newMapping.getObjectId(), new CacheEntry(newMapping));
-  }
-
-  public List<WaveletMapping> hackReadAllMappings() {
-    return directory.hackReadAllEntries();
   }
 
 }

@@ -61,6 +61,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
 
+import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -117,10 +118,12 @@ public class ImportOverviewHandler extends AbstractHandler {
               "" + new LocalDate(new Instant(wavelet.getDigest().getLastModifiedMillis())),
               importsInProgress.containsEntry(Pair.of(wavelet.getSourceInstance(), waveletName),
                   ImportSharingMode.PRIVATE),
+              wavelet.getPrivateLocalId() == null ? null : wavelet.getPrivateLocalId().getId(),
               wavelet.getPrivateLocalId() == null ? null
                   : makeLocalWaveLink(wavelet.getPrivateLocalId()),
               importsInProgress.containsEntry(Pair.of(wavelet.getSourceInstance(), waveletName),
                   ImportSharingMode.SHARED),
+              wavelet.getSharedLocalId() == null ? null : wavelet.getSharedLocalId().getId(),
               wavelet.getSharedLocalId() == null ? null
                   : makeLocalWaveLink(wavelet.getSharedLocalId())));
     }
@@ -231,6 +234,10 @@ public class ImportOverviewHandler extends AbstractHandler {
         task.setSharingMode(ImportWaveletTask.ImportSharingMode.SHARED);
       } else {
         throw new BadRequestException("Unexpected import sharing mode");
+      }
+      @Nullable String existingSlobIdToIgnore = optionalParameter(req, "ignoreexisting", null);
+      if (existingSlobIdToIgnore != null) {
+        task.setExistingSlobIdToIgnore(existingSlobIdToIgnore);
       }
       final ImportTaskPayload payload = new ImportTaskPayloadGsonImpl();
       payload.setImportWaveletTask(task);

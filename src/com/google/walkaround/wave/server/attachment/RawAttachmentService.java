@@ -98,7 +98,7 @@ public class RawAttachmentService {
           }
         } else {
           // TODO(danilatos): Thumbnails for non-images
-          log.warning("Unimplemented: Thumbnails for non-images");
+          log.info("Unimplemented: Thumbnails for non-images");
         }
         return new AttachmentMetadata(id, blobKey, data);
       }
@@ -112,7 +112,7 @@ public class RawAttachmentService {
     AttachmentId newId = new AttachmentId(random64.next(
         // 115 * 6 random bits; should be unguessable.  (6 bits per random64 char.)
         115));
-    Assert.check(metadataDirectory.get(newId) == null,
+    Assert.check(metadataDirectory.getWithoutTx(newId) == null,
         "Random attachment id already taken: %s", newId);
     log.info("Computing metadata for " + newId + " (" + blobKey + ")");
     AttachmentMetadata metadata = computeMetadata(newId, blobKey);

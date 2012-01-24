@@ -22,6 +22,9 @@ import com.google.walkaround.proto.ServerMutateRequest;
 import com.google.walkaround.slob.shared.ChangeData;
 import com.google.walkaround.slob.shared.ClientId;
 import com.google.walkaround.slob.shared.SlobId;
+import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
+import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
+import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTransaction;
 
 import org.waveprotocol.wave.model.util.Pair;
 
@@ -79,8 +82,10 @@ public interface SlobStore {
   /**
    * Creates a new object.
    */
-  void newObject(SlobId slobId, String metadata, List<ChangeData<String>> initialHistory)
-      throws SlobAlreadyExistsException, IOException, AccessDeniedException;
+  void newObject(CheckedTransaction tx, SlobId slobId, String metadata,
+      List<ChangeData<String>> initialHistory, boolean inhibitPostCommit)
+      throws SlobAlreadyExistsException, AccessDeniedException,
+      RetryableFailure, PermanentFailure;
 
   /** Result of a history fetch. */
   final class HistoryResult {

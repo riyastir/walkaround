@@ -327,7 +327,21 @@ public class LocalMutationProcessor {
         tx.rollback();
         return;
       }
-      completeTransaction(tx, objectId, appender);
+      appender.finish();
+      runPreCommit(tx, objectId, appender);
+      schedulePostCommit(tx, objectId, appender);
+      log.info("Committing...");
+      try {
+        tx.commit();
+      } catch (RetryableFailure e) {
+        log.log(Level.INFO, "RetryableFailure while committing mutation", e);
+        monitoring.incrementCounter("object-update-transaction-retryable-failure");
+        throw e;
+      } catch (PermanentFailure e) {
+        log.log(Level.INFO, "PermanentFailure while committing mutation", e);
+        monitoring.incrementCounter("object-update-transaction-permanent-failure");
+        throw e;
+      }
       if (lastResult != null) {
         List<ChangeData<String>> deltasToBroadcast = deltaCache.getNewDeltas();
         JSONArray messages = new JSONArray();
@@ -339,7 +353,6 @@ public class LocalMutationProcessor {
             throw new RuntimeException(e);
           }
         }
-
         lastResult.broadcastData = messages;
         lastResult.indexData = appender.getIndexedHtml();
       }
@@ -351,33 +364,18 @@ public class LocalMutationProcessor {
     }
   }
 
-  void completeTransaction(CheckedTransaction tx, SlobId slobId,
-      MutationLog.Appender appender) throws PermanentFailure, RetryableFailure {
-    appender.flush();
-    // TODO: share code with SlobStoreImpl.newObject().
+  public void runPreCommit(CheckedTransaction tx, SlobId slobId, MutationLog.Appender appender)
+      throws PermanentFailure, RetryableFailure {
     for (PreCommitAction action : preCommitActions) {
       log.info("Calling pre-commit action " + action);
       action.run(tx, slobId, appender.getStagedVersion(), appender.getStagedState());
     }
-    Runnable postCommitRunnable =
-        postCommitActionScheduler.prepareCommitAndGetPostCommitRunnable(
+  }
+
+  public void schedulePostCommit(CheckedTransaction tx, SlobId slobId,
+      MutationLog.Appender appender) throws PermanentFailure, RetryableFailure {
+    postCommitActionScheduler.prepareCommit(
         tx, slobId, appender.getStagedVersion(), appender.getStagedState());
-    log.info("Committing...");
-    try {
-      tx.commit();
-    } catch (RetryableFailure e) {
-      log.log(Level.INFO, "RetryableFailure while committing mutation", e);
-      monitoring.incrementCounter("object-update-transaction-retryable-failure");
-      throw e;
-    } catch (PermanentFailure e) {
-      log.log(Level.INFO, "PermanentFailure while committing mutation", e);
-      monitoring.incrementCounter("object-update-transaction-permanent-failure");
-      throw e;
-    }
-    log.info("Commit successful");
-    // TODO: share code with SlobStoreImpl.newObject().
-    appender.postCommit();
-    postCommitRunnable.run();
   }
 
   private final SlobModel model;

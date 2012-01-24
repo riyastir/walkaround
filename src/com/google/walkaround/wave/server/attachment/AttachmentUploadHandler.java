@@ -35,8 +35,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * Handles attachment uploads, then redirects to
- * {@link AttachmentUploadResultHandler}
+ * Handles attachment uploads.
  *
  * @author danilatos@google.com (Daniel Danilatos)
  */

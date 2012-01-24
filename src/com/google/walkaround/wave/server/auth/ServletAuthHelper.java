@@ -184,7 +184,10 @@ public class ServletAuthHelper {
       body.run();
       writeBackContextMaybe(record);
     } catch (NeedNewOAuthTokenException e) {
-      log.log(Level.INFO, "Need new token", e);
+      // We don't log the stack trace since the situation is expected most of
+      // the time, and we don't want to draw attention to it in the logs (like a
+      // stack trace would).
+      log.info("Need new token: " + e);
       if (record != null) {
         // Delete the token so that the next page load will prompt to re-enable.
         // TODO(ohler): Change the client to be able to prompt for a new token

@@ -138,8 +138,26 @@ public class PostCommitActionScheduler {
     this.datastore = datastore;
   }
 
-  /** Returns a Runnable that must be called after the commit. */
-  public Runnable prepareCommitAndGetPostCommitRunnable(CheckedTransaction tx, final SlobId slobId,
+  private void scheduleTask(CheckedTransaction tx, final SlobId slobId, long taskEtaMillis)
+      throws PermanentFailure, RetryableFailure {
+    tx.enqueueTask(postCommitActionQueue,
+        TaskOptions.Builder.withUrl(taskUrl)
+        .param(PostCommitTaskHandler.STORE_TYPE_PARAM, rootEntityKind)
+        .param(PostCommitTaskHandler.SLOB_ID_PARAM, slobId.getId())
+        .etaMillis(taskEtaMillis));
+  }
+
+  /** Prefer {@link #prepareCommit} if you can. */
+  public void unconditionallyScheduleTask(CheckedTransaction tx, final SlobId slobId)
+      throws PermanentFailure, RetryableFailure {
+    // Can't short-circuit if actions.isEmpty() because we always have internalPostCommit.
+    long timeNowMillis = System.currentTimeMillis();
+    log.info("Scheduling post-commit actions on " + slobId
+        + " (" + rootEntityKind + "); time now=" + timeNowMillis);
+    scheduleTask(tx, slobId, timeNowMillis);
+  }
+
+  public void prepareCommit(CheckedTransaction tx, final SlobId slobId,
       final long resultingVersion, final ReadableSlob resultingState)
       throws PermanentFailure, RetryableFailure {
     // Can't short-circuit if actions.isEmpty() because we always have internalPostCommit.
@@ -162,26 +180,22 @@ public class PostCommitActionScheduler {
           + " (" + rootEntityKind + "); time now=" + timeNowMillis
           + ", cache entry expiration=" + cacheEntryExpirationMillis
           + ", task eta=" + taskEtaMillis);
-      tx.enqueueTask(postCommitActionQueue,
-          TaskOptions.Builder.withUrl(taskUrl)
-          .param(PostCommitTaskHandler.STORE_TYPE_PARAM, rootEntityKind)
-          .param(PostCommitTaskHandler.SLOB_ID_PARAM, slobId.getId())
-          .etaMillis(taskEtaMillis));
+      scheduleTask(tx, slobId, taskEtaMillis);
     }
     @Nullable final Long cacheEntryExpirationMillisFinal = cacheEntryExpirationMillis;
-    return new Runnable() {
-      @Override public void run() {
-        if (cacheEntryExpirationMillisFinal != null) {
-          postCommitActionPending.put(slobId, true,
-              Expiration.onDate(new Date(cacheEntryExpirationMillisFinal)));
+    tx.runAfterCommit(new Runnable() {
+        @Override public void run() {
+          if (cacheEntryExpirationMillisFinal != null) {
+            postCommitActionPending.put(slobId, true,
+                Expiration.onDate(new Date(cacheEntryExpirationMillisFinal)));
+          }
+          for (PostCommitAction action : getActions()) {
+            log.info("Running immediate post-commit action " + action
+                + " on " + slobId + " (" + rootEntityKind + ")");
+            action.unreliableImmediatePostCommit(slobId, resultingVersion, resultingState);
+          }
         }
-        for (PostCommitAction action : getActions()) {
-          log.info("Running immediate post-commit action " + action
-              + " on " + slobId + " (" + rootEntityKind + ")");
-          action.unreliableImmediatePostCommit(slobId, resultingVersion, resultingState);
-        }
-      }
-    };
+      });
   }
 
   private Iterable<PostCommitAction> getActions() {

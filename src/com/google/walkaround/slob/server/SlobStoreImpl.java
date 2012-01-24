@@ -32,7 +32,6 @@ import com.google.walkaround.slob.shared.ClientId;
 import com.google.walkaround.slob.shared.SlobId;
 import com.google.walkaround.slob.shared.SlobModel.ReadableSlob;
 import com.google.walkaround.slob.shared.StateAndVersion;
-import com.google.walkaround.util.server.RetryHelper;
 import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
 import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
 import com.google.walkaround.util.server.appengine.CheckedDatastore;
@@ -274,53 +273,41 @@ public class SlobStoreImpl implements SlobStore {
   }
 
   @Override
-  public void newObject(final SlobId slobId, final String metadata,
-      final List<ChangeData<String>> initialHistory)
-      throws SlobAlreadyExistsException, IOException, AccessDeniedException {
+  public void newObject(CheckedTransaction tx,
+      SlobId slobId, String metadata, List<ChangeData<String>> initialHistory,
+      boolean inhibitPostCommit)
+      throws SlobAlreadyExistsException, AccessDeniedException, RetryableFailure, PermanentFailure {
+    Preconditions.checkNotNull(tx, "Null tx");
     Preconditions.checkNotNull(slobId, "Null slobId");
     Preconditions.checkNotNull(metadata, "Null metadata");
     Preconditions.checkNotNull(initialHistory, "Null initialHistory");
     accessChecker.checkCanCreate(slobId);
+    MutationLog l = mutationLogFactory.create(tx, slobId);
+    String existingMetadata = l.getMetadata();
+    if (existingMetadata != null) {
+      log.info("Slob " + slobId + " already exists: found metadata: " + existingMetadata);
+      throw new SlobAlreadyExistsException(slobId + " already exists");
+    }
+    // Check for the existence of deltas as well because legacy conv
+    // wavelets have no metadata entity.
+    long version = l.getVersion();
+    if (version != 0) {
+      log.info("Slob " + slobId + " already exists at version " + version);
+      throw new SlobAlreadyExistsException(slobId + " already exists (found deltas)");
+    }
+
+    MutationLog.Appender appender = l.prepareAppender().getAppender();
     try {
-      boolean alreadyExists = new RetryHelper().run(new RetryHelper.Body<Boolean>() {
-        @Override public Boolean run() throws RetryableFailure, PermanentFailure {
-          CheckedTransaction tx = datastore.beginTransaction();
-          try {
-            MutationLog l = mutationLogFactory.create(tx, slobId);
-
-            String existingMetadata = l.getMetadata();
-            if (existingMetadata != null) {
-              log.info("Slob " + slobId + " already exists: found metadata: "
-                  + existingMetadata);
-              return true;
-            }
-            // Check for the existence of deltas as well because legacy conv
-            // wavelets have no metadata entity.
-            long version = l.getVersion();
-            if (version != 0) {
-              log.info("Slob " + slobId + " already exists at version " + version);
-              return true;
-            }
-
-            MutationLog.Appender appender = l.prepareAppender().getAppender();
-            try {
-              appender.appendAll(initialHistory);
-            } catch (ChangeRejected e) {
-              throw new IllegalArgumentException("Invalid initial " + initialHistory);
-            }
-            l.putMetadata(metadata);
-            localProcessor.completeTransaction(tx, slobId, appender);
-            return false;
-          } finally {
-            tx.close();
-          }
-        }
-      });
-      if (alreadyExists) {
-        throw new SlobAlreadyExistsException(slobId + " already exists");
-      }
-    } catch (PermanentFailure e) {
-      throw new IOException(e);
+      appender.appendAll(initialHistory);
+    } catch (ChangeRejected e) {
+      throw new IllegalArgumentException("Invalid initial history: " + initialHistory);
+    }
+    l.putMetadata(metadata);
+    appender.finish();
+    // TODO(ohler): once we have inbox based on full-text search, inhibit pre-commit as well.
+    localProcessor.runPreCommit(tx, slobId, appender);
+    if (!inhibitPostCommit) {
+      localProcessor.schedulePostCommit(tx, slobId, appender);
     }
   }
 

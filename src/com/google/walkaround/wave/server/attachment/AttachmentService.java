@@ -139,7 +139,7 @@ public class AttachmentService {
     BlobKey key = metadata.getBlobKey();
     // TODO(danilatos): Factor out some of this code into a separate method so that
     // thumbnails can be eagerly created at upload time.
-    ThumbnailData thumbnail = thumbnailDirectory.get(key);
+    ThumbnailData thumbnail = thumbnailDirectory.getWithoutTx(key);
 
     if (thumbnail == null) {
       log.info("Generating and storing thumbnail for " + key);
@@ -206,7 +206,7 @@ public class AttachmentService {
       //      query the __BlobInfo__ entities directly.
       Optional<AttachmentMetadata> metadata = metadataCache.get(id);
       if (metadata == null) {
-        AttachmentMetadata storedMetadata = metadataDirectory.get(id);
+        AttachmentMetadata storedMetadata = metadataDirectory.getWithoutTx(id);
         if (storedMetadata != null) {
           metadata = Optional.of(storedMetadata);
           metadataCache.put(id, metadata);
