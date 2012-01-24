@@ -28,10 +28,10 @@ import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTrans
 
 import org.waveprotocol.wave.model.util.Pair;
 
+import javax.annotation.Nullable;
+
 import java.io.IOException;
 import java.util.List;
-
-import javax.annotation.Nullable;
 
 /**
  * Interactions with the shared live object (slob) store.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Google Inc. All Rights Reserved.
+ * Copyright 2012 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,18 @@
  * limitations under the License.
  */
 
-package com.google.walkaround.slob.server;
+package com.google.walkaround.wave.server.util;
 
+import javax.servlet.http.HttpServletRequest;
 
 /**
- * Result of sending a mutation to an object in the object store.
- *
  * @author danilatos@google.com (Daniel Danilatos)
  */
-public final class MutateResult {
-  private final long resultingVersion;
+public final class RequestUtil {
+  private RequestUtil() {}
 
-  public MutateResult(long resultingVersion) {
-    this.resultingVersion = resultingVersion;
-  }
-
-  public long getResultingVersion() {
-    return resultingVersion;
-  }
-
-  @Override public String toString() {
-    return "MutateResult(" + resultingVersion + ")";
+  public static boolean isMobile(HttpServletRequest req) {
+    String ua = req.getHeader("User-Agent").toLowerCase();
+    return "true".equals(req.getParameter("mobile")) || (ua != null && ua.contains("mobile"));
   }
 }

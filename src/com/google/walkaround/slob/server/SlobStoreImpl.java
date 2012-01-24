@@ -98,7 +98,6 @@ public class SlobStoreImpl implements SlobStore {
   private final SlobMessageRouter messageRouter;
   private final AffinityMutationProcessor defaultProcessor;
   private final AccessChecker accessChecker;
-  private final PostMutateHook postMutateHook;
   private final String rootEntityKind;
   private final Cache cache;
   private final LocalMutationProcessor localProcessor;
@@ -111,7 +110,6 @@ public class SlobStoreImpl implements SlobStore {
       AffinityMutationProcessor defaultProcessor,
       LocalMutationProcessor localProcessor,
       AccessChecker accessChecker,
-      PostMutateHook postMutateHook,
       @SlobRootEntityKind String rootEntityKind,
       Cache cache) {
     this.datastore = datastore;
@@ -120,7 +118,6 @@ public class SlobStoreImpl implements SlobStore {
     this.defaultProcessor = defaultProcessor;
     this.localProcessor = localProcessor;
     this.accessChecker = accessChecker;
-    this.postMutateHook = postMutateHook;
     this.rootEntityKind = rootEntityKind;
     this.cache = cache;
   }
@@ -262,10 +259,7 @@ public class SlobStoreImpl implements SlobStore {
         // sure Walkaround has the same problems, but let's disallow it anyway.
         "Can't create objects with mutateObject()");
     ServerMutateResponse response = defaultProcessor.mutateObject(req);
-    MutateResult result = new MutateResult(response.getResultingVersion(), response.getIndexData());
-    // Sending the broadcast message is not critical, so run the
-    // postMutateHook first.
-    postMutateHook.run(objectId, result);
+    MutateResult result = new MutateResult(response.getResultingVersion());
     if (response.getBroadcastData() != null) {
       messageRouter.publishMessages(objectId, response.getBroadcastData());
     }

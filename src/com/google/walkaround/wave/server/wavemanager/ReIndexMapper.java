@@ -35,6 +35,7 @@ import com.google.walkaround.util.server.appengine.CheckedDatastore;
 import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTransaction;
 import com.google.walkaround.wave.server.GuiceSetup;
 import com.google.walkaround.wave.server.conv.ConvStore;
+import com.google.walkaround.wave.server.index.WaveIndexer;
 import com.google.walkaround.wave.server.model.WaveObjectStoreModel.ReadableWaveletObject;
 
 import org.apache.hadoop.io.NullWritable;
@@ -43,8 +44,7 @@ import java.io.IOException;
 import java.util.logging.Logger;
 
 /**
- * Mapreduce mapper that re-indexes and re-extracts ACL metadata from all
- * conversations.
+ * Mapreduce mapper that re-indexes all conversations.
  *
  * @author ohler@google.com (Christian Ohler)
  */
@@ -56,30 +56,17 @@ public class ReIndexMapper extends AppEngineMapper<Key, Entity, NullWritable, Nu
   private static class Handler {
     @Inject CheckedDatastore datastore;
     @Inject @ConvStore SlobFacilities facilities;
-    @Inject WaveIndex index;
+    @Inject WaveIndexer indexer;
 
     void process(Context context, final Key key) throws PermanentFailure {
       new RetryHelper().run(new RetryHelper.VoidBody() {
           @Override public void run() throws PermanentFailure, RetryableFailure {
-            CheckedTransaction tx = datastore.beginTransaction();
+            SlobId objectId = facilities.parseRootEntityKey(key);
+            // Update search index
             try {
-              SlobId objectId = facilities.parseRootEntityKey(key);
-              MutationLog mutationLog = facilities.getMutationLogFactory().create(tx, objectId);
-              try {
-                ObsoleteWaveletMetadata metadata = GsonProto.fromGson(
-                    new ObsoleteWaveletMetadataGsonImpl(), mutationLog.getMetadata());
-                if (metadata.getType() != ObsoleteWaveletMetadata.Type.CONV) {
-                  throw new RuntimeException(objectId + ": Not CONV: " + metadata);
-                }
-              } catch (MessageException e) {
-                throw new RuntimeException("Failed to parse metadata for " + objectId, e);
-              }
-              StateAndVersion state = mutationLog.reconstruct(null);
-              log.info("Re-indexing " + objectId + " at version " + state.getVersion());
-              index.update(tx, objectId, (ReadableWaveletObject) state.getState());
-              tx.commit();
-            } finally {
-              tx.close();
+              indexer.index(objectId);
+            } catch (IOException e) {
+              throw new RetryableFailure(e);
             }
           }
         });

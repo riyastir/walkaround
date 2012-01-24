@@ -22,12 +22,9 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.multibindings.Multibinder;
 import com.google.walkaround.slob.server.AccessChecker;
-import com.google.walkaround.slob.server.MutateResult;
+import com.google.walkaround.slob.server.PostCommitAction;
 import com.google.walkaround.slob.server.PostCommitActionQueue;
-import com.google.walkaround.slob.server.PostMutateHook;
 import com.google.walkaround.slob.server.PreCommitAction;
-import com.google.walkaround.slob.server.SlobManager;
-import com.google.walkaround.slob.server.SlobManager.SlobIndexUpdate;
 import com.google.walkaround.slob.server.StoreModuleHelper;
 import com.google.walkaround.slob.shared.SlobId;
 import com.google.walkaround.slob.shared.SlobModel;
@@ -36,12 +33,11 @@ import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
 import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
 import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTransaction;
 import com.google.walkaround.wave.server.conv.PermissionCache.PermissionSource;
+import com.google.walkaround.wave.server.index.IndexTask;
 import com.google.walkaround.wave.server.model.WaveObjectStoreModel;
 import com.google.walkaround.wave.server.model.WaveObjectStoreModel.ReadableWaveletObject;
-import com.google.walkaround.wave.server.wavemanager.WaveIndex;
 import com.google.walkaround.wave.server.wavemanager.WaveManager;
 
-import java.io.IOException;
 import java.util.logging.Logger;
 
 /**
@@ -66,37 +62,9 @@ public class ConvStoreModule extends PrivateModule {
     bind(AccessChecker.class).to(ConvAccessChecker.class);
     bind(PermissionSource.class).to(WaveManager.class);
 
-    final Provider<WaveIndex> index = getProvider(WaveIndex.class);
-    Multibinder<PreCommitAction> preCommitActions =
-        Multibinder.newSetBinder(binder(), PreCommitAction.class);
-    preCommitActions.addBinding().toInstance(
-        new PreCommitAction() {
-          @Override public void run(CheckedTransaction tx, SlobId objectId,
-              long resultingVersion, ReadableSlob resultingState)
-              throws RetryableFailure, PermanentFailure {
-            // TODO(ohler): Introduce generics in SlobModel to avoid the cast.
-            index.get().update(tx, objectId, (ReadableWaveletObject) resultingState);
-          }
-        });
-
-    final Provider<SlobManager> manager = getProvider(SlobManager.class);
-    bind(PostMutateHook.class).toInstance(
-        new PostMutateHook() {
-          private String summarize(String data) {
-            return data.length() <= 50 ? data : (data.substring(0, 50) + "...");
-          }
-          @Override public void run(SlobId objectId, MutateResult result) {
-            if (result.getIndexData() != null) {
-              log.info("Updating index, index data is " + summarize(result.getIndexData()));
-              try {
-                manager.get().update(objectId,
-                    new SlobIndexUpdate(result.getIndexData(), null));
-              } catch (IOException e) {
-                throw new RuntimeException("SlobManager update failed", e);
-              }
-            }
-          }
-        });
+    Multibinder<PostCommitAction> postCommitActions =
+        Multibinder.newSetBinder(binder(), PostCommitAction.class);
+    postCommitActions.addBinding().to(IndexTask.class);
 
     bind(Queue.class).annotatedWith(PostCommitActionQueue.class).toInstance(
         QueueFactory.getQueue("post-commit-conv"));
