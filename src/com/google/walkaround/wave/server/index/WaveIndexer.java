@@ -181,7 +181,7 @@ public class WaveIndexer {
 
   private static class ConvFields {
     SlobId slobId;
-    String content;
+    String indexableText;
     String title;
     String creator;
     String lastModified;
@@ -290,13 +290,13 @@ public class WaveIndexer {
     WaveletDataImpl convData = load(convStore, convId);
 
     fields.slobId = convId;
-    fields.content = TextRenderer.renderToText(convData);
     fields.title = Util.extractTitle(convData);
     fields.creator = convData.getCreator().getAddress();
     fields.lastModified = convData.getLastModifiedTime() + "";
     fields.version = (int) convData.getVersion();
     fields.waveletId = convData.getWaveletId();
     fields.model = getConversation(convData);
+    fields.indexableText = TextRenderer.renderToText(fields.model);
     fields.blipCount = countBlips(fields.model);
 
     return fields;
@@ -318,7 +318,7 @@ public class WaveIndexer {
 
     Document.Builder builder = Document.newBuilder();
     builder.setId(conv.slobId.getId());
-    builder.addField(Field.newBuilder().setName("content").setText(conv.content));
+    builder.addField(Field.newBuilder().setName("content").setText(conv.indexableText));
     builder.addField(Field.newBuilder().setName("title").setText(conv.title));
     builder.addField(Field.newBuilder().setName("creator").setText(conv.creator));
     builder.addField(Field.newBuilder().setName("modified").setText(conv.lastModified));

@@ -50,10 +50,6 @@ public class WaveObjectStoreModel implements SlobModel {
   // TODO(ohler): Replace these methods with getIndexEntry().
   public interface ReadableWaveletObject extends SlobModel.ReadableSlob {
     ParticipantId getCreator();
-    // TODO(ohler): Define separate models for conv wavelets and UDWs; this
-    // stuff makes no sense on UDWs.
-    String getTitle();
-    String getSnippet();
     long getLastModifiedMillis();
     List<ParticipantId> getParticipants();
   }
@@ -115,19 +111,6 @@ public class WaveObjectStoreModel implements SlobModel {
     // version 0 is apply().
     @Override public ParticipantId getCreator() {
       return wavelet.getCreator();
-    }
-
-    @Override public String getTitle() {
-      // TODO(ohler): extract title
-      return "";
-    }
-
-    // Getting a snippet as a function of just the current state of the wave is
-    // not what we really want; we should be extracting a snippet from the wave
-    // based on the search query, or based on which blips the user hasn't read
-    // yet.  TODO(ohler): redo this when we integrate with full text search.
-    @Override public String getSnippet() {
-      return TextRenderer.renderToText(wavelet);
     }
 
     @Override public long getLastModifiedMillis() {
