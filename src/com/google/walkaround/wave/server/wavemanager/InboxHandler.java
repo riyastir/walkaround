@@ -54,7 +54,7 @@ public class InboxHandler extends AbstractHandler {
   private static final Logger log = Logger.getLogger(InboxHandler.class.getName());
 
   private static final String XSRF_ACTION = "inboxaction";
-  private static final String DEFAULT_QUERY = "folder:inbox";
+  private static final String DEFAULT_QUERY = "in:inbox";
 
   @Inject XsrfHelper xsrfHelper;
   @Inject CheckedDatastore datastore;

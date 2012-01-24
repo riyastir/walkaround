@@ -63,11 +63,7 @@ public class ReIndexMapper extends AppEngineMapper<Key, Entity, NullWritable, Nu
           @Override public void run() throws PermanentFailure, RetryableFailure {
             SlobId objectId = facilities.parseRootEntityKey(key);
             // Update search index
-            try {
-              indexer.index(objectId);
-            } catch (IOException e) {
-              throw new RetryableFailure(e);
-            }
+            indexer.indexConversation(objectId);
           }
         });
     }

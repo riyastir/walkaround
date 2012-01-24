@@ -19,6 +19,7 @@ package com.google.walkaround.wave.server.index;
 import org.waveprotocol.wave.model.conversation.TitleHelper;
 import org.waveprotocol.wave.model.document.Document;
 import org.waveprotocol.wave.model.document.Doc.E;
+import org.waveprotocol.wave.model.document.operation.impl.DocOpUtil;
 import org.waveprotocol.wave.model.document.util.DocHelper;
 import org.waveprotocol.wave.model.document.util.Range;
 import org.waveprotocol.wave.model.id.IdConstants;
@@ -61,5 +62,16 @@ class Util {
 
   private static Document getDoc(WaveletDataImpl conv, String id) {
     return (Document) conv.getDocument(id).getContent();
+  }
+
+  static String describe(WaveletDataImpl udwData) {
+    StringBuilder b = new StringBuilder();
+    for (String id : udwData.getDocumentIds()) {
+      b.append(id + ":\n");
+      b.append(DocOpUtil.toPrettyXmlString(
+          ((Document) udwData.getDocument(id).getContent()).toInitialization(), 2));
+      b.append("\n\n");
+    }
+    return b.toString();
   }
 }

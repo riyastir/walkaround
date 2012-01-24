@@ -68,7 +68,9 @@ public class Searcher {
             // are displaying the context of a search query).
             wave.getSnippetHtml().trim(),
             "" + new LocalDate(new Instant(wave.getLastModifiedMillis())),
-            makeWaveLink(wave.getObjectId())));
+            makeWaveLink(wave.getObjectId()),
+            wave.getBlipCount(),
+            wave.getUnreadCount()));
       }
       return out.build();
     }

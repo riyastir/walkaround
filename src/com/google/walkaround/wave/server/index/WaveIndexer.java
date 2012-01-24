@@ -34,8 +34,10 @@ import com.google.appengine.api.search.SearchResponse;
 import com.google.appengine.api.search.SearchResult;
 import com.google.appengine.api.search.StatusCode;
 import com.google.appengine.api.utils.SystemProperty;
+import com.google.appengine.repackaged.com.google.common.collect.Iterables;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.walkaround.slob.server.MutationLog;
 import com.google.walkaround.slob.server.MutationLog.MutationLogFactory;
@@ -46,24 +48,47 @@ import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
 import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
 import com.google.walkaround.util.server.appengine.CheckedDatastore;
 import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTransaction;
+import com.google.walkaround.util.shared.RandomBase64Generator;
+import com.google.walkaround.wave.server.auth.AccountStore;
 import com.google.walkaround.wave.server.conv.ConvStore;
 import com.google.walkaround.wave.server.model.ServerMessageSerializer;
 import com.google.walkaround.wave.server.model.TextRenderer;
+import com.google.walkaround.wave.server.udw.UdwStore;
+import com.google.walkaround.wave.server.udw.UserDataWaveletDirectory;
+import com.google.walkaround.wave.server.udw.UserDataWaveletDirectory.ConvUdwMapping;
 import com.google.walkaround.wave.shared.IdHack;
 import com.google.walkaround.wave.shared.WaveSerializer;
 
+import org.waveprotocol.wave.model.conversation.BlipIterators;
+import org.waveprotocol.wave.model.conversation.Conversation;
+import org.waveprotocol.wave.model.conversation.ConversationBlip;
+import org.waveprotocol.wave.model.conversation.WaveBasedConversationView;
 import org.waveprotocol.wave.model.document.operation.DocInitialization;
 import org.waveprotocol.wave.model.document.operation.automaton.DocumentSchema;
+import org.waveprotocol.wave.model.id.IdGenerator;
+import org.waveprotocol.wave.model.id.WaveId;
 import org.waveprotocol.wave.model.id.WaveletId;
 import org.waveprotocol.wave.model.id.WaveletName;
+import org.waveprotocol.wave.model.supplement.PrimitiveSupplement;
+import org.waveprotocol.wave.model.supplement.Supplement;
+import org.waveprotocol.wave.model.supplement.SupplementImpl;
+import org.waveprotocol.wave.model.supplement.WaveletBasedSupplement;
 import org.waveprotocol.wave.model.wave.ParticipantId;
 import org.waveprotocol.wave.model.wave.data.DocumentFactory;
 import org.waveprotocol.wave.model.wave.data.impl.ObservablePluggableMutableDocument;
 import org.waveprotocol.wave.model.wave.data.impl.WaveletDataImpl;
+import org.waveprotocol.wave.model.wave.opbased.OpBasedWavelet;
+import org.waveprotocol.wave.model.wave.opbased.WaveViewImpl;
+import org.waveprotocol.wave.model.wave.opbased.WaveViewImpl.WaveletConfigurator;
+import org.waveprotocol.wave.model.wave.opbased.WaveViewImpl.WaveletFactory;
+
+import javax.annotation.Nullable;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -78,17 +103,23 @@ public class WaveIndexer {
     private final String title;
     private final String snippet;
     private final long lastModifiedMillis;
+    private final int blipCount;
+    private final @Nullable Integer unreadCount;
 
     public UserIndexEntry(SlobId objectId,
         ParticipantId creator,
         String title,
         String snippet,
-        long lastModifiedMillis) {
+        long lastModifiedMillis,
+        int blipCount,
+        @Nullable Integer unreadCount) {
       this.objectId = checkNotNull(objectId, "Null objectId");
       this.creator = checkNotNull(creator, "Null creator");
       this.title = checkNotNull(title, "Null title");
       this.snippet = checkNotNull(snippet, "Null snippet");
       this.lastModifiedMillis = lastModifiedMillis;
+      this.blipCount = blipCount;
+      this.unreadCount = unreadCount;
     }
 
     public SlobId getObjectId() {
@@ -109,6 +140,17 @@ public class WaveIndexer {
 
     public long getLastModifiedMillis() {
       return lastModifiedMillis;
+    }
+
+    public int getBlipCount() {
+      return blipCount;
+    }
+
+    /**
+     * Null if it's completely read.
+     */
+    @Nullable public Integer getUnreadCount() {
+      return unreadCount;
     }
 
     @Override public String toString() {
@@ -137,6 +179,18 @@ public class WaveIndexer {
     }
   }
 
+  private static class ConvFields {
+    SlobId slobId;
+    String content;
+    String title;
+    String creator;
+    String lastModified;
+    int version;
+    WaveletId waveletId;
+    Conversation model;
+    int blipCount;
+  }
+
   private static final Logger log = Logger.getLogger(WaveIndexer.class.getName());
 
   private static final String USER_WAVE_INDEX_PREFIX = "USRIDX2-";
@@ -144,14 +198,27 @@ public class WaveIndexer {
   private final WaveSerializer serializer;
   private final IndexManager indexManager;
   private final CheckedDatastore datastore;
-  private final MutationLogFactory mutationLogFactory;
+  private final MutationLogFactory convStore;
+  private final MutationLogFactory udwStore;
+  private final UserDataWaveletDirectory udwDirectory;
+  private final AccountStore users;
+  private final RandomBase64Generator random;
 
   @Inject
-  public WaveIndexer(CheckedDatastore datastore, @ConvStore MutationLogFactory mutationLogFactory,
-      IndexManager indexManager) {
+  public WaveIndexer(CheckedDatastore datastore,
+      @ConvStore MutationLogFactory convStore,
+      @UdwStore MutationLogFactory udwStore,
+      UserDataWaveletDirectory udwDirectory,
+      IndexManager indexManager,
+      AccountStore users,
+      RandomBase64Generator random) {
     this.datastore = datastore;
-    this.mutationLogFactory = mutationLogFactory;
+    this.convStore = convStore;
+    this.udwStore = udwStore;
+    this.udwDirectory = udwDirectory;
     this.indexManager = indexManager;
+    this.users = users;
+    this.random = random;
     this.serializer = new WaveSerializer(
         new ServerMessageSerializer(), new DocumentFactory<ObservablePluggableMutableDocument>() {
 
@@ -164,74 +231,213 @@ public class WaveIndexer {
         });
   }
 
-  public void index(SlobId slobId) throws IOException {
+  /**
+   * Indexes the wave for all users
+   */
+  public void indexConversation(SlobId convId) throws RetryableFailure, PermanentFailure {
     // TODO(danilatos): Handle waves for participants that have been removed.
     // Currently they will remain in the inbox but they won't have access until
     // we implement snapshotting of the waves at the point the participants
     // were removed (or similar).
+    log.info("Indexing conversation for all participants");
+    ConvFields convFields = getConvFields(convId);
 
-    StateAndVersion rawConv = loadConv(slobId);
-    WaveletName convWaveletName = IdHack.convWaveletNameFromConvObjectId(slobId);
-
-    WaveletDataImpl convWavelet = deserializeWavelet(convWaveletName,
-        rawConv.getState().snapshot());
-
-    if (rawConv.getVersion() != convWavelet.getVersion()) {
-      throw new AssertionError("Raw version " + rawConv.getVersion() +
-          " does not match wavelet version " + convWavelet.getVersion());
+    List<ConvUdwMapping> convUserMappings = udwDirectory.getAllUdwIds(convId);
+    Map<ParticipantId, SlobId> participantsToUdws = Maps.newHashMap();
+    for (ConvUdwMapping m : convUserMappings) {
+      participantsToUdws.put(users.get(m.getKey().getUserId()).getParticipantId(), m.getUdwId());
     }
 
-    String content = TextRenderer.renderToText(convWavelet);
+    for (ParticipantId participant : convFields.model.getParticipantIds()) {
+      SlobId udwId = participantsToUdws.get(participant);
+      log.info("Indexing " + convId.getId() + " for " + participant.getAddress() +
+          (udwId != null ? " with udw " + udwId : ""));
 
-    String title = Util.extractTitle(convWavelet);
-    String creator = convWavelet.getCreator().getAddress();
-    String lastModified = convWavelet.getLastModifiedTime() + "";
+      Supplement supplement = udwId == null ? null : getSupplement(load(udwStore, udwId));
+      index(convFields, participant, supplement);
+    }
+  }
 
-    for (ParticipantId participant : convWavelet.getParticipants()) {
-      log.info("Indexing " + slobId.getId() + " for " + participant.getAddress());
+  /**
+   * Indexes the wave only for the user of the given user data wavelet
+   */
+  public void indexSupplement(SlobId udwId) throws PermanentFailure, RetryableFailure {
+    log.info("Indexing conversation for participant with udwId " + udwId);
+    PrimitiveSupplement supplement = getPrimitiveSupplement(load(udwStore, udwId));
+    // NOTE(danilatos): This trick (grabbing the only "read wavelet" in the supplement)
+    // won't work if we ever support private replies...
+    // it only works if there is only 1 conversation per wave.
+    for (WaveletId waveletId : supplement.getReadWavelets()) {
+      SlobId convId = IdHack.objectIdFromWaveletId(waveletId);
 
-      Document.Builder builder = Document.newBuilder();
-      builder.setId(slobId.getId());
-      builder.addField(Field.newBuilder().setName("content").setText(content));
-      builder.addField(Field.newBuilder().setName("title").setText(title));
-      builder.addField(Field.newBuilder().setName("creator").setText(creator));
-      builder.addField(Field.newBuilder().setName("modified").setText(lastModified));
-      builder.addField(Field.newBuilder().setName("folder").setText("inbox"));
-      Document doc = builder.build();
+      // Is there a better way to get the participant id from the supplement?
+      List<ConvUdwMapping> convUserMappings = udwDirectory.getAllUdwIds(convId);
+      for (ConvUdwMapping m : convUserMappings) {
+        if (m.getUdwId().equals(udwId)) {
+          index(getConvFields(convId), users.get(m.getKey().getUserId()).getParticipantId(),
+              new SupplementImpl(supplement));
 
-      Index idx = getIndex(participant);
-
-      log.info("Indexing " + describe(doc));
-
-      // TODO(danilatos): Factor out all the error handling?
-      AddDocumentsResponse resp;
-      try {
-        resp = idx.add(doc);
-      } catch (AddDocumentsException e) {
-        throw new IOException("Error indexing " + slobId, e);
-      }
-      for (OperationResult result : resp.getResults()) {
-        if (!result.getCode().equals(StatusCode.OK)) {
-          throw new IOException("Error indexing " + slobId + ", " + result.getMessage());
+          return;
         }
+      }
+      throw new RuntimeException("Unexpectedly did not find the supplement " + udwId +
+          " associated with its conversation");
+    }
+  }
+
+  private ConvFields getConvFields(SlobId convId) throws PermanentFailure, RetryableFailure {
+    ConvFields fields = new ConvFields();
+    WaveletDataImpl convData = load(convStore, convId);
+
+    fields.slobId = convId;
+    fields.content = TextRenderer.renderToText(convData);
+    fields.title = Util.extractTitle(convData);
+    fields.creator = convData.getCreator().getAddress();
+    fields.lastModified = convData.getLastModifiedTime() + "";
+    fields.version = (int) convData.getVersion();
+    fields.waveletId = convData.getWaveletId();
+    fields.model = getConversation(convData);
+    fields.blipCount = countBlips(fields.model);
+
+    return fields;
+  }
+
+  private void index(ConvFields conv, ParticipantId user, @Nullable Supplement supplement)
+      throws RetryableFailure, PermanentFailure {
+
+    boolean isArchived = false;
+    boolean isFollowed = true;
+    @Nullable Integer unreadCount = conv.blipCount;
+    if (supplement != null) {
+      unreadCount = unreadCount(conv.model, conv.waveletId, conv.version, supplement);
+      isArchived = supplement.isArchived(conv.waveletId, conv.version);
+      isFollowed = supplement.isFollowed(true);
+    }
+
+    log.info("Unread count: " + unreadCount + " has supplement: " + (supplement != null));
+
+    Document.Builder builder = Document.newBuilder();
+    builder.setId(conv.slobId.getId());
+    builder.addField(Field.newBuilder().setName("content").setText(conv.content));
+    builder.addField(Field.newBuilder().setName("title").setText(conv.title));
+    builder.addField(Field.newBuilder().setName("creator").setText(conv.creator));
+    builder.addField(Field.newBuilder().setName("modified").setText(conv.lastModified));
+    builder.addField(Field.newBuilder().setName("in").setText("inbox"));
+    builder.addField(Field.newBuilder().setName("blips").setText("" + conv.blipCount)); //use num?
+    builder.addField(Field.newBuilder().setName("unread").setText(
+        unreadCount == null ? "no" : ("" + unreadCount)));
+    builder.addField(Field.newBuilder().setName("is").setText(
+        (unreadCount == null ? "read " : "unread ")
+        + (isArchived ? "archived " : "")
+        + (isFollowed ? "followed " : ""))
+        );
+    Document doc = builder.build();
+
+    Index idx = getIndex(user);
+
+    log.info("Saving index document  " + describe(doc));
+
+    // TODO(danilatos): Factor out all the error handling?
+    AddDocumentsResponse resp;
+    try {
+      resp = idx.add(doc);
+    } catch (AddDocumentsException e) {
+      throw new RetryableFailure("Error indexing " + conv.slobId, e);
+    }
+    for (OperationResult result : resp.getResults()) {
+      if (!result.getCode().equals(StatusCode.OK)) {
+        throw new RetryableFailure("Error indexing " + conv.slobId + ", " + result.getMessage());
       }
     }
   }
 
-  private StateAndVersion loadConv(SlobId id) throws IOException {
-    try {
-      CheckedTransaction tx = datastore.beginTransaction();
-      try {
-        MutationLog l = mutationLogFactory.create(tx, id);
-        return l.reconstruct(null);
-      } finally {
-        tx.rollback();
+  private int countBlips(Conversation conv) {
+    return Iterables.size(BlipIterators.breadthFirst(conv));
+  }
+
+  /**
+   * Returns the number of unread blips, and returns 0 if there are no unread
+   * blips but the participant list or any other non-blip part of the wave is
+   * "unread".
+   *
+   * Returns null if the conversation is fully read.
+   */
+  private Integer unreadCount(Conversation conv, WaveletId convId, int convVersion,
+      Supplement supplement) {
+    int unreadBlips = 0;
+    for (ConversationBlip blip : BlipIterators.breadthFirst(conv)) {
+      log.info("Seen wavelets: " + supplement.getSeenWavelets());
+      log.info("Conv wavelet: " + convId);
+      if (supplement.isBlipUnread(convId, blip.getId(), (int) blip.getLastModifiedVersion())) {
+        unreadBlips++;
       }
-    } catch (PermanentFailure e) {
-      throw new IOException(e);
-    } catch (RetryableFailure e) {
-      throw new IOException(e);
     }
+
+    if (unreadBlips > 0) {
+      return unreadBlips;
+    }
+//    TODO(danilatos): Get this bit to work...  probably something wrong with the version.
+//    if (supplement.isParticipantsUnread(convId, convVersion)) {
+//      return 0;
+//    }
+
+    return null;
+  }
+
+  private static final WaveletFactory<OpBasedWavelet> STUB_FACTORY =
+    new WaveletFactory<OpBasedWavelet>() {
+        @Override public OpBasedWavelet create(WaveId waveId, WaveletId id, ParticipantId creator) {
+          throw new UnsupportedOperationException();
+        }
+      };
+  private Conversation getConversation(WaveletDataImpl convData) {
+    IdGenerator idGenerator = new IdHack.MinimalIdGenerator(
+            convData.getWaveletId(),
+            IdHack.FAKE_WAVELET_NAME.waveletId,
+            random);
+    WaveViewImpl<OpBasedWavelet> waveView = WaveViewImpl.create(STUB_FACTORY,
+        convData.getWaveId(), idGenerator,
+        ParticipantId.ofUnsafe("fake@fake.com"),
+        WaveletConfigurator.ERROR);
+    waveView.addWavelet(OpBasedWavelet.createReadOnly(convData));
+    WaveBasedConversationView convView = WaveBasedConversationView.create(
+        waveView, idGenerator);
+
+    return convView.getRoot();
+  }
+
+  private Supplement getSupplement(WaveletDataImpl udwData) {
+    return new SupplementImpl(getPrimitiveSupplement(udwData));
+  }
+
+  private PrimitiveSupplement getPrimitiveSupplement(WaveletDataImpl udwData) {
+    return WaveletBasedSupplement.create(OpBasedWavelet.createReadOnly(udwData));
+  }
+
+  private WaveletDataImpl load(MutationLogFactory store, SlobId id)
+      throws PermanentFailure, RetryableFailure {
+
+    StateAndVersion raw;
+    CheckedTransaction tx = datastore.beginTransaction();
+    try {
+      MutationLog l = store.create(tx, id);
+      raw = l.reconstruct(null);
+    } finally {
+      tx.rollback();
+    }
+
+    WaveletName waveletName = IdHack.convWaveletNameFromConvObjectId(id);
+
+    WaveletDataImpl waveletData = deserializeWavelet(waveletName,
+        raw.getState().snapshot());
+
+    if (raw.getVersion() != waveletData.getVersion()) {
+      throw new AssertionError("Raw version " + raw.getVersion() +
+          " does not match wavelet version " + waveletData.getVersion());
+    }
+
+
+    return waveletData;
   }
 
   private Index getIndex(ParticipantId participant) {
@@ -307,12 +513,21 @@ public class WaveIndexer {
       // Workaround for bug where all fields come back empty in local dev mode.
       boolean HACK = SystemProperty.environment.value()
           == SystemProperty.Environment.Value.Development;
+      String unreadCount;
+      if (HACK) {
+        int c = new Random().nextInt(5);
+        unreadCount = c == 0 ? "no" : "" + c * 7;
+      } else {
+        unreadCount = getField(doc, "unread");
+      }
       entries.add(new UserIndexEntry(
           new SlobId(doc.getId()),
           ParticipantId.ofUnsafe(HACK ? "hack@hack.com" : getField(doc, "creator")),
           HACK ? "XXX" : getField(doc, "title"),
           snippetHtml,
-          Long.parseLong(HACK ? "1" : getField(doc, "modified"))
+          Long.parseLong(HACK ? "1" : getField(doc, "modified")),
+          Integer.parseInt(HACK ? "23" : getField(doc, "blips")),
+          "no".equals(unreadCount) ? null : Integer.parseInt(unreadCount)
           ));
     }
     return entries;
@@ -330,6 +545,6 @@ public class WaveIndexer {
   }
 
   private String describe(Document doc) {
-    return "doc[" + doc.getId() + " with " + doc.getFieldNames() + "]";
+    return "doc[" + doc.getId() + " with " + doc.getFields() + "]";
   }
 }

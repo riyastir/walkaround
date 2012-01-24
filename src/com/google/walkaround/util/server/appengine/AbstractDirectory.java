@@ -20,7 +20,6 @@ import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.walkaround.util.server.RetryHelper;
@@ -28,12 +27,12 @@ import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
 import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
 import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTransaction;
 
+import javax.annotation.Nullable;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import javax.annotation.Nullable;
 
 /**
  * A directory in the datastore that stores a set of T, where each T contains an
@@ -64,7 +63,6 @@ public abstract class AbstractDirectory<T, I> {
   protected abstract void populateEntity(T in, Entity out);
   protected abstract T parse(Entity e);
 
-  @VisibleForTesting
   public Key makeKey(I id) {
     return KeyFactory.createKey(entityKind, serializeId(id));
   }

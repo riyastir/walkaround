@@ -24,40 +24,65 @@ import com.google.walkaround.util.server.RetryHelper;
 import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
 import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
 
-import java.io.IOException;
 import java.util.logging.Logger;
 
 /**
  *
  * @author danilatos@google.com
  */
-public class IndexTask implements PostCommitAction {
+public class IndexTask {
   private static final Logger log = Logger.getLogger(IndexTask.class.getName());
 
-  @Inject private WaveIndexer indexer;
+  public static class Conv implements PostCommitAction {
+    @Inject private WaveIndexer indexer;
 
-  @Override
-  public void reliableDelayedPostCommit(final SlobId slobId) {
-    try {
-      new RetryHelper().run(new RetryHelper.VoidBody() {
-        @Override
-        public void run() throws RetryableFailure, PermanentFailure {
-          try {
-            indexer.index(slobId);
-          } catch (IOException e) {
-            throw new RetryableFailure(e);
+    @Override
+    public void reliableDelayedPostCommit(final SlobId slobId) {
+      try {
+        new RetryHelper().run(new RetryHelper.VoidBody() {
+          @Override
+          public void run() throws RetryableFailure, PermanentFailure {
+            indexer.indexConversation(slobId);
           }
-        }
-      });
-    } catch (PermanentFailure e) {
-      throw new RuntimeException(e);
+        });
+      } catch (PermanentFailure e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    @Override
+    public void unreliableImmediatePostCommit(SlobId slobId, long resultingVersion,
+            ReadableSlob resultingState) {
+      // XXX XXX remove
+      reliableDelayedPostCommit(slobId);
+      // nothing
     }
   }
 
-  @Override
-  public void unreliableImmediatePostCommit(SlobId slobId, long resultingVersion,
-          ReadableSlob resultingState) {
-    // nothing
+  public static class Udw implements PostCommitAction {
+    @Inject private WaveIndexer indexer;
+
+    @Override
+    public void reliableDelayedPostCommit(final SlobId slobId) {
+      try {
+        new RetryHelper().run(new RetryHelper.VoidBody() {
+          @Override
+          public void run() throws RetryableFailure, PermanentFailure {
+            indexer.indexSupplement(slobId);
+          }
+        });
+      } catch (PermanentFailure e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    @Override
+    public void unreliableImmediatePostCommit(SlobId slobId, long resultingVersion,
+            ReadableSlob resultingState) {
+      // XXX XXX remove
+      reliableDelayedPostCommit(slobId);
+      // nothing
+    }
   }
 
 }

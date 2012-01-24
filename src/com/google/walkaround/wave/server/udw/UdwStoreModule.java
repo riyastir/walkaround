@@ -19,11 +19,14 @@ package com.google.walkaround.wave.server.udw;
 import com.google.appengine.api.taskqueue.Queue;
 import com.google.appengine.api.taskqueue.QueueFactory;
 import com.google.inject.PrivateModule;
+import com.google.inject.multibindings.Multibinder;
 import com.google.walkaround.slob.server.AccessChecker;
+import com.google.walkaround.slob.server.PostCommitAction;
 import com.google.walkaround.slob.server.PostCommitActionQueue;
 import com.google.walkaround.slob.server.StoreModuleHelper;
 import com.google.walkaround.slob.shared.SlobId;
 import com.google.walkaround.slob.shared.SlobModel;
+import com.google.walkaround.wave.server.index.IndexTask;
 import com.google.walkaround.wave.server.model.WaveObjectStoreModel;
 
 import java.util.logging.Logger;
@@ -55,6 +58,11 @@ public class UdwStoreModule extends PrivateModule {
           @Override public void checkCanModify(SlobId objectId) {}
           @Override public void checkCanCreate(SlobId objectId) {}
         });
+
+    Multibinder<PostCommitAction> postCommitActions =
+      Multibinder.newSetBinder(binder(), PostCommitAction.class);
+    postCommitActions.addBinding().to(IndexTask.Udw.class);
+
     bind(Queue.class).annotatedWith(PostCommitActionQueue.class).toInstance(
         QueueFactory.getQueue("post-commit-udw"));
   }

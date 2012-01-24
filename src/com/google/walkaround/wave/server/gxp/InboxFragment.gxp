@@ -148,6 +148,23 @@
       top: 4px;
       right: 0;
     }
+    
+    .unread .record-title, .unread .modified {
+      font-weight: bold;
+    }
+    
+    .unread-count {
+      display: inline-block;
+      color: white;
+      background-color: #789E35;
+      border-radius: 6px;
+      width: 26px;
+      text-align: center;
+    }
+    .blip-count {
+      display:inline;
+      color: #888;
+    }
   </style>
   
   <script type='text/javascript'>
@@ -185,8 +202,8 @@
             expr:disabled='waveRecords.isEmpty()'>Next</button>
         <div id='nav-links'>
           <gxp:msg>Go to:</gxp:msg>
-          <a href='javascript:search("")'>Inbox</a> <!-- uncomment when implemented |
-          <a href='javascript:search("is:unread")'>Unread</a> -->
+          <a href='javascript:search("")'>Inbox</a> |
+          <a href='javascript:search("is:unread")'>Unread</a>
         </div>
       </div>
     </form>
@@ -203,29 +220,37 @@
         -->
         <div class='container'>
           <table>
-            <thead>
-              <tr>
-                <th><gxp:msg>Creator</gxp:msg></th>
-                <th class='titlecolumn'><gxp:msg>Title</gxp:msg></th>
-                <th><gxp:msg>Last modified</gxp:msg></th>
-              </tr>
-            </thead>
             <tbody>
               <gxp:loop var='record' type='InboxDisplayRecord' iterable='waveRecords'>
-                <tr>
-                  <td><gxp:eval expr='record.getCreator()'/></td>
-                  <td>
+                <tr expr:class='record.isUnread() ? "unread" : ""'>
+                  <td valign="top"><gxp:eval expr='record.getCreator()'/></td>
+                  <td valign="top">
                     <a expr:href='record.getLink()' expr:target='target'>
                       <gxp:if
                          cond='record.getTitle().isEmpty() &amp;&amp; !record.hasSnippet()'>
-                        <i><gxp:msg>(no title)</gxp:msg></i>
+                        <span class='record-title'><i><gxp:msg>(no title)</gxp:msg></i></span>
                       <gxp:else/>
-                        <b><gxp:eval expr='record.getTitle()'/></b> -
-                        <gxp:eval expr='record.getSnippetHtml()'/>
+                        <span class='record-title'><gxp:eval expr='record.getTitle()'/></span>
+                        <span class='snippet'> - <gxp:eval expr='record.getSnippetHtml()'/></span>
                       </gxp:if>
                     </a>
                   </td>
-                  <td><gxp:eval expr='record.getLastModified()'/></td>
+                  <td valign="top">
+                    <div class='modified'><gxp:eval expr='record.getLastModified()'/></div>
+
+                    <gxp:if cond='record.isUnread()'>
+                      <div class='unread-count'><gxp:eval expr='"" + record.getUnreadCount()'/></div>
+                      <div class='blip-count'>
+                        <gxp:msg>of</gxp:msg>
+                        <gxp:eval expr='"" + record.getBlipCount()'/>
+                      </div>
+                    <gxp:else/>
+                      <div class='blip-count'>
+                        <gxp:eval expr='"" + record.getBlipCount()'/>
+                        <gxp:msg>msgs</gxp:msg>
+                      </div>
+                    </gxp:if>
+                  </td>
                 </tr>
               </gxp:loop>
             </tbody>

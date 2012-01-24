@@ -64,7 +64,7 @@ public class ConvStoreModule extends PrivateModule {
 
     Multibinder<PostCommitAction> postCommitActions =
         Multibinder.newSetBinder(binder(), PostCommitAction.class);
-    postCommitActions.addBinding().to(IndexTask.class);
+    postCommitActions.addBinding().to(IndexTask.Conv.class);
 
     bind(Queue.class).annotatedWith(PostCommitActionQueue.class).toInstance(
         QueueFactory.getQueue("post-commit-conv"));

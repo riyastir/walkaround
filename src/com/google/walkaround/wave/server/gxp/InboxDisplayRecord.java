@@ -21,6 +21,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.gxp.html.HtmlClosure;
 import com.google.gxp.html.HtmlClosures;
 
+import javax.annotation.Nullable;
+
 /**
  * Information {@link InboxFragment} needs about a wave.
  *
@@ -33,17 +35,23 @@ public class InboxDisplayRecord {
   private final String snippetHtml;
   private final String lastModified;
   private final String link;
+  private final int blipCount;
+  private final Integer unreadCount;
 
   public InboxDisplayRecord(String creator,
       String title,
       String snippetHtml,
       String lastModified,
-      String link) {
+      String link,
+      int blipCount,
+      @Nullable Integer unreadCount) {
     this.creator = checkNotNull(creator, "Null creator");
     this.title = checkNotNull(title, "Null title");
     this.snippetHtml = checkNotNull(snippetHtml, "Null snippet");
     this.lastModified = checkNotNull(lastModified, "Null lastModified");
     this.link = checkNotNull(link, "Null link");
+    this.blipCount = blipCount;
+    this.unreadCount = unreadCount;
   }
 
   public String getCreator() {
@@ -68,6 +76,18 @@ public class InboxDisplayRecord {
 
   public String getLink() {
     return link;
+  }
+
+  public int getBlipCount() {
+    return blipCount;
+  }
+
+  public boolean isUnread() {
+    return unreadCount != null;
+  }
+
+  public int getUnreadCount() {
+    return unreadCount;
   }
 
   @Override public String toString() {
