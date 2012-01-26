@@ -24,6 +24,7 @@ import com.google.appengine.api.images.Image;
 import com.google.appengine.api.images.ImagesService;
 import com.google.appengine.api.images.ImagesServiceFactory;
 import com.google.appengine.api.images.Transform;
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.walkaround.util.shared.Assert;
 import com.google.walkaround.util.shared.RandomBase64Generator;
@@ -109,6 +110,7 @@ public class RawAttachmentService {
   }
 
   public AttachmentId turnBlobIntoAttachment(BlobKey blobKey) throws IOException {
+    Preconditions.checkNotNull(blobKey, "Null blobKey");
     AttachmentId newId = new AttachmentId(random64.next(
         // 115 * 6 random bits; should be unguessable.  (6 bits per random64 char.)
         115));
