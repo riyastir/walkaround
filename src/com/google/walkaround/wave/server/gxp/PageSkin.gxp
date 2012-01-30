@@ -65,12 +65,22 @@
           font-size: 1.5em;
         }
 
-        #userEmail {
+        #user-email {
+          font-size: 1.1em;
+        }
+        
+        #top-links {
           float: right;
+          font-size: 0.8em;
+        }
+        
+        #top-links a {
+          margin-left: 10px;
+          text-decoration: none;
         }
 
         #footer {
-          font-size: 0.8 em;
+          font-size: 0.9 em;
         }
 
         .main {
@@ -108,7 +118,12 @@
       <div class='main'>
         <div id='header'>
           <span id='title'><gxp:nomsg>walkaround</gxp:nomsg></span>
-          <span id='userEmail'><gxp:eval expr='userEmail'/></span>
+          <span id='top-links'>
+            <span id='user-email'>
+              <gxp:eval expr='userEmail'/>
+            </span>
+            <a href='/logout'>logout</a>
+          </span>
         </div>
         <gxp:eval expr='content'/>
       </div>
