@@ -18,22 +18,25 @@
   <total-storage-limit>100M</total-storage-limit>
   <queue>
     <name>import</name>
-    <rate>100/s</rate>
-    <bucket-size>100</bucket-size>
+    <rate>${queue-rate}/s</rate>
+    <max-concurrent-requests>${queue-rate}</max-concurrent-requests>
     <retry-parameters>
-      <task-age-limit>3d</task-age-limit>
+      <task-age-limit>7d</task-age-limit>
     </retry-parameters>
   </queue>
   <queue>
     <name>memcache-deletion</name>
-    <rate>100/s</rate>
+    <rate>${queue-rate}/s</rate>
+    <max-concurrent-requests>${queue-rate}</max-concurrent-requests>
   </queue>
   <queue>
     <name>post-commit-conv</name>
-    <rate>100/s</rate>
+    <rate>${queue-rate}/s</rate>
+    <max-concurrent-requests>${queue-rate}</max-concurrent-requests>
   </queue>
   <queue>
     <name>post-commit-udw</name>
-    <rate>100/s</rate>
+    <rate>${queue-rate}/s</rate>
+    <max-concurrent-requests>${queue-rate}</max-concurrent-requests>
   </queue>
 </queue-entries>

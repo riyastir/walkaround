@@ -171,6 +171,11 @@ message ImportWaveletTask {
   // re-import, since its id is different from the id the task
   // ignores.
   optional string existing_slob_id_to_ignore = 6;
+
+  // If true, synthesize a history rather than copying remote history.
+  // If false, attempt to preserve history, but fall back to synthesis
+  // if history can't be preserved.
+  required bool synthesize_history = 7;
 }
 
 message FetchAttachmentsAndImportWaveletTask {

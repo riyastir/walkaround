@@ -39,6 +39,8 @@ import com.google.walkaround.util.server.auth.InvalidSecurityTokenException;
 import com.google.walkaround.util.server.servlet.AbstractHandler;
 import com.google.walkaround.util.server.servlet.BadRequestException;
 import com.google.walkaround.util.shared.Assert;
+import com.google.walkaround.wave.server.Flag;
+import com.google.walkaround.wave.server.FlagName;
 import com.google.walkaround.wave.server.auth.NeedNewOAuthTokenException;
 import com.google.walkaround.wave.server.auth.StableUserId;
 import com.google.walkaround.wave.server.auth.UserContext;
@@ -90,6 +92,7 @@ public class ImportOverviewHandler extends AbstractHandler {
   @Inject Provider<FindRemoteWavesProcessor> findProcessor;
   @Inject PageSkinWriter pageSkinWriter;
   @Inject UserContext userContext;
+  @Inject @Flag(FlagName.IMPORT_PRESERVE_HISTORY) boolean preserveHistory;
 
   private String makeLocalWaveLink(SlobId convSlobId) {
     return "/wave?id=" + UriEscapers.uriQueryStringEscaper(false).escape(convSlobId.getId());
@@ -235,13 +238,15 @@ public class ImportOverviewHandler extends AbstractHandler {
       } else {
         throw new BadRequestException("Unexpected import sharing mode");
       }
+      task.setSynthesizeHistory(!preserveHistory);
       @Nullable String existingSlobIdToIgnore = optionalParameter(req, "ignoreexisting", null);
       if (existingSlobIdToIgnore != null) {
         task.setExistingSlobIdToIgnore(existingSlobIdToIgnore);
       }
       final ImportTaskPayload payload = new ImportTaskPayloadGsonImpl();
       payload.setImportWaveletTask(task);
-      log.info("Enqueueing import task for " + waveId);
+      log.info("Enqueueing import task for " + waveId
+          + "; synthesizeHistory=" + task.getSynthesizeHistory());
       enqueueTasks(ImmutableList.of(payload));
     } else if ("canceltasks".equals(action)) {
       log.info("Cancelling all tasks for " + userId);

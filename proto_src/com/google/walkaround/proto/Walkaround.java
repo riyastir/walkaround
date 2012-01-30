@@ -2695,6 +2695,20 @@ public final class Walkaround {
     public boolean hasImportFinished() { return hasImportFinished; }
     public boolean getImportFinished() { return importFinished_; }
     
+    // optional bool remote_history_copied = 7 [default = false];
+    public static final int REMOTE_HISTORY_COPIED_FIELD_NUMBER = 7;
+    private boolean hasRemoteHistoryCopied;
+    private boolean remoteHistoryCopied_ = false;
+    public boolean hasRemoteHistoryCopied() { return hasRemoteHistoryCopied; }
+    public boolean getRemoteHistoryCopied() { return remoteHistoryCopied_; }
+    
+    // optional int64 remote_version_imported = 8;
+    public static final int REMOTE_VERSION_IMPORTED_FIELD_NUMBER = 8;
+    private boolean hasRemoteVersionImported;
+    private long remoteVersionImported_ = 0L;
+    public boolean hasRemoteVersionImported() { return hasRemoteVersionImported; }
+    public long getRemoteVersionImported() { return remoteVersionImported_; }
+    
     private void initFields() {
     }
     public final boolean isInitialized() {
@@ -2728,6 +2742,12 @@ public final class Walkaround {
       if (hasImportFinished()) {
         output.writeBool(6, getImportFinished());
       }
+      if (hasRemoteHistoryCopied()) {
+        output.writeBool(7, getRemoteHistoryCopied());
+      }
+      if (hasRemoteVersionImported()) {
+        output.writeInt64(8, getRemoteVersionImported());
+      }
       getUnknownFields().writeTo(output);
     }
     
@@ -2760,6 +2780,14 @@ public final class Walkaround {
       if (hasImportFinished()) {
         size += com.google.protobuf.CodedOutputStream
           .computeBoolSize(6, getImportFinished());
+      }
+      if (hasRemoteHistoryCopied()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(7, getRemoteHistoryCopied());
+      }
+      if (hasRemoteVersionImported()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(8, getRemoteVersionImported());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -2937,6 +2965,12 @@ public final class Walkaround {
         if (other.hasImportFinished()) {
           setImportFinished(other.getImportFinished());
         }
+        if (other.hasRemoteHistoryCopied()) {
+          setRemoteHistoryCopied(other.getRemoteHistoryCopied());
+        }
+        if (other.hasRemoteVersionImported()) {
+          setRemoteVersionImported(other.getRemoteVersionImported());
+        }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
@@ -2984,6 +3018,14 @@ public final class Walkaround {
             }
             case 48: {
               setImportFinished(input.readBool());
+              break;
+            }
+            case 56: {
+              setRemoteHistoryCopied(input.readBool());
+              break;
+            }
+            case 64: {
+              setRemoteVersionImported(input.readInt64());
               break;
             }
           }
@@ -3108,6 +3150,42 @@ public final class Walkaround {
       public Builder clearImportFinished() {
         result.hasImportFinished = false;
         result.importFinished_ = false;
+        return this;
+      }
+      
+      // optional bool remote_history_copied = 7 [default = false];
+      public boolean hasRemoteHistoryCopied() {
+        return result.hasRemoteHistoryCopied();
+      }
+      public boolean getRemoteHistoryCopied() {
+        return result.getRemoteHistoryCopied();
+      }
+      public Builder setRemoteHistoryCopied(boolean value) {
+        result.hasRemoteHistoryCopied = true;
+        result.remoteHistoryCopied_ = value;
+        return this;
+      }
+      public Builder clearRemoteHistoryCopied() {
+        result.hasRemoteHistoryCopied = false;
+        result.remoteHistoryCopied_ = false;
+        return this;
+      }
+      
+      // optional int64 remote_version_imported = 8;
+      public boolean hasRemoteVersionImported() {
+        return result.hasRemoteVersionImported();
+      }
+      public long getRemoteVersionImported() {
+        return result.getRemoteVersionImported();
+      }
+      public Builder setRemoteVersionImported(long value) {
+        result.hasRemoteVersionImported = true;
+        result.remoteVersionImported_ = value;
+        return this;
+      }
+      public Builder clearRemoteVersionImported() {
+        result.hasRemoteVersionImported = false;
+        result.remoteVersionImported_ = 0L;
         return this;
       }
       
@@ -7718,46 +7796,48 @@ public final class Walkaround {
       "Metadata\0221\n\004type\030\001 \002(\0162#.proto.ObsoleteW" +
       "aveletMetadata.Type\0220\n\014udw_metadata\030\002 \001(" +
       "\0132\032.proto.ObsoleteUdwMetadata\"\031\n\004Type\022\010\n" +
-      "\004CONV\020\000\022\007\n\003UDW\020\001\"\262\001\n\016ImportMetadata\022\027\n\017s" +
+      "\004CONV\020\000\022\007\n\003UDW\020\001\"\371\001\n\016ImportMetadata\022\027\n\017s" +
       "ource_instance\030\001 \002(\t\022\026\n\016remote_wave_id\030\002" +
       " \002(\t\022\031\n\021remote_wavelet_id\030\003 \002(\t\022\031\n\021origi" +
       "nal_importer\030\004 \002(\t\022 \n\030import_begin_time_" +
-      "millis\030\005 \002(\003\022\027\n\017import_finished\030\006 \002(\010\">\n",
-      "\014ConvMetadata\022.\n\017import_metadata\030\001 \001(\0132\025" +
-      ".proto.ImportMetadata\"N\n\022ObjectSessionPr" +
-      "oto\022\021\n\tobject_id\030\001 \002(\t\022\021\n\tclient_id\030\002 \002(" +
-      "\t\022\022\n\nstore_type\030\003 \002(\t\"T\n\023SignedObjectSes" +
-      "sion\022*\n\007session\030\001 \002(\0132\031.proto.ObjectSess" +
-      "ionProto\022\021\n\tsignature\030\002 \002(\t\"\223\001\n\017ConnectR" +
-      "esponse\0222\n\016signed_session\030\001 \002(\0132\032.proto." +
-      "SignedObjectSession\022\035\n\025signed_session_st" +
-      "ring\030c \002(\t\022\025\n\rchannel_token\030\002 \001(\t\022\026\n\016obj" +
-      "ect_version\030\003 \002(\003\"\367\005\n\nClientVars\022:\n\020live",
-      "_client_vars\030\001 \001(\0132 .proto.ClientVars.Li" +
-      "veClientVars\022/\n\nerror_vars\030\002 \001(\0132\033.proto" +
-      ".ClientVars.ErrorVars\022>\n\022static_client_v" +
-      "ars\030\003 \001(\0132\".proto.ClientVars.StaticClien" +
-      "tVars\032s\n\013UdwLoadData\0220\n\020connect_response" +
-      "\030\001 \002(\0132\026.proto.ConnectResponse\0222\n\010snapsh" +
-      "ot\030\002 \002(\0132 .proto.WalkaroundWaveletSnapsh" +
-      "ot\032\200\002\n\016LiveClientVars\022\026\n\016client_version\030" +
-      "\001 \002(\005\022\023\n\013random_seed\030\002 \002(\005\022\022\n\nuser_email" +
-      "\030\003 \002(\t\022\030\n\020have_oauth_token\030\004 \002(\010\0225\n\025conv",
-      "_connect_response\030\n \002(\0132\026.proto.ConnectR" +
-      "esponse\0220\n\rconv_snapshot\030\013 \002(\0132\031.diff.Wa" +
-      "veletDiffSnapshot\022*\n\003udw\030\024 \001(\0132\035.proto.C" +
-      "lientVars.UdwLoadData\032\237\001\n\020StaticClientVa" +
-      "rs\022\023\n\013random_seed\030\002 \002(\005\022\022\n\nuser_email\030\003 " +
-      "\002(\t\022\030\n\020have_oauth_token\030\004 \002(\010\022\026\n\016conv_ob" +
-      "ject_id\030\n \002(\t\0220\n\rconv_snapshot\030\013 \002(\0132\031.d" +
-      "iff.WaveletDiffSnapshot\032\"\n\tErrorVars\022\025\n\r" +
-      "error_message\030\001 \002(\t\"c\n\023ServerMutateReque" +
-      "st\022*\n\007session\030\001 \002(\0132\031.proto.ObjectSessio",
-      "nProto\022\017\n\007version\030\002 \002(\003\022\017\n\007payload\030\003 \003(\t" +
-      "\"]\n\024ServerMutateResponse\022\031\n\021resulting_ve" +
-      "rsion\030\001 \002(\003\022\026\n\016broadcast_data\030\002 \002(\t\022\022\n\ni" +
-      "ndex_data\030\003 \002(\tB)\n\033com.google.walkaround" +
-      ".protoB\nWalkaround"
+      "millis\030\005 \002(\003\022\027\n\017import_finished\030\006 \002(\010\022$\n",
+      "\025remote_history_copied\030\007 \001(\010:\005false\022\037\n\027r" +
+      "emote_version_imported\030\010 \001(\003\">\n\014ConvMeta" +
+      "data\022.\n\017import_metadata\030\001 \001(\0132\025.proto.Im" +
+      "portMetadata\"N\n\022ObjectSessionProto\022\021\n\tob" +
+      "ject_id\030\001 \002(\t\022\021\n\tclient_id\030\002 \002(\t\022\022\n\nstor" +
+      "e_type\030\003 \002(\t\"T\n\023SignedObjectSession\022*\n\007s" +
+      "ession\030\001 \002(\0132\031.proto.ObjectSessionProto\022" +
+      "\021\n\tsignature\030\002 \002(\t\"\223\001\n\017ConnectResponse\0222" +
+      "\n\016signed_session\030\001 \002(\0132\032.proto.SignedObj" +
+      "ectSession\022\035\n\025signed_session_string\030c \002(",
+      "\t\022\025\n\rchannel_token\030\002 \001(\t\022\026\n\016object_versi" +
+      "on\030\003 \002(\003\"\367\005\n\nClientVars\022:\n\020live_client_v" +
+      "ars\030\001 \001(\0132 .proto.ClientVars.LiveClientV" +
+      "ars\022/\n\nerror_vars\030\002 \001(\0132\033.proto.ClientVa" +
+      "rs.ErrorVars\022>\n\022static_client_vars\030\003 \001(\013" +
+      "2\".proto.ClientVars.StaticClientVars\032s\n\013" +
+      "UdwLoadData\0220\n\020connect_response\030\001 \002(\0132\026." +
+      "proto.ConnectResponse\0222\n\010snapshot\030\002 \002(\0132" +
+      " .proto.WalkaroundWaveletSnapshot\032\200\002\n\016Li" +
+      "veClientVars\022\026\n\016client_version\030\001 \002(\005\022\023\n\013",
+      "random_seed\030\002 \002(\005\022\022\n\nuser_email\030\003 \002(\t\022\030\n" +
+      "\020have_oauth_token\030\004 \002(\010\0225\n\025conv_connect_" +
+      "response\030\n \002(\0132\026.proto.ConnectResponse\0220" +
+      "\n\rconv_snapshot\030\013 \002(\0132\031.diff.WaveletDiff" +
+      "Snapshot\022*\n\003udw\030\024 \001(\0132\035.proto.ClientVars" +
+      ".UdwLoadData\032\237\001\n\020StaticClientVars\022\023\n\013ran" +
+      "dom_seed\030\002 \002(\005\022\022\n\nuser_email\030\003 \002(\t\022\030\n\020ha" +
+      "ve_oauth_token\030\004 \002(\010\022\026\n\016conv_object_id\030\n" +
+      " \002(\t\0220\n\rconv_snapshot\030\013 \002(\0132\031.diff.Wavel" +
+      "etDiffSnapshot\032\"\n\tErrorVars\022\025\n\rerror_mes",
+      "sage\030\001 \002(\t\"c\n\023ServerMutateRequest\022*\n\007ses" +
+      "sion\030\001 \002(\0132\031.proto.ObjectSessionProto\022\017\n" +
+      "\007version\030\002 \002(\003\022\017\n\007payload\030\003 \003(\t\"]\n\024Serve" +
+      "rMutateResponse\022\031\n\021resulting_version\030\001 \002" +
+      "(\003\022\026\n\016broadcast_data\030\002 \002(\t\022\022\n\nindex_data" +
+      "\030\003 \002(\tB)\n\033com.google.walkaround.protoB\nW" +
+      "alkaround"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -7817,7 +7897,7 @@ public final class Walkaround {
           internal_static_proto_ImportMetadata_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_proto_ImportMetadata_descriptor,
-              new java.lang.String[] { "SourceInstance", "RemoteWaveId", "RemoteWaveletId", "OriginalImporter", "ImportBeginTimeMillis", "ImportFinished", },
+              new java.lang.String[] { "SourceInstance", "RemoteWaveId", "RemoteWaveletId", "OriginalImporter", "ImportBeginTimeMillis", "ImportFinished", "RemoteHistoryCopied", "RemoteVersionImported", },
               com.google.walkaround.proto.Walkaround.ImportMetadata.class,
               com.google.walkaround.proto.Walkaround.ImportMetadata.Builder.class);
           internal_static_proto_ConvMetadata_descriptor =

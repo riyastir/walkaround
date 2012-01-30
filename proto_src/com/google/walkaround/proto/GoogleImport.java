@@ -4870,6 +4870,13 @@ public final class GoogleImport {
     public boolean hasExistingSlobIdToIgnore() { return hasExistingSlobIdToIgnore; }
     public java.lang.String getExistingSlobIdToIgnore() { return existingSlobIdToIgnore_; }
     
+    // required bool synthesize_history = 7;
+    public static final int SYNTHESIZE_HISTORY_FIELD_NUMBER = 7;
+    private boolean hasSynthesizeHistory;
+    private boolean synthesizeHistory_ = false;
+    public boolean hasSynthesizeHistory() { return hasSynthesizeHistory; }
+    public boolean getSynthesizeHistory() { return synthesizeHistory_; }
+    
     private void initFields() {
       sharingMode_ = com.google.walkaround.proto.GoogleImport.ImportWaveletTask.ImportSharingMode.PRIVATE;
     }
@@ -4878,6 +4885,7 @@ public final class GoogleImport {
       if (!hasWaveId) return false;
       if (!hasWaveletId) return false;
       if (!hasSharingMode) return false;
+      if (!hasSynthesizeHistory) return false;
       for (com.google.walkaround.proto.GoogleImport.ImportWaveletTask.ImportedAttachment element : getAttachmentList()) {
         if (!element.isInitialized()) return false;
       }
@@ -4904,6 +4912,9 @@ public final class GoogleImport {
       }
       if (hasExistingSlobIdToIgnore()) {
         output.writeString(6, getExistingSlobIdToIgnore());
+      }
+      if (hasSynthesizeHistory()) {
+        output.writeBool(7, getSynthesizeHistory());
       }
       getUnknownFields().writeTo(output);
     }
@@ -4937,6 +4948,10 @@ public final class GoogleImport {
       if (hasExistingSlobIdToIgnore()) {
         size += com.google.protobuf.CodedOutputStream
           .computeStringSize(6, getExistingSlobIdToIgnore());
+      }
+      if (hasSynthesizeHistory()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(7, getSynthesizeHistory());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -5121,6 +5136,9 @@ public final class GoogleImport {
         if (other.hasExistingSlobIdToIgnore()) {
           setExistingSlobIdToIgnore(other.getExistingSlobIdToIgnore());
         }
+        if (other.hasSynthesizeHistory()) {
+          setSynthesizeHistory(other.getSynthesizeHistory());
+        }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
@@ -5176,6 +5194,10 @@ public final class GoogleImport {
             }
             case 50: {
               setExistingSlobIdToIgnore(input.readString());
+              break;
+            }
+            case 56: {
+              setSynthesizeHistory(input.readBool());
               break;
             }
           }
@@ -5336,6 +5358,24 @@ public final class GoogleImport {
       public Builder clearExistingSlobIdToIgnore() {
         result.hasExistingSlobIdToIgnore = false;
         result.existingSlobIdToIgnore_ = getDefaultInstance().getExistingSlobIdToIgnore();
+        return this;
+      }
+      
+      // required bool synthesize_history = 7;
+      public boolean hasSynthesizeHistory() {
+        return result.hasSynthesizeHistory();
+      }
+      public boolean getSynthesizeHistory() {
+        return result.getSynthesizeHistory();
+      }
+      public Builder setSynthesizeHistory(boolean value) {
+        result.hasSynthesizeHistory = true;
+        result.synthesizeHistory_ = value;
+        return this;
+      }
+      public Builder clearSynthesizeHistory() {
+        result.hasSynthesizeHistory = false;
+        result.synthesizeHistory_ = false;
         return this;
       }
       
@@ -7218,38 +7258,39 @@ public final class GoogleImport {
       "ified_millis\030\005 \002(\003\022\022\n\nblip_count\030\006 \002(\005\022\031" +
       "\n\021unread_blip_count\030\007 \002(\005\"V\n\023FindRemoteW" +
       "avesTask\022\020\n\010instance\030\001 \002(\t\022\030\n\020on_or_afte" +
-      "r_days\030\002 \002(\003\022\023\n\013before_days\030\003 \002(\003\"\366\002\n\021Im" +
+      "r_days\030\002 \002(\003\022\023\n\013before_days\030\003 \002(\003\"\222\003\n\021Im" +
       "portWaveletTask\022\020\n\010instance\030\001 \002(\t\022\017\n\007wav" +
       "e_id\030\002 \002(\t\022\022\n\nwavelet_id\030\003 \002(\t\022N\n\014sharin" +
       "g_mode\030\004 \002(\01628.google_import_proto.Impor",
       "tWaveletTask.ImportSharingMode\022M\n\nattach" +
       "ment\030\005 \003(\01329.google_import_proto.ImportW" +
       "aveletTask.ImportedAttachment\022\"\n\032existin" +
-      "g_slob_id_to_ignore\030\006 \001(\t\0329\n\022ImportedAtt" +
-      "achment\022\021\n\tremote_id\030\001 \002(\t\022\020\n\010local_id\030\002" +
-      " \001(\t\",\n\021ImportSharingMode\022\013\n\007PRIVATE\020\000\022\n" +
-      "\n\006SHARED\020\001\"\266\004\n$FetchAttachmentsAndImport" +
-      "WaveletTask\022D\n\024original_import_task\030\001 \002(" +
-      "\0132&.google_import_proto.ImportWaveletTas" +
-      "k\022a\n\tto_import\030\002 \003(\0132N.google_import_pro",
-      "to.FetchAttachmentsAndImportWaveletTask." +
-      "RemoteAttachmentInfo\022b\n\010imported\030\003 \003(\0132P" +
-      ".google_import_proto.FetchAttachmentsAnd" +
-      "ImportWaveletTask.ImportedAttachmentInfo" +
-      "\032o\n\024RemoteAttachmentInfo\022\021\n\tremote_id\030\001 " +
-      "\002(\t\022\020\n\010filename\030\002 \001(\t\022\021\n\tsizeBytes\030\003 \001(\003" +
-      "\022\021\n\tmime_type\030\004 \001(\t\022\014\n\004path\030\005 \002(\t\032\217\001\n\026Im" +
-      "portedAttachmentInfo\022c\n\013remote_info\030\001 \002(" +
-      "\0132N.google_import_proto.FetchAttachments" +
-      "AndImportWaveletTask.RemoteAttachmentInf",
-      "o\022\020\n\010local_id\030\002 \001(\t\"\366\001\n\021ImportTaskPayloa" +
-      "d\022A\n\017find_waves_task\030\001 \001(\0132(.google_impo" +
-      "rt_proto.FindRemoteWavesTask\022C\n\023import_w" +
-      "avelet_task\030\002 \001(\0132&.google_import_proto." +
-      "ImportWaveletTask\022Y\n\026fetch_attachments_t" +
-      "ask\030\003 \001(\01329.google_import_proto.FetchAtt" +
-      "achmentsAndImportWaveletTaskB+\n\033com.goog" +
-      "le.walkaround.protoB\014GoogleImport"
+      "g_slob_id_to_ignore\030\006 \001(\t\022\032\n\022synthesize_" +
+      "history\030\007 \002(\010\0329\n\022ImportedAttachment\022\021\n\tr" +
+      "emote_id\030\001 \002(\t\022\020\n\010local_id\030\002 \001(\t\",\n\021Impo" +
+      "rtSharingMode\022\013\n\007PRIVATE\020\000\022\n\n\006SHARED\020\001\"\266" +
+      "\004\n$FetchAttachmentsAndImportWaveletTask\022" +
+      "D\n\024original_import_task\030\001 \002(\0132&.google_i" +
+      "mport_proto.ImportWaveletTask\022a\n\tto_impo",
+      "rt\030\002 \003(\0132N.google_import_proto.FetchAtta" +
+      "chmentsAndImportWaveletTask.RemoteAttach" +
+      "mentInfo\022b\n\010imported\030\003 \003(\0132P.google_impo" +
+      "rt_proto.FetchAttachmentsAndImportWavele" +
+      "tTask.ImportedAttachmentInfo\032o\n\024RemoteAt" +
+      "tachmentInfo\022\021\n\tremote_id\030\001 \002(\t\022\020\n\010filen" +
+      "ame\030\002 \001(\t\022\021\n\tsizeBytes\030\003 \001(\003\022\021\n\tmime_typ" +
+      "e\030\004 \001(\t\022\014\n\004path\030\005 \002(\t\032\217\001\n\026ImportedAttach" +
+      "mentInfo\022c\n\013remote_info\030\001 \002(\0132N.google_i" +
+      "mport_proto.FetchAttachmentsAndImportWav",
+      "eletTask.RemoteAttachmentInfo\022\020\n\010local_i" +
+      "d\030\002 \001(\t\"\366\001\n\021ImportTaskPayload\022A\n\017find_wa" +
+      "ves_task\030\001 \001(\0132(.google_import_proto.Fin" +
+      "dRemoteWavesTask\022C\n\023import_wavelet_task\030" +
+      "\002 \001(\0132&.google_import_proto.ImportWavele" +
+      "tTask\022Y\n\026fetch_attachments_task\030\003 \001(\01329." +
+      "google_import_proto.FetchAttachmentsAndI" +
+      "mportWaveletTaskB+\n\033com.google.walkaroun" +
+      "d.protoB\014GoogleImport"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -7341,7 +7382,7 @@ public final class GoogleImport {
           internal_static_google_import_proto_ImportWaveletTask_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_google_import_proto_ImportWaveletTask_descriptor,
-              new java.lang.String[] { "Instance", "WaveId", "WaveletId", "SharingMode", "Attachment", "ExistingSlobIdToIgnore", },
+              new java.lang.String[] { "Instance", "WaveId", "WaveletId", "SharingMode", "Attachment", "ExistingSlobIdToIgnore", "SynthesizeHistory", },
               com.google.walkaround.proto.GoogleImport.ImportWaveletTask.class,
               com.google.walkaround.proto.GoogleImport.ImportWaveletTask.Builder.class);
           internal_static_google_import_proto_ImportWaveletTask_ImportedAttachment_descriptor =

@@ -83,16 +83,16 @@ public class MutationLog {
 
   private static class CacheEntry {
     private final long version;
-    private final String snapshot;
+    @Nullable private final String snapshot;
     private final long mostRecentSnapshotBytes;
     private final long totalDeltaBytesSinceSnapshot;
 
     public CacheEntry(long version,
-        String snapshot,
+        @Nullable String snapshot,
         long mostRecentSnapshotBytes,
         long totalDeltaBytesSinceSnapshot) {
       this.version = version;
-      this.snapshot = checkNotNull(snapshot, "Null snapshot");
+      this.snapshot = snapshot;
       this.mostRecentSnapshotBytes = mostRecentSnapshotBytes;
       this.totalDeltaBytesSinceSnapshot = totalDeltaBytesSinceSnapshot;
     }
@@ -101,7 +101,7 @@ public class MutationLog {
       return version;
     }
 
-    public String getSnapshot() {
+    @Nullable public String getSnapshot() {
       return snapshot;
     }
 
@@ -114,7 +114,7 @@ public class MutationLog {
     }
 
     @Override public String toString() {
-      return "CacheEntry("
+      return getClass().getSimpleName() + "("
           + version + ", "
           + snapshot + ", "
           + mostRecentSnapshotBytes + ", "
@@ -649,11 +649,15 @@ public class MutationLog {
     }
   }
 
+  @Nullable private Entity getDeltaEntity(long version) throws RetryableFailure, PermanentFailure {
+    return tx.get(makeDeltaKey(objectId, version));
+  }
+
   private void checkDeltaDoesNotExist(long version) throws RetryableFailure, PermanentFailure {
     // This check is not necessary but let's be paranoid.
     // TODO(danilatos): Make this async and check the result on flush() to
     // improve latency. Or, make an informed decision to remove it.
-    Entity existing = tx.get(makeDeltaKey(objectId, version));
+    Entity existing = getDeltaEntity(version);
     Assert.check(existing == null,
         "Datastore fail?  Found unexpected delta: %s, %s, %s",
         objectId, version, existing);
@@ -704,14 +708,20 @@ public class MutationLog {
       // case of having no deltas to read for transform more common, and would
       // (presumably) make sharing the iterator harder, so this code would be a
       // better starting point for that.
-      CheckedIterator deltaKeys = getDeltaEntityIterator(cachedVersion - 1, cachedVersion + 1,
-          FetchOptions.Builder.withChunkSize(2).limit(2).prefetchSize(2), true, true);
-      if (!deltaKeys.hasNext()) {
-        throw new RuntimeException("Missing data: Delta " + cachedVersion
-            + " not found: " + deltaKeys);
+      boolean cacheValid;
+      if (cachedVersion == 0) {
+        cacheValid = getDeltaEntity(0L) == null;
+      } else {
+        CheckedIterator deltaKeys = getDeltaEntityIterator(cachedVersion - 1, cachedVersion + 1,
+            FetchOptions.Builder.withChunkSize(2).limit(2).prefetchSize(2), true, true);
+        if (!deltaKeys.hasNext()) {
+          throw new RuntimeException("Missing data: Delta " + cachedVersion
+              + " not found: " + deltaKeys);
+        }
+        deltaKeys.next();
+        cacheValid = !deltaKeys.hasNext();
       }
-      deltaKeys.next();
-      if (!deltaKeys.hasNext()) {
+      if (cacheValid) {
         log.info("MutationLog cache: Constructing appender based on cached slob version "
             + cachedVersion);
         return new AppenderAndCachedDeltas(

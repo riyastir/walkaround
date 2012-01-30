@@ -17,6 +17,7 @@
 package com.google.walkaround.wave.server.googleimport;
 
 import com.google.appengine.api.urlfetch.FetchOptions;
+
 import com.google.appengine.api.urlfetch.HTTPHeader;
 import com.google.appengine.api.urlfetch.HTTPMethod;
 import com.google.appengine.api.urlfetch.HTTPRequest;
@@ -38,6 +39,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.waveprotocol.wave.federation.Proto.ProtocolAppliedWaveletDelta;
 import org.waveprotocol.wave.model.id.WaveId;
 import org.waveprotocol.wave.model.id.WaveletId;
 import org.waveprotocol.wave.model.id.WaveletName;
@@ -224,7 +226,7 @@ public class RobotApi {
   }
 
   /**
-   * Gets the current state of the wave.
+   * Gets the current state of the wavelet.
    */
   public Pair<GoogleWavelet, ImmutableList<GoogleDocument>> getSnapshot(WaveletName waveletName)
       throws IOException {
@@ -245,7 +247,26 @@ public class RobotApi {
     }
   }
 
-  // TODO(ohler): Add getDeltas() method.
+  /**
+   * Gets delta history for the wavelet.  The server limits its response size in
+   * various ways but always return at least one delta; this method has the same
+   * behavior.
+   */
+  public List<ProtocolAppliedWaveletDelta> getRawDeltas(WaveletName waveletName, long fromVersion)
+      throws IOException {
+    JSONObject resp = callRobotApi(ROBOT_API_METHOD_FETCH_WAVE,
+        getFetchWaveParamMap(waveletName, "rawDeltasFromVersion", fromVersion));
+    try {
+      JSONArray deltas = resp.getJSONArray("rawDeltas");
+      ImmutableList.Builder<ProtocolAppliedWaveletDelta> out = ImmutableList.builder();
+      for (int i = 0; i < deltas.length(); i++) {
+        out.add(ProtocolAppliedWaveletDelta.parseFrom(Base64.decodeBase64(deltas.getString(i))));
+      }
+      return out.build();
+    } catch (JSONException e) {
+      throw new RuntimeException("Failed to parse deltas response: " + resp, e);
+    }
+  }
 
   /**
    * Gets the list of wavelets in a wave that are visible the user.

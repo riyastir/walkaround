@@ -49,6 +49,10 @@ post_commit_action_interval_millis: 10000,
    -- note that frontend clones will probably not live that long anyway */
 slob_local_cache_expiration_millis: 172800000,
 
+/* Attempts to preserve history but falls back to synthesis in certain
+   error cases. */
+import_preserve_history: '${import-preserve-history}',
+
 announcement_html: '${announcement-html}'
 
 }
