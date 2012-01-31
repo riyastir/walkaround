@@ -133,10 +133,12 @@ message FindRemoteWavesTask {
   required int64 on_or_after_days = 2;
   // End of time period to search in days since Unix epoch.  Exclusive.
   required int64 before_days = 3;
+  // If present, import all waves found, with these settings.
+  optional ImportSettings auto_import_settings = 4;
 }
 
-// Task to import a wavelet.
-message ImportWaveletTask {
+// Specifies how to import a wavelet (but not what wavelet to import).
+message ImportSettings {
   // Apparently, PST throws NullPointerExceptions on top-level enums,
   // so this is nested.
   enum ImportSharingMode {
@@ -144,7 +146,22 @@ message ImportWaveletTask {
     PRIVATE = 0;
     // Imported wavelet will be shared between all original participants.
     SHARED = 1;
+    // Imported wavelet will be shared if importing user is a
+    // participant, private otherwise.
+    PRIVATE_UNLESS_PARTICIPANT = 2;
   }
+
+  // Whether to use private or shared import.
+  required ImportSharingMode sharing_mode = 1;
+
+  // If true, synthesize a history rather than copying remote history.
+  // If false, attempt to preserve history, but fall back to synthesis
+  // if history can't be preserved.
+  required bool synthesize_history = 2;
+}
+
+// Task to import a wavelet.
+message ImportWaveletTask {
 
   // Source instance in serialized form.
   required string instance = 1;
@@ -152,14 +169,16 @@ message ImportWaveletTask {
   required string wave_id = 2;
   // Wavelet to import.  Must be conversational.
   required string wavelet_id = 3;
-  // Whether to use private or shared import.
-  required ImportSharingMode sharing_mode = 4;
+  // How to import.
+  required ImportSettings settings = 4;
 
   message ImportedAttachment {
     required string remote_id = 1;
     // Absent means attachment could not be imported.
     optional string local_id = 2;
   }
+  // May be set by the import logic itself.  Leave this empty when
+  // creating a new task.
   repeated ImportedAttachment attachment = 5;
 
   // If present, a slob ID that should not be considered an existing
@@ -171,11 +190,6 @@ message ImportWaveletTask {
   // re-import, since its id is different from the id the task
   // ignores.
   optional string existing_slob_id_to_ignore = 6;
-
-  // If true, synthesize a history rather than copying remote history.
-  // If false, attempt to preserve history, but fall back to synthesis
-  // if history can't be preserved.
-  required bool synthesize_history = 7;
 }
 
 message FetchAttachmentsAndImportWaveletTask {

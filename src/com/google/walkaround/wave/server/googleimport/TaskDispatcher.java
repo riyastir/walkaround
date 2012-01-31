@@ -25,7 +25,7 @@ import com.google.walkaround.proto.FetchAttachmentsAndImportWaveletTask;
 import com.google.walkaround.proto.FindRemoteWavesTask;
 import com.google.walkaround.proto.ImportTaskPayload;
 import com.google.walkaround.proto.ImportWaveletTask;
-import com.google.walkaround.proto.ImportWaveletTask.ImportSharingMode;
+import com.google.walkaround.proto.ImportSettings.ImportSharingMode;
 import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
 import com.google.walkaround.wave.server.gxp.SourceInstance;
 
@@ -89,22 +89,25 @@ public class TaskDispatcher {
     if (task.getPayload().hasFindWavesTask()) {
       FindRemoteWavesTask t = task.getPayload().getFindWavesTask();
       return taskAgePrefix(task)
-          + "Find waves on "
+          + (t.hasAutoImportSettings() ? "Find and import" : "Find") + " waves on "
           + sourceInstanceFactory.parseUnchecked(t.getInstance()).getShortName()
           + " between " + DaysSinceEpoch.toLocalDate(t.getOnOrAfterDays())
           + " and " + DaysSinceEpoch.toLocalDate(t.getBeforeDays());
     } else if (task.getPayload().hasImportWaveletTask()) {
       ImportWaveletTask t = task.getPayload().getImportWaveletTask();
       String sharingMode;
-      switch (t.getSharingMode()) {
+      switch (t.getSettings().getSharingMode()) {
         case PRIVATE:
           sharingMode = "Private";
           break;
         case SHARED:
           sharingMode = "Shared";
           break;
+        case PRIVATE_UNLESS_PARTICIPANT:
+          sharingMode = "Shared (if participant)";
+          break;
         default:
-          throw new AssertionError("Unexpected SharingMode: " + t.getSharingMode());
+          throw new AssertionError("Unexpected SharingMode: " + t.getSettings().getSharingMode());
       }
       return taskAgePrefix(task)
           + sharingMode + " import of wavelet " + t.getWaveId() + " " + t.getWaveletId()
@@ -120,6 +123,17 @@ public class TaskDispatcher {
     } else {
       throw new AssertionError("Unknown task payload type: " + task);
     }
+  }
+
+  public boolean importAllInProgress(List<ImportTask> tasksInProgress) {
+    for (ImportTask task : tasksInProgress) {
+      if (task.getPayload().hasFindWavesTask()) {
+        if (task.getPayload().getFindWavesTask().hasAutoImportSettings()) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public Multimap<Pair<SourceInstance, WaveletName>, ImportSharingMode> waveletImportsInProgress(
@@ -142,7 +156,7 @@ public class TaskDispatcher {
             Pair.of(sourceInstanceFactory.parseUnchecked(t.getInstance()),
                 WaveletName.of(WaveId.deserialise(t.getWaveId()),
                     WaveletId.deserialise(t.getWaveletId()))),
-            t.getSharingMode());
+            t.getSettings().getSharingMode());
       }
     }
     return out.build();
