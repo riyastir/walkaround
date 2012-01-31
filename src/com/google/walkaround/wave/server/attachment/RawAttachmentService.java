@@ -140,6 +140,11 @@ public class RawAttachmentService {
   }
 
   @Nullable private Image attemptGetImageMetadata(BlobstoreService blobstore, BlobInfo info) {
+    if (info.getSize() == 0) {
+      // Special case since it would lead to an IllegalArgumentException below.
+      log.info("Empty attachment, can't get image metadata: " + info);
+      return null;
+    }
     final int readPortion = headerBytesUpperBound;
     BlobKey key = info.getBlobKey();
     byte[] data = blobstore.fetchData(key, 0, readPortion);

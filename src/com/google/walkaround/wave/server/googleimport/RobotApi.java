@@ -17,7 +17,6 @@
 package com.google.walkaround.wave.server.googleimport;
 
 import com.google.appengine.api.urlfetch.FetchOptions;
-
 import com.google.appengine.api.urlfetch.HTTPHeader;
 import com.google.appengine.api.urlfetch.HTTPMethod;
 import com.google.appengine.api.urlfetch.HTTPRequest;
@@ -32,6 +31,9 @@ import com.google.walkaround.proto.GoogleImport.GoogleDocument;
 import com.google.walkaround.proto.GoogleImport.GoogleWavelet;
 import com.google.walkaround.proto.RobotSearchDigest;
 import com.google.walkaround.proto.gson.RobotSearchDigestGsonImpl;
+import com.google.walkaround.util.server.RetryHelper;
+import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
+import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
 import com.google.walkaround.wave.server.auth.OAuthedFetchService;
 import com.google.walkaround.wave.server.auth.OAuthedFetchService.TokenRefreshNeededDetector;
 
@@ -92,6 +94,7 @@ public class RobotApi {
       new TokenRefreshNeededDetector() {
         @Override public boolean refreshNeeded(HTTPResponse resp) throws IOException {
           if (resp.getResponseCode() == 401) {
+            log.warning("Response code 401: " + resp);
             return true;
           }
           if (!EXPECTED_CONTENT_TYPE.equals(fetch.getSingleHeader(resp, "Content-Type"))) {
@@ -101,7 +104,12 @@ public class RobotApi {
           try {
             if (result.has("error")) {
               JSONObject error = result.getJSONObject("error");
-              return error.has("code") && error.getInt("code") == 401;
+              if (error.has("code") && error.getInt("code") == 401) {
+                log.warning("Looks like a 401: " + result + ", " + resp);
+                return true;
+              } else {
+                return false;
+              }
             } else {
               return false;
             }
@@ -167,7 +175,8 @@ public class RobotApi {
     }
   }
 
-  private JSONObject callRobotApi(String method, Map<String, Object> params) throws IOException {
+  private JSONObject callRobotApi(final String method, Map<String, Object> params)
+      throws IOException {
     JSONArray ops = new JSONArray();
     try {
       JSONObject jsonParams = new JSONObject();
@@ -182,34 +191,47 @@ public class RobotApi {
     } catch (JSONException e) {
       throw new RuntimeException("Failed to construct JSON object", e);
     }
-    HTTPRequest req = new HTTPRequest(new URL(baseUrl), HTTPMethod.POST,
+    final HTTPRequest req = new HTTPRequest(new URL(baseUrl), HTTPMethod.POST,
         FetchOptions.Builder.disallowTruncate().followRedirects()
             .validateCertificate().setDeadline(20.0));
     log.info("payload=" + ops);
     req.setHeader(new HTTPHeader("Content-Type", "application/json; charset=UTF-8"));
     req.setPayload(ops.toString().getBytes(Charsets.UTF_8));
-    JSONObject result = parseJsonResponseBody(fetch.fetch(req, robotErrorCode401Detector));
-    log.info("result=" + ValueUtils.abbrev("" + result, 500));
     try {
-      if (result.has("error")) {
-        log.warning("Error result: " + result);
-        JSONObject error = result.getJSONObject("error");
-        throw new RuntimeException("Error from robot API: " + error);
-      } else if (result.has("data")) {
-        JSONObject data = result.getJSONObject("data");
-        if (data.length() == 0) {
-          // Apparently, the server often sends {"id":"op_id", "data":{}} when
-          // something went wrong on the server side, so we translate that to an
-          // IOException.
-          throw new IOException("Robot API response looks like an error: " + result);
-        } else {
-          return data;
-        }
-      } else {
-        throw new RuntimeException("Result has neither error nor data: " + result);
-      }
-    } catch (JSONException e) {
-      throw new RuntimeException("JSONException parsing result: " + result, e);
+      return new RetryHelper().run(new RetryHelper.Body<JSONObject>() {
+            @Override public JSONObject run() throws RetryableFailure, PermanentFailure {
+              JSONObject result;
+              try {
+                result = parseJsonResponseBody(fetch.fetch(req, robotErrorCode401Detector));
+              } catch (IOException e) {
+                throw new PermanentFailure("IOException with " + method + ": " + req, e);
+              }
+              log.info("result=" + ValueUtils.abbrev("" + result, 500));
+              try {
+                if (result.has("error")) {
+                  log.warning("Error result: " + result);
+                  JSONObject error = result.getJSONObject("error");
+                  throw new RuntimeException("Error from robot API: " + error);
+                } else if (result.has("data")) {
+                  JSONObject data = result.getJSONObject("data");
+                  if (data.length() == 0) {
+                    // Apparently, the server often sends {"id":"op_id", "data":{}} when
+                    // something went wrong on the server side, so we translate that to an
+                    // IOException.
+                    throw new RetryableFailure("Robot API response looks like an error: " + result);
+                  } else {
+                    return data;
+                  }
+                } else {
+                  throw new RuntimeException("Result has neither error nor data: " + result);
+                }
+              } catch (JSONException e) {
+                throw new RuntimeException("JSONException parsing result: " + result, e);
+              }
+            }
+          });
+    } catch (PermanentFailure e) {
+      throw new IOException("PermanentFailure with " + method + ": " + req);
     }
   }
 

@@ -78,7 +78,7 @@ public class AttachmentIdConverter extends NindoCursorDecorator {
           String newValue;
           AttachmentId mapped = mapping.get(entry.getValue());
           if (mapped == null) {
-            log.severe("Attachment id not found: " + entry);
+            log.warning("Attachment id not found: " + entry);
             // Preserve; not sure this is a good idea but it's probably better
             // than dropping the value.
             newValue = entry.getValue();
