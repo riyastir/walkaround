@@ -23,9 +23,11 @@ import com.google.gxp.base.GxpContext;
 import com.google.gxp.html.HtmlClosure;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.google.walkaround.proto.ImportSettings;
+import com.google.walkaround.proto.ImportSettings.ImportSharingMode;
 import com.google.walkaround.proto.ImportTaskPayload;
 import com.google.walkaround.proto.ImportWaveletTask;
-import com.google.walkaround.proto.ImportWaveletTask.ImportSharingMode;
+import com.google.walkaround.proto.gson.ImportSettingsGsonImpl;
 import com.google.walkaround.proto.gson.ImportTaskPayloadGsonImpl;
 import com.google.walkaround.proto.gson.ImportWaveletTaskGsonImpl;
 import com.google.walkaround.slob.shared.SlobId;
@@ -39,6 +41,8 @@ import com.google.walkaround.util.server.auth.InvalidSecurityTokenException;
 import com.google.walkaround.util.server.servlet.AbstractHandler;
 import com.google.walkaround.util.server.servlet.BadRequestException;
 import com.google.walkaround.util.shared.Assert;
+import com.google.walkaround.wave.server.Flag;
+import com.google.walkaround.wave.server.FlagName;
 import com.google.walkaround.wave.server.auth.NeedNewOAuthTokenException;
 import com.google.walkaround.wave.server.auth.StableUserId;
 import com.google.walkaround.wave.server.auth.UserContext;
@@ -90,6 +94,7 @@ public class ImportOverviewHandler extends AbstractHandler {
   @Inject Provider<FindRemoteWavesProcessor> findProcessor;
   @Inject PageSkinWriter pageSkinWriter;
   @Inject UserContext userContext;
+  @Inject @Flag(FlagName.IMPORT_PRESERVE_HISTORY) boolean preserveHistory;
 
   private String makeLocalWaveLink(SlobId convSlobId) {
     return "/wave?id=" + UriEscapers.uriQueryStringEscaper(false).escape(convSlobId.getId());
@@ -117,12 +122,16 @@ public class ImportOverviewHandler extends AbstractHandler {
               wavelet.getDigest().getTitle(),
               "" + new LocalDate(new Instant(wavelet.getDigest().getLastModifiedMillis())),
               importsInProgress.containsEntry(Pair.of(wavelet.getSourceInstance(), waveletName),
-                  ImportSharingMode.PRIVATE),
+                  ImportSharingMode.PRIVATE)
+                  || importsInProgress.containsEntry(Pair.of(wavelet.getSourceInstance(),
+                      waveletName), ImportSharingMode.PRIVATE_UNLESS_PARTICIPANT),
               wavelet.getPrivateLocalId() == null ? null : wavelet.getPrivateLocalId().getId(),
               wavelet.getPrivateLocalId() == null ? null
                   : makeLocalWaveLink(wavelet.getPrivateLocalId()),
               importsInProgress.containsEntry(Pair.of(wavelet.getSourceInstance(), waveletName),
-                  ImportSharingMode.SHARED),
+                  ImportSharingMode.SHARED)
+                  || importsInProgress.containsEntry(Pair.of(wavelet.getSourceInstance(),
+                      waveletName), ImportSharingMode.PRIVATE_UNLESS_PARTICIPANT),
               wavelet.getSharedLocalId() == null ? null : wavelet.getSharedLocalId().getId(),
               wavelet.getSharedLocalId() == null ? null
                   : makeLocalWaveLink(wavelet.getSharedLocalId())));
@@ -138,9 +147,9 @@ public class ImportOverviewHandler extends AbstractHandler {
       Assert.check(instanceId.matches("[a-zA-Z_.]+"),
           "Bad characters in instance id: %s", instance);
       out.append("<input type='radio'" + (first ? " checked='checked'" : "")
-          + " name='instance' value='" + instanceId + "'>"
+          + " name='instance' value='" + instanceId + "'/> "
           + HtmlEscaper.HTML_ESCAPER.escape(instance.getLongName())
-          + "</input><br/>");
+          + "<br/>");
       first = false;
     }
     return out.toString();
@@ -209,16 +218,33 @@ public class ImportOverviewHandler extends AbstractHandler {
       throw new BadRequestException(e);
     }
     String action = requireParameter(req, "action");
-    if ("findwaves".equals(action)) {
+    if ("findwaves".equals(action) || "findandimport".equals(action)) {
       SourceInstance instance =
           sourceInstanceFactory.parseUnchecked(requireParameter(req, "instance"));
       // Rather than enqueueing just one interval 2008-01-01 to 2013-01-01, we
       // split that interval into random parts.  See the note on randomization
       // in FindRemoteWavesProcessor.
       log.info("Enqueueing find waves tasks");
+      @Nullable ImportSettings autoImportSettings;
+      if ("findwaves".equals(action)) {
+        autoImportSettings = null;
+      } else {
+        autoImportSettings = new ImportSettingsGsonImpl();
+        autoImportSettings.setSynthesizeHistory(!preserveHistory);
+        if ("private".equals(requireParameter(req, "sharingmode"))) {
+          autoImportSettings.setSharingMode(ImportSharingMode.PRIVATE);
+        } else if ("shared".equals(requireParameter(req, "sharingmode"))) {
+          autoImportSettings.setSharingMode(ImportSharingMode.SHARED);
+        } else if ("privateunlessparticipant".equals(requireParameter(req, "sharingmode"))) {
+          autoImportSettings.setSharingMode(ImportSharingMode.PRIVATE_UNLESS_PARTICIPANT);
+        } else {
+          throw new BadRequestException("Bad sharingmode");
+        }
+      }
       enqueueTasks(findProcessor.get().makeRandomTasksForInterval(instance,
             DaysSinceEpoch.fromYMD(2008, 1, 1),
-            DaysSinceEpoch.fromYMD(2013, 1, 1)));
+            DaysSinceEpoch.fromYMD(2013, 1, 1),
+            autoImportSettings));
     } else if ("importwavelet".equals(action)) {
       SourceInstance instance =
           sourceInstanceFactory.parseUnchecked(requireParameter(req, "instance"));
@@ -228,20 +254,24 @@ public class ImportOverviewHandler extends AbstractHandler {
       task.setInstance(instance.serialize());
       task.setWaveId(waveId.serialise());
       task.setWaveletId(waveletId.serialise());
+      ImportSettings settings = new ImportSettingsGsonImpl();
       if ("private".equals(requireParameter(req, "sharingmode"))) {
-        task.setSharingMode(ImportWaveletTask.ImportSharingMode.PRIVATE);
+        settings.setSharingMode(ImportSettings.ImportSharingMode.PRIVATE);
       } else if ("shared".equals(requireParameter(req, "sharingmode"))) {
-        task.setSharingMode(ImportWaveletTask.ImportSharingMode.SHARED);
+        settings.setSharingMode(ImportSettings.ImportSharingMode.SHARED);
       } else {
         throw new BadRequestException("Unexpected import sharing mode");
       }
+      settings.setSynthesizeHistory(!preserveHistory);
+      task.setSettings(settings);
       @Nullable String existingSlobIdToIgnore = optionalParameter(req, "ignoreexisting", null);
       if (existingSlobIdToIgnore != null) {
         task.setExistingSlobIdToIgnore(existingSlobIdToIgnore);
       }
       final ImportTaskPayload payload = new ImportTaskPayloadGsonImpl();
       payload.setImportWaveletTask(task);
-      log.info("Enqueueing import task for " + waveId);
+      log.info("Enqueueing import task for " + waveId
+          + "; synthesizeHistory=" + task.getSettings().getSynthesizeHistory());
       enqueueTasks(ImmutableList.of(payload));
     } else if ("canceltasks".equals(action)) {
       log.info("Cancelling all tasks for " + userId);

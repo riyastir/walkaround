@@ -269,7 +269,7 @@ public class SlobStoreImpl implements SlobStore {
   @Override
   public void newObject(CheckedTransaction tx,
       SlobId slobId, String metadata, List<ChangeData<String>> initialHistory,
-      boolean inhibitPostCommit)
+      boolean inhibitPreAndPostCommit)
       throws SlobAlreadyExistsException, AccessDeniedException, RetryableFailure, PermanentFailure {
     Preconditions.checkNotNull(tx, "Null tx");
     Preconditions.checkNotNull(slobId, "Null slobId");
@@ -294,13 +294,12 @@ public class SlobStoreImpl implements SlobStore {
     try {
       appender.appendAll(initialHistory);
     } catch (ChangeRejected e) {
-      throw new IllegalArgumentException("Invalid initial history: " + initialHistory);
+      throw new IllegalArgumentException("Invalid initial history: " + initialHistory, e);
     }
     l.putMetadata(metadata);
     appender.finish();
-    // TODO(ohler): once we have inbox based on full-text search, inhibit pre-commit as well.
-    localProcessor.runPreCommit(tx, slobId, appender);
-    if (!inhibitPostCommit) {
+    if (!inhibitPreAndPostCommit) {
+      localProcessor.runPreCommit(tx, slobId, appender);
       localProcessor.schedulePostCommit(tx, slobId, appender);
     }
   }

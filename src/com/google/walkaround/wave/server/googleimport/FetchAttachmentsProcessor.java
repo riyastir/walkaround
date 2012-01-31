@@ -152,7 +152,7 @@ public class FetchAttachmentsProcessor {
     // API is still experimental and I've seen it misbehave.
     bytes.rewind();
     byte[] expected = getBytes(bytes);
-    byte[] actual= slurp(file);
+    byte[] actual = slurp(file);
     if (!Arrays.equals(expected, actual)) {
       // These may be big log messages, but we need to log something that helps debugging.
       log.warning("Tried to write: " + prettyBytes(expected));
@@ -188,9 +188,24 @@ public class FetchAttachmentsProcessor {
                   Assert.check(expectedBytes == bytes.length, "Expected %s bytes, got %s: %s",
                       expectedBytes, bytes.length, prettyBytes(bytes));
                 }
-                AppEngineFile file = dump(mimeType, filename, ByteBuffer.wrap(bytes));
+                final AppEngineFile file = dump(mimeType, filename, ByteBuffer.wrap(bytes));
                 log.info("Wrote file " + file);
-                BlobKey blobKey = getFileService().getBlobKey(file);
+                BlobKey blobKey =
+                    // NOTE(ohler): When running locally with unapplied jobs
+                    // enabled, getBlobKey() sometimes returns null here even
+                    // though it shouldn't, according to its documentation.  So
+                    // we retry.  Not sure if this is needed when deployed.
+                    new RetryHelper().run(
+                        new RetryHelper.Body<BlobKey>() {
+                          @Override public BlobKey run() throws RetryableFailure {
+                            BlobKey key = getFileService().getBlobKey(file);
+                            if (key != null) {
+                              return key;
+                            } else {
+                              throw new RetryableFailure("getBlobKey(" + file + ") returned null");
+                            }
+                          }
+                        });
                 return rawAttachmentService.turnBlobIntoAttachment(blobKey);
               } catch (IOException e) {
                 throw new RetryableFailure("IOException fetching " + url);

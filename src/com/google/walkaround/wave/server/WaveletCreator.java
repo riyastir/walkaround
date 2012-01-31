@@ -169,7 +169,7 @@ public class WaveletCreator {
 
   public SlobId newConvWithGeneratedId(
       @Nullable List<WaveletOperation> historyOps,
-      @Nullable final ConvMetadataGsonImpl convMetadata, final boolean inhibitPostCommit)
+      @Nullable final ConvMetadataGsonImpl convMetadata, final boolean inhibitPreAndPostCommit)
       throws IOException {
     final List<ChangeData<String>> history;
     if (historyOps != null) {
@@ -187,7 +187,7 @@ public class WaveletCreator {
               CheckedTransaction tx = datastore.beginTransaction();
               try {
                 convStore.newObject(tx, convId, makeObsoleteConvMetadata(), history,
-                    inhibitPostCommit);
+                    inhibitPreAndPostCommit);
                 convMetadataStore.put(tx, convId,
                     convMetadata != null ? convMetadata : new ConvMetadataGsonImpl());
                 tx.commit();

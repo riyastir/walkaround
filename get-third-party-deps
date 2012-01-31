@@ -71,6 +71,19 @@ dir third_party_src
     cd trunk
     # TODO(ohler): submit to Apache Wave
     patch -p0 <<EOF
+Index: src/org/waveprotocol/wave/migration/helpers/FixLinkAnnotationsFilter.java
+===================================================================
+--- src/org/waveprotocol/wave/migration/helpers/FixLinkAnnotationsFilter.java	(revision 1213039)
++++ src/org/waveprotocol/wave/migration/helpers/FixLinkAnnotationsFilter.java	(working copy)
+@@ -136,7 +136,7 @@
+   }
+ 
+   public static String normalize(String oldHref) {
+-    if (oldHref.startsWith(OLD_PREFIX)) {
++    if (oldHref != null && oldHref.startsWith(OLD_PREFIX)) {
+       try {
+         return linkValueFromWaveValue(oldHref.substring(OLD_PREFIX.length()));
+       } catch (InvalidWaveRefException e) {
 Index: src/org/waveprotocol/wave/client/wavepanel/view/dom/ParticipantAvatarDomImpl.java
 ===================================================================
 --- src/org/waveprotocol/wave/client/wavepanel/view/dom/ParticipantAvatarDomImpl.java	(revision 1213039)

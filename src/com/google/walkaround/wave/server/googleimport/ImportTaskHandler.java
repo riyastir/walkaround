@@ -98,6 +98,12 @@ public class ImportTaskHandler extends AbstractHandler {
             @Override public void run() throws RetryableFailure, PermanentFailure {
               CheckedTransaction tx = datastore.beginTransaction();
               try {
+                if (perUserTable.getTask(tx, userId, taskId) == null) {
+                  // If the task is already gone, make sure we don't schedule follow-up tasks.
+                  log.info(
+                      "Task is gone from datastore; either completed concurrently or cancelled");
+                  return;
+                }
                 perUserTable.deleteTask(tx, userId, taskId);
                 for (ImportTaskPayload payload : followupTasks) {
                   perUserTable.addTask(tx, userId, payload);

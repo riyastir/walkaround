@@ -449,6 +449,7 @@
     <dev_appserver war="${build.war}" port="8080" address="0.0.0.0">
       <options>
         <arg value="--jvm_flag=-XX:+ClassUnloading"/>
+        <arg value="--jvm_flag=-Ddatastore.default_high_rep_job_policy_unapplied_job_pct=30"/>
       </options>
     </dev_appserver>
   </target>
@@ -458,6 +459,7 @@
     <dev_appserver war="${build.war}" port="8080">
       <options>
         <arg value="--jvm_flag=-XX:+ClassUnloading"/>
+        <arg value="--jvm_flag=-Ddatastore.default_high_rep_job_policy_unapplied_job_pct=30"/>
         <arg value="--jvm_flag=-Xdebug"/>
         <arg value="--jvm_flag=-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=9999"/>
       </options>

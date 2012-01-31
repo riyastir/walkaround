@@ -83,7 +83,7 @@ public interface SlobStore {
    * Creates a new object.
    */
   void newObject(CheckedTransaction tx, SlobId slobId, String metadata,
-      List<ChangeData<String>> initialHistory, boolean inhibitPostCommit)
+      List<ChangeData<String>> initialHistory, boolean inhibitPreAndPostCommit)
       throws SlobAlreadyExistsException, AccessDeniedException,
       RetryableFailure, PermanentFailure;
 

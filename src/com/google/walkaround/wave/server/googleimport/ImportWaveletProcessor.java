@@ -35,9 +35,9 @@ import com.google.walkaround.proto.GoogleImport.GoogleDocumentContent.ElementSta
 import com.google.walkaround.proto.GoogleImport.GoogleDocumentContent.KeyValuePair;
 import com.google.walkaround.proto.GoogleImport.GoogleWavelet;
 import com.google.walkaround.proto.ImportMetadata;
+import com.google.walkaround.proto.ImportSettings;
 import com.google.walkaround.proto.ImportTaskPayload;
 import com.google.walkaround.proto.ImportWaveletTask;
-import com.google.walkaround.proto.ImportWaveletTask.ImportSharingMode;
 import com.google.walkaround.proto.ImportWaveletTask.ImportedAttachment;
 import com.google.walkaround.proto.gson.ConvMetadataGsonImpl;
 import com.google.walkaround.proto.gson.FetchAttachmentsAndImportWaveletTaskGsonImpl;
@@ -72,6 +72,9 @@ import com.google.walkaround.wave.server.model.ServerMessageSerializer;
 import com.google.walkaround.wave.server.model.WaveObjectStoreModel.ReadableWaveletObject;
 import com.google.walkaround.wave.shared.WaveSerializer;
 
+import org.waveprotocol.box.server.common.CoreWaveletOperationSerializer;
+import org.waveprotocol.wave.federation.Proto.ProtocolAppliedWaveletDelta;
+import org.waveprotocol.wave.federation.Proto.ProtocolWaveletDelta;
 import org.waveprotocol.wave.migration.helpers.FixLinkAnnotationsFilter;
 import org.waveprotocol.wave.model.document.operation.Nindo;
 import org.waveprotocol.wave.model.id.IdConstants;
@@ -79,7 +82,15 @@ import org.waveprotocol.wave.model.id.IdUtil;
 import org.waveprotocol.wave.model.id.WaveId;
 import org.waveprotocol.wave.model.id.WaveletId;
 import org.waveprotocol.wave.model.id.WaveletName;
+import org.waveprotocol.wave.model.operation.wave.AddParticipant;
+import org.waveprotocol.wave.model.operation.wave.NoOp;
+import org.waveprotocol.wave.model.operation.wave.RemoveParticipant;
+import org.waveprotocol.wave.model.operation.wave.VersionUpdateOp;
+import org.waveprotocol.wave.model.operation.wave.WaveletBlipOperation;
+import org.waveprotocol.wave.model.operation.wave.WaveletDelta;
 import org.waveprotocol.wave.model.operation.wave.WaveletOperation;
+import org.waveprotocol.wave.model.operation.wave.WaveletOperationContext;
+import org.waveprotocol.wave.model.operation.wave.WaveletOperationVisitor;
 import org.waveprotocol.wave.model.util.Pair;
 import org.waveprotocol.wave.model.wave.ParticipantId;
 
@@ -87,6 +98,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.annotation.Nullable;
@@ -161,6 +173,10 @@ public class ImportWaveletProcessor {
     return participantId.replace("@googlewave.com", "@gmail.com");
   }
 
+  private ParticipantId convertGooglewaveToGmail(ParticipantId participantId) {
+    return ParticipantId.ofUnsafe(convertGooglewaveToGmail(participantId.getAddress()));
+  }
+
   private Pair<GoogleWavelet, ImmutableList<GoogleDocument>> convertGooglewaveToGmail(
       Pair<GoogleWavelet, ? extends List<GoogleDocument>> pair) {
     GoogleWavelet w = pair.getFirst();
@@ -184,15 +200,43 @@ public class ImportWaveletProcessor {
     return Pair.of(w2.build(), docs2.build());
   }
 
-  private List<WaveletOperation> convertConvHistory(List<WaveletOperation> in,
-      Map<String, AttachmentId> attachmentIdMapping) {
-    List<WaveletOperation> out = Lists.newArrayList();
-    WaveletHistoryConverter m = new WaveletHistoryConverter(
-        getConvNindoConverter(attachmentIdMapping));
-    for (WaveletOperation op : in) {
-      out.add(m.convertAndApply(op));
-    }
-    return out;
+  private WaveletOperation convertGooglewaveToGmail(final WaveletOperation op) {
+    final WaveletOperationContext newContext = new WaveletOperationContext(
+        convertGooglewaveToGmail(op.getContext().getCreator()),
+        op.getContext().getTimestamp(), op.getContext().getVersionIncrement(),
+        op.getContext().getHashedVersion());
+    final WaveletOperation[] result = { null };
+    op.acceptVisitor(new WaveletOperationVisitor() {
+        void setResult(WaveletOperation x) {
+          Preconditions.checkState(result[0] == null,
+              "%s: More than one result: %s, %s", op, result[0], x);
+          result[0] = x;
+        }
+
+        @Override public void visitNoOp(NoOp op) {
+          setResult(new NoOp(newContext));
+        }
+
+        @Override public void visitVersionUpdateOp(VersionUpdateOp op) {
+          throw new AssertionError("Unexpected visitVersionUpdateOp(" + op + ")");
+        }
+
+        @Override public void visitAddParticipant(AddParticipant op) {
+          setResult(
+              new AddParticipant(newContext, convertGooglewaveToGmail(op.getParticipantId())));
+        }
+
+        @Override public void visitRemoveParticipant(RemoveParticipant op) {
+          setResult(
+              new RemoveParticipant(newContext, convertGooglewaveToGmail(op.getParticipantId())));
+        }
+
+        @Override public void visitWaveletBlipOperation(WaveletBlipOperation waveletOp) {
+          setResult(WaveletOperation.cloneOp(waveletOp, newContext));
+        }
+      });
+    Assert.check(result[0] != null, "No result: %s", op);
+    return result[0];
   }
 
   private Map<String, AttachmentId> buildAttachmentMapping(ImportWaveletTask task) {
@@ -323,22 +367,19 @@ public class ImportWaveletProcessor {
     private final ImportWaveletTask task;
     private final SourceInstance instance;
     private final WaveletName waveletName;
-    private final ImportSharingMode sharingMode;
     private final RobotApi robotApi;
 
     private ImportContext(ImportWaveletTask task,
         SourceInstance instance,
         WaveletName waveletName,
-        ImportSharingMode sharingMode,
         RobotApi robotApi) {
       this.task = checkNotNull(task, "Null task");
       this.instance = checkNotNull(instance, "Null instance");
       this.waveletName = checkNotNull(waveletName, "Null waveletName");
-      this.sharingMode = checkNotNull(sharingMode, "Null sharingMode");
       this.robotApi = checkNotNull(robotApi, "Null robotApi");
     }
 
-    private List<WaveletOperation> handleAttachmentsAndSynthesizeHistory(
+    private Map<String, AttachmentId> getAttachmentsAndMapping(
         Pair<GoogleWavelet, ImmutableList<GoogleDocument>> snapshot)
         throws TaskCompleted {
       GoogleWavelet wavelet = snapshot.getFirst();
@@ -352,14 +393,14 @@ public class ImportWaveletProcessor {
               }));
       // Maps attachment ids (not document ids) to documents.
       Map<String, GoogleDocument> attachmentDocs = getAttachmentDocs(documents);
-      Map<String, AttachmentId> attachmentMapping;
       if (attachmentDocs.isEmpty()) {
         log.info("No attachments");
-        attachmentMapping = ImmutableMap.of();
+        return ImmutableMap.of();
       } else if (task.getAttachmentSize() > 0) {
-        attachmentMapping = buildAttachmentMapping(task);
+        Map<String, AttachmentId> attachmentMapping = buildAttachmentMapping(task);
         log.info("Attachments already imported; importing with attachment mapping "
             + attachmentMapping);
+        return attachmentMapping;
       } else {
         log.info("Found attachmend ids " + attachmentDocs.keySet());
         // Replace this task with one that fetches attachments and then imports.
@@ -371,12 +412,9 @@ public class ImportWaveletProcessor {
         payload.setFetchAttachmentsTask(newTask);
         throw TaskCompleted.withFollowup(payload);
       }
-      List<WaveletOperation> history =
-          new HistorySynthesizer().synthesizeHistory(wavelet, documents);
-      return convertConvHistory(history, attachmentMapping);
     }
 
-    private void addToPerUserTable(CheckedTransaction tx, SlobId newId)
+    private void addToPerUserTable(CheckedTransaction tx, SlobId newId, boolean isPrivate)
         throws RetryableFailure, PermanentFailure {
       @Nullable RemoteConvWavelet entry =
           perUserTable.getWavelet(tx, userId, instance, waveletName);
@@ -386,26 +424,22 @@ public class ImportWaveletProcessor {
       }
       // We overwrite unconditionally here, since it's a corner case.
       // TODO(ohler): think about this and explain what exactly is going on.
-      switch (sharingMode) {
-        case PRIVATE:
-          entry.setPrivateLocalId(newId);
-          break;
-        case SHARED:
-          entry.setSharedLocalId(newId);
-          break;
-        default:
-          throw new AssertionError("Unexpected ImportSharingMode: " + sharingMode);
+      if (isPrivate) {
+        entry.setPrivateLocalId(newId);
+      } else {
+        entry.setSharedLocalId(newId);
       }
       perUserTable.putWavelet(tx, userId, entry);
     }
 
-    private void addToPerUserTableWithoutTx(final SlobId newId) throws PermanentFailure {
+    private void addToPerUserTableWithoutTx(final SlobId newId, final boolean isPrivate)
+        throws PermanentFailure {
       new RetryHelper().run(
           new RetryHelper.VoidBody() {
             @Override public void run() throws RetryableFailure, PermanentFailure {
               CheckedTransaction tx = datastore.beginTransaction();
               try {
-                addToPerUserTable(tx, newId);
+                addToPerUserTable(tx, newId, isPrivate);
                 tx.commit();
               } finally {
                 tx.close();
@@ -487,7 +521,90 @@ public class ImportWaveletProcessor {
           });
     }
 
+    private class ConvHistoryWriter {
+      // TODO(ohler): tune this.
+      private static final int BATCH_SIZE = 100;
+
+      private final SlobId slobId;
+      private final List<ChangeData<String>> buffer = Lists.newArrayListWithCapacity(BATCH_SIZE);
+
+      public ConvHistoryWriter(SlobId slobId) {
+        this.slobId = checkNotNull(slobId, "Null slobId");
+      }
+
+      private void flush() throws PermanentFailure, ChangeRejected {
+        @Nullable ChangeRejected rejected = new RetryHelper().run(
+            new RetryHelper.Body<ChangeRejected>() {
+              @Override public ChangeRejected run() throws RetryableFailure, PermanentFailure {
+                CheckedTransaction tx = datastore.beginTransaction();
+                try {
+                  MutationLog mutationLog = convSlobFacilities.getMutationLogFactory().create(
+                      tx, slobId);
+                  MutationLog.Appender appender = mutationLog.prepareAppender().getAppender();
+                  try {
+                    appender.appendAll(buffer);
+                  } catch (ChangeRejected e) {
+                    return e;
+                  }
+                  appender.finish();
+                  tx.commit();
+                  return null;
+                } finally {
+                  tx.close();
+                }
+              }
+            });
+        if (rejected != null) {
+          throw rejected;
+        }
+        buffer.clear();
+      }
+
+      public void append(WaveletOperation op) throws PermanentFailure, ChangeRejected {
+        if (buffer.size() >= BATCH_SIZE) {
+          flush();
+        }
+        buffer.add(new ChangeData<String>(getFakeClientId(), SERIALIZER.serializeDelta(op)));
+      }
+
+      public void append(List<WaveletOperation> ops) throws PermanentFailure, ChangeRejected {
+        for (WaveletOperation op : ops) {
+          append(op);
+        }
+      }
+
+      public void finish() throws PermanentFailure, ChangeRejected {
+        flush();
+      }
+    }
+
     private void doImport() throws TaskCompleted, PermanentFailure, IOException {
+      // Fetch the wavelet.  Even if this is a shared import and the wavelet is
+      // already imported, we have to do this fetch before re-using the existing
+      // wavelet, to confirm that the user has access to the wavelet on the remote
+      // instance.
+      Pair<GoogleWavelet, ImmutableList<GoogleDocument>> snapshot =
+          // We convertGooglewaveToGmail here since we do a lot of checks on the
+          // participant list below, and it's easier if it's already converted.
+          convertGooglewaveToGmail(robotApi.getSnapshot(waveletName));
+      GoogleWavelet wavelet = snapshot.getFirst();
+      log.info("Snapshot fetch succeeded: version " + wavelet.getVersion() + ", "
+          + wavelet.getParticipantCount() + " participants: "  + wavelet.getParticipantList());
+      final boolean isPrivate;
+      switch (task.getSettings().getSharingMode()) {
+        case PRIVATE:
+          isPrivate = true;
+          break;
+        case SHARED:
+          isPrivate = false;
+          break;
+        case PRIVATE_UNLESS_PARTICIPANT:
+          isPrivate = !wavelet.getParticipantList().contains(importingUser.getAddress());
+          break;
+        default:
+          throw new AssertionError("Unexpected ImportSharingMode: "
+              + task.getSettings().getSharingMode());
+      }
       // Look up if already imported according to PerUserTable; if so, we have nothing to do.
       boolean alreadyImportedForThisUser = new RetryHelper().run(
           new RetryHelper.Body<Boolean>() {
@@ -496,28 +613,26 @@ public class ImportWaveletProcessor {
               try {
                 @Nullable RemoteConvWavelet entry =
                     perUserTable.getWavelet(tx, userId, instance, waveletName);
-                switch (sharingMode) {
-                  case PRIVATE:
-                    if (entry != null && entry.getPrivateLocalId() != null
-                        && !(task.hasExistingSlobIdToIgnore()
-                            && new SlobId(task.getExistingSlobIdToIgnore()).equals(
-                                entry.getPrivateLocalId()))) {
-                      log.info("Private import already exists, aborting: " + entry);
-                      return true;
-                    } else {
-                      return false;
-                    }
-                  case SHARED:
-                    if (entry != null && entry.getSharedLocalId() != null
-                        && !(task.hasExistingSlobIdToIgnore()
-                            && new SlobId(task.getExistingSlobIdToIgnore()).equals(
-                                entry.getSharedLocalId()))) {
-                      log.info("Shared import already exists, aborting: " + entry);
-                      return true;
-                    } else {
-                      return false;
-                    }
-                  default: throw new AssertionError("Unexpected ImportSharingMode: " + sharingMode);
+                if (isPrivate) {
+                  if (entry != null && entry.getPrivateLocalId() != null
+                      && !(task.hasExistingSlobIdToIgnore()
+                          && new SlobId(task.getExistingSlobIdToIgnore()).equals(
+                              entry.getPrivateLocalId()))) {
+                    log.info("Private import already exists, aborting: " + entry);
+                    return true;
+                  } else {
+                    return false;
+                  }
+                } else {
+                  if (entry != null && entry.getSharedLocalId() != null
+                      && !(task.hasExistingSlobIdToIgnore()
+                          && new SlobId(task.getExistingSlobIdToIgnore()).equals(
+                              entry.getSharedLocalId()))) {
+                    log.info("Shared import already exists, aborting: " + entry);
+                    return true;
+                  } else {
+                    return false;
+                  }
                 }
               } finally {
                 tx.close();
@@ -527,57 +642,41 @@ public class ImportWaveletProcessor {
       if (alreadyImportedForThisUser) {
         throw TaskCompleted.noFollowup();
       }
-      // Fetch the wavelet.  Even if this is a shared import and the wavelet is
-      // already imported, we have to do this fetch before re-using the existing
-      // wavelet, to confirm that the user has access to the wavelet on the remote
-      // instance.
-      Pair<GoogleWavelet, ImmutableList<GoogleDocument>> snapshot =
-          convertGooglewaveToGmail(robotApi.getSnapshot(waveletName));
-      GoogleWavelet wavelet = snapshot.getFirst();
-      log.info("Snapshot fetch succeeded: version " + wavelet.getVersion() + ", "
-          + wavelet.getParticipantCount() + " participants: "  + wavelet.getParticipantList());
-      switch (sharingMode) {
-        case PRIVATE: break;
-        case SHARED:
-          @Nullable SlobId existingSharedImport =
+      if (!isPrivate) {
+        @Nullable SlobId existingSharedImport =
               sharedImportTable.lookupWithoutTx(instance, waveletName);
-          if (existingSharedImport != null
-              && !(task.hasExistingSlobIdToIgnore()
-                  && new SlobId(task.getExistingSlobIdToIgnore()).equals(existingSharedImport))) {
-            log.info("Found existing shared import " + existingSharedImport + ", re-using");
-            ensureParticipant(existingSharedImport);
-            addToPerUserTableWithoutTx(existingSharedImport);
-            throw TaskCompleted.noFollowup();
-          }
-          break;
-        default: throw new AssertionError("Unexpected ImportSharingMode: " + sharingMode);
+        if (existingSharedImport != null
+            && !(task.hasExistingSlobIdToIgnore()
+                && new SlobId(task.getExistingSlobIdToIgnore()).equals(existingSharedImport))) {
+          log.info("Found existing shared import " + existingSharedImport + ", re-using");
+          ensureParticipant(existingSharedImport);
+          addToPerUserTableWithoutTx(existingSharedImport, isPrivate);
+          throw TaskCompleted.noFollowup();
+        }
       }
-      List<WaveletOperation> history = handleAttachmentsAndSynthesizeHistory(snapshot);
-      log.info("Synthesized history with " + history.size() + " ops; fixing up participation");
-      switch (sharingMode) {
-        case PRIVATE:
-          for (String participant : ImmutableList.copyOf(wavelet.getParticipantList())) {
-            history.add(
-                HistorySynthesizer.newRemoveParticipant(importingUser.getAddress(),
-                    wavelet.getLastModifiedTimeMillis(), participant));
-          }
-          history.add(
+      Map<String, AttachmentId> attachmentMapping = getAttachmentsAndMapping(snapshot);
+      List<WaveletOperation> participantFixup = Lists.newArrayList();
+      if (isPrivate) {
+        for (String participant : ImmutableList.copyOf(wavelet.getParticipantList())) {
+          participantFixup.add(
+              HistorySynthesizer.newRemoveParticipant(importingUser.getAddress(),
+                  wavelet.getLastModifiedTimeMillis(), participant));
+        }
+        participantFixup.add(
+            HistorySynthesizer.newAddParticipant(importingUser.getAddress(),
+                wavelet.getLastModifiedTimeMillis(), importingUser.getAddress()));
+      } else {
+        if (!wavelet.getParticipantList().contains(importingUser.getAddress())) {
+          log.info(
+              importingUser + " is not a participant, adding: " + wavelet.getParticipantList());
+          participantFixup.add(
               HistorySynthesizer.newAddParticipant(importingUser.getAddress(),
                   wavelet.getLastModifiedTimeMillis(), importingUser.getAddress()));
-          break;
-        case SHARED:
-          if (!wavelet.getParticipantList().contains(importingUser.getAddress())) {
-            log.info(
-                importingUser + " is not a participant, adding: " + wavelet.getParticipantList());
-            history.add(
-                HistorySynthesizer.newAddParticipant(importingUser.getAddress(),
-                    wavelet.getLastModifiedTimeMillis(), importingUser.getAddress()));
-          }
-          break;
-        default:
-          throw new AssertionError("Unexpected ImportSharingMode: " + sharingMode);
+        }
       }
-      log.info("History now has " + history.size() + " ops");
+      log.info("participantFixup=" + participantFixup);
+      boolean preserveHistory = !task.getSettings().getSynthesizeHistory();
+      log.info("preserveHistory=" + preserveHistory);
       ImportMetadata importMetadata = new ImportMetadataGsonImpl();
       importMetadata.setImportBeginTimeMillis(System.currentTimeMillis());
       importMetadata.setImportFinished(false);
@@ -585,40 +684,82 @@ public class ImportWaveletProcessor {
       importMetadata.setSourceInstance(instance.serialize());
       importMetadata.setRemoteWaveId(waveletName.waveId.serialise());
       importMetadata.setRemoteWaveletId(waveletName.waveletId.serialise());
+      importMetadata.setRemoteHistoryCopied(preserveHistory);
+      importMetadata.setRemoteVersionImported(snapshot.getFirst().getVersion());
       ConvMetadataGsonImpl convMetadata = new ConvMetadataGsonImpl();
       convMetadata.setImportMetadata(importMetadata);
-      final SlobId newId = waveletCreator.newConvWithGeneratedId(history, convMetadata, true);
+      final SlobId newId;
+      if (!preserveHistory) {
+        List<WaveletOperation> initialHistory = Lists.newArrayList();
+        WaveletHistoryConverter converter = new WaveletHistoryConverter(
+            getConvNindoConverter(attachmentMapping));
+        for (WaveletOperation op :
+            new HistorySynthesizer().synthesizeHistory(wavelet, snapshot.getSecond())) {
+          initialHistory.add(converter.convertAndApply(convertGooglewaveToGmail(op)));
+        }
+        initialHistory.addAll(participantFixup);
+        newId = waveletCreator.newConvWithGeneratedId(initialHistory, convMetadata, true);
+      } else {
+        long version = 0;
+        newId = waveletCreator.newConvWithGeneratedId(
+            ImmutableList.<WaveletOperation>of(), convMetadata, true);
+        ConvHistoryWriter historyWriter = new ConvHistoryWriter(newId);
+        WaveletHistoryConverter converter =
+            new WaveletHistoryConverter(getConvNindoConverter(attachmentMapping));
+        try {
+          // NOTE(ohler): We have to stop at snapshot.getFirst().getVersion() even if
+          // getRawDeltas gives us more, since otherwise, participantFixup may be out-of-date.
+          while (version < snapshot.getFirst().getVersion()) {
+            List<ProtocolAppliedWaveletDelta> rawDeltas =
+                robotApi.getRawDeltas(waveletName, version);
+            for (ProtocolAppliedWaveletDelta rawDelta : rawDeltas) {
+              WaveletDelta delta = CoreWaveletOperationSerializer.deserialize(ProtocolWaveletDelta
+                  .parseFrom(rawDelta.getSignedOriginalDelta().getDelta()));
+              for (WaveletOperation op : delta) {
+                WaveletOperation converted =
+                    converter.convertAndApply(convertGooglewaveToGmail(op));
+                //log.info(version + ": " + op + " -> " + converted);
+                historyWriter.append(converted);
+                version++;
+              }
+            }
+          }
+          historyWriter.append(participantFixup);
+          historyWriter.finish();
+        } catch (ChangeRejected e) {
+          log.log(Level.SEVERE, "Change rejected somewhere at or before version " + version
+              + ", re-importing without history", e);
+          ImportSettings settings = task.getSettings();
+          settings.setSynthesizeHistory(true);
+          task.setSettings(settings);
+          throw TaskCompleted.withFollowup(task);
+        }
+      }
       log.info("Imported wavelet " + waveletName + " as local id " + newId);
       boolean abandonAndRetry = new RetryHelper().run(
           new RetryHelper.Body<Boolean>() {
             @Override public Boolean run() throws RetryableFailure, PermanentFailure {
               CheckedTransaction tx = datastore.beginTransactionXG();
               try {
-                switch (sharingMode) {
-                  case SHARED:
-                    @Nullable SlobId existingSharedImport =
-                        sharedImportTable.lookup(tx, instance, waveletName);
-                    if (existingSharedImport != null
-                        && !(task.hasExistingSlobIdToIgnore()
-                            && new SlobId(task.getExistingSlobIdToIgnore()).equals(
-                                existingSharedImport))) {
-                      log.warning("Found existing shared import " + existingSharedImport
-                          + ", abandoning import and retrying");
-                      return true;
-                    }
-                    sharedImportTable.put(tx, instance, waveletName, newId);
-                    break;
-                  case PRIVATE:
-                    break;
-                  default:
-                    throw new AssertionError("Unexpected ImportSharingMode: " + sharingMode);
+                if (!isPrivate) {
+                  @Nullable SlobId existingSharedImport =
+                      sharedImportTable.lookup(tx, instance, waveletName);
+                  if (existingSharedImport != null
+                      && !(task.hasExistingSlobIdToIgnore()
+                          && new SlobId(task.getExistingSlobIdToIgnore()).equals(
+                              existingSharedImport))) {
+                    log.warning("Found existing shared import " + existingSharedImport
+                        + ", abandoning import and retrying");
+                    return true;
+                  }
+                  sharedImportTable.put(tx, instance, waveletName, newId);
                 }
                 if (!unlockWavelet(tx, newId)) {
                   // Already unlocked, which means this transaction is a spurious retry.
                   // Nothing to do.
                   return false;
                 }
-                addToPerUserTable(tx, newId);
+                addToPerUserTable(tx, newId, isPrivate);
                 // We don't want to run the immediate post-commit actions in this task
                 // since we don't want this task to fail if they crash.  So we
                 // just schedule a task unconditionally.
@@ -650,7 +791,6 @@ public class ImportWaveletProcessor {
           WaveletName.of(
               WaveId.deserialise(task.getWaveId()),
               WaveletId.deserialise(task.getWaveletId())),
-          task.getSharingMode(),
           robotApiFactory.create(instance.getApiUrl()))
           .doImport();
       throw new AssertionError("import() did not throw TaskCompleted");

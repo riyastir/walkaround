@@ -102,7 +102,7 @@ public class WaveObjectStoreModel implements SlobModel {
         } catch (OperationException e) {
           // Operation failed. The wavelet is still intact, however, so just
           // report the failure and continue on.
-          throw new ChangeRejected("Invalid op: " + op, e);
+          throw new ChangeRejected("Invalid op at version " + wavelet.getVersion() + ": " + op, e);
         }
       }
     }

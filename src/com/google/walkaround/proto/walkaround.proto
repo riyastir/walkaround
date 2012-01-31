@@ -115,6 +115,9 @@ message ImportMetadata {
   required int64 import_begin_time_millis = 5;
   // If false, wavelet is still in a locked state where it's inaccessible.
   required bool import_finished = 6;
+  optional bool remote_history_copied = 7 [default = false];
+  // Optional because some existing data lacks it.
+  optional int64 remote_version_imported = 8;
 }
 
 // Non-model metadata for a conv wavelet.  This is stored in the same

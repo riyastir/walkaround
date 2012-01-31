@@ -23,10 +23,13 @@ import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;
 import com.google.inject.Inject;
 import com.google.walkaround.proto.FindRemoteWavesTask;
+import com.google.walkaround.proto.ImportSettings;
 import com.google.walkaround.proto.ImportTaskPayload;
+import com.google.walkaround.proto.ImportWaveletTask;
 import com.google.walkaround.proto.RobotSearchDigest;
 import com.google.walkaround.proto.gson.FindRemoteWavesTaskGsonImpl;
 import com.google.walkaround.proto.gson.ImportTaskPayloadGsonImpl;
+import com.google.walkaround.proto.gson.ImportWaveletTaskGsonImpl;
 import com.google.walkaround.util.server.RetryHelper;
 import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
 import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
@@ -47,6 +50,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.logging.Logger;
+
+import javax.annotation.Nullable;
 
 /**
  * Processes a {@link FindRemoteWavesTask}.
@@ -169,14 +174,18 @@ public class FindRemoteWavesProcessor {
   }
 
   private List<ImportTaskPayload> makeTasks(
-      SourceInstance instance, List<Pair<Long, Long>> intervals) {
-    log.info("intervals: " + intervals);
+      SourceInstance instance, List<Pair<Long, Long>> intervals,
+      @Nullable ImportSettings autoImportSettings) {
+    log.info("intervals=" + intervals + ", settings=" + autoImportSettings);
     ImmutableList.Builder<ImportTaskPayload> accu = ImmutableList.builder();
     for (Pair<Long, Long> interval : intervals) {
       FindRemoteWavesTask task = new FindRemoteWavesTaskGsonImpl();
       task.setInstance(instance.serialize());
       task.setOnOrAfterDays(interval.getFirst());
       task.setBeforeDays(interval.getSecond());
+      if (autoImportSettings != null) {
+        task.setAutoImportSettings(autoImportSettings);
+      }
       ImportTaskPayload payload = new ImportTaskPayloadGsonImpl();
       payload.setFindWavesTask(task);
       accu.add(payload);
@@ -185,11 +194,13 @@ public class FindRemoteWavesProcessor {
   }
 
   public List<ImportTaskPayload> makeRandomTasksForInterval(SourceInstance instance,
-      long onOrAfterDays, long beforeDays) {
+      long onOrAfterDays, long beforeDays, @Nullable ImportSettings autoImportSettings) {
     if (onOrAfterDays == beforeDays - 1) {
-      return makeTasks(instance, ImmutableList.of(Pair.of(onOrAfterDays, beforeDays)));
+      return makeTasks(instance, ImmutableList.of(Pair.of(onOrAfterDays, beforeDays)),
+          autoImportSettings);
     } else {
-      return makeTasks(instance, splitInterval(onOrAfterDays, beforeDays));
+      return makeTasks(instance, splitInterval(onOrAfterDays, beforeDays),
+          autoImportSettings);
     }
   }
 
@@ -214,6 +225,36 @@ public class FindRemoteWavesProcessor {
           });
     }
     log.info("Successfully added " + results.size() + " remote waves");
+  }
+
+  private void scheduleImportTasks(List<RemoteConvWavelet> results,
+      final ImportSettings autoImportSettings) throws PermanentFailure {
+    for (final List<RemoteConvWavelet> partition : Iterables.partition(results,
+            // 5 tasks per transaction.
+            5)) {
+      new RetryHelper().run(
+          new RetryHelper.VoidBody() {
+            @Override public void run() throws RetryableFailure, PermanentFailure {
+              CheckedTransaction tx = datastore.beginTransaction();
+              try {
+                for (RemoteConvWavelet wavelet : partition) {
+                  ImportWaveletTask task = new ImportWaveletTaskGsonImpl();
+                  task.setInstance(wavelet.getSourceInstance().serialize());
+                  task.setWaveId(wavelet.getDigest().getWaveId());
+                  task.setWaveletId(wavelet.getWaveletId().serialise());
+                  task.setSettings(autoImportSettings);
+                  ImportTaskPayload payload = new ImportTaskPayloadGsonImpl();
+                  payload.setImportWaveletTask(task);
+                  perUserTable.addTask(tx, userId, payload);
+                }
+                tx.commit();
+              } finally {
+                tx.close();
+              }
+            }
+          });
+    }
+    log.info("Successfully scheduled import of " + results.size() + " waves");
   }
 
   private List<RemoteConvWavelet> expandPrivateReplies(SourceInstance instance,
@@ -248,11 +289,16 @@ public class FindRemoteWavesProcessor {
     long beforeDays = task.getBeforeDays();
     List<RobotSearchDigest> results = searchBetween(instance, onOrAfterDays, beforeDays);
     List<RemoteConvWavelet> wavelets = expandPrivateReplies(instance, results);
+    @Nullable ImportSettings autoImportSettings =
+        task.hasAutoImportSettings() ? task.getAutoImportSettings() : null;
     log.info("Search found " + results.size() + " waves, " + wavelets.size() + " wavelets");
     if (results.isEmpty()) {
       return ImmutableList.of();
     }
     storeResults(wavelets);
+    if (autoImportSettings != null) {
+      scheduleImportTasks(wavelets, autoImportSettings);
+    }
     if (results.size() >= MAX_RESULTS) {
       // Result list is most likely truncated, repeat with smaller intervals.
       log.info("Got " + results.size() + " results between "  + onOrAfterDays + " and " + beforeDays
@@ -261,7 +307,7 @@ public class FindRemoteWavesProcessor {
         throw new RuntimeException("Can't split further; too many results (" + results.size()
             + ") between " + onOrAfterDays + " and " + beforeDays);
       }
-      return makeRandomTasksForInterval(instance, onOrAfterDays, beforeDays);
+      return makeRandomTasksForInterval(instance, onOrAfterDays, beforeDays, autoImportSettings);
     } else {
       return ImmutableList.of();
     }
