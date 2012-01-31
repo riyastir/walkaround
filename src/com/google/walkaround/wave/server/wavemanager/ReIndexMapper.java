@@ -20,23 +20,15 @@ import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.tools.mapreduce.AppEngineMapper;
 import com.google.inject.Inject;
-import com.google.walkaround.proto.ObsoleteWaveletMetadata;
-import com.google.walkaround.proto.gson.ObsoleteWaveletMetadataGsonImpl;
-import com.google.walkaround.slob.server.GsonProto;
-import com.google.walkaround.slob.server.MutationLog;
 import com.google.walkaround.slob.server.SlobFacilities;
-import com.google.walkaround.slob.shared.MessageException;
 import com.google.walkaround.slob.shared.SlobId;
-import com.google.walkaround.slob.shared.StateAndVersion;
 import com.google.walkaround.util.server.RetryHelper;
 import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
 import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
-import com.google.walkaround.util.server.appengine.CheckedDatastore;
-import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTransaction;
 import com.google.walkaround.wave.server.GuiceSetup;
 import com.google.walkaround.wave.server.conv.ConvStore;
 import com.google.walkaround.wave.server.index.WaveIndexer;
-import com.google.walkaround.wave.server.model.WaveObjectStoreModel.ReadableWaveletObject;
+import com.google.walkaround.wave.server.index.WaveletLockedException;
 
 import org.apache.hadoop.io.NullWritable;
 
@@ -54,7 +46,6 @@ public class ReIndexMapper extends AppEngineMapper<Key, Entity, NullWritable, Nu
   private static final Logger log = Logger.getLogger(ReIndexMapper.class.getName());
 
   private static class Handler {
-    @Inject CheckedDatastore datastore;
     @Inject @ConvStore SlobFacilities facilities;
     @Inject WaveIndexer indexer;
 
@@ -63,7 +54,11 @@ public class ReIndexMapper extends AppEngineMapper<Key, Entity, NullWritable, Nu
           @Override public void run() throws PermanentFailure, RetryableFailure {
             SlobId objectId = facilities.parseRootEntityKey(key);
             // Update search index
-            indexer.indexConversation(objectId);
+            try {
+              indexer.indexConversation(objectId);
+            } catch (WaveletLockedException e) {
+              log.info("Ignoring locked wavelet: " + objectId);
+            }
           }
         });
     }

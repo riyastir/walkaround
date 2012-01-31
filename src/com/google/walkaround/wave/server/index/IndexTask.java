@@ -24,6 +24,7 @@ import com.google.walkaround.util.server.RetryHelper;
 import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
 import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -42,7 +43,11 @@ public class IndexTask {
         new RetryHelper().run(new RetryHelper.VoidBody() {
           @Override
           public void run() throws RetryableFailure, PermanentFailure {
-            indexer.indexConversation(slobId);
+            try {
+              indexer.indexConversation(slobId);
+            } catch (WaveletLockedException e) {
+              log.log(Level.SEVERE, "Post-commit on locked conv wavelet " + slobId, e);
+            }
           }
         });
       } catch (PermanentFailure e) {
@@ -52,9 +57,7 @@ public class IndexTask {
 
     @Override
     public void unreliableImmediatePostCommit(SlobId slobId, long resultingVersion,
-            ReadableSlob resultingState) {
-      // XXX XXX remove
-      reliableDelayedPostCommit(slobId);
+        ReadableSlob resultingState) {
       // nothing
     }
   }
@@ -68,7 +71,11 @@ public class IndexTask {
         new RetryHelper().run(new RetryHelper.VoidBody() {
           @Override
           public void run() throws RetryableFailure, PermanentFailure {
-            indexer.indexSupplement(slobId);
+            try {
+              indexer.indexSupplement(slobId);
+            } catch (WaveletLockedException e) {
+              log.log(Level.SEVERE, "Post-commit on udw when conv wavelet is locked: " + slobId, e);
+            }
           }
         });
       } catch (PermanentFailure e) {
@@ -78,9 +85,7 @@ public class IndexTask {
 
     @Override
     public void unreliableImmediatePostCommit(SlobId slobId, long resultingVersion,
-            ReadableSlob resultingState) {
-      // XXX XXX remove
-      reliableDelayedPostCommit(slobId);
+         ReadableSlob resultingState) {
       // nothing
     }
   }

@@ -39,6 +39,9 @@ import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
+import com.google.walkaround.proto.ConvMetadata;
+import com.google.walkaround.proto.gson.ObsoleteWaveletMetadataGsonImpl;
+import com.google.walkaround.slob.server.GsonProto;
 import com.google.walkaround.slob.server.MutationLog;
 import com.google.walkaround.slob.server.MutationLog.MutationLogFactory;
 import com.google.walkaround.slob.shared.MessageException;
@@ -48,8 +51,11 @@ import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
 import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
 import com.google.walkaround.util.server.appengine.CheckedDatastore;
 import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTransaction;
+import com.google.walkaround.util.shared.Assert;
 import com.google.walkaround.util.shared.RandomBase64Generator;
 import com.google.walkaround.wave.server.auth.AccountStore;
+import com.google.walkaround.wave.server.auth.StableUserId;
+import com.google.walkaround.wave.server.conv.ConvMetadataStore;
 import com.google.walkaround.wave.server.conv.ConvStore;
 import com.google.walkaround.wave.server.model.ServerMessageSerializer;
 import com.google.walkaround.wave.server.model.TextRenderer;
@@ -82,8 +88,6 @@ import org.waveprotocol.wave.model.wave.opbased.WaveViewImpl;
 import org.waveprotocol.wave.model.wave.opbased.WaveViewImpl.WaveletConfigurator;
 import org.waveprotocol.wave.model.wave.opbased.WaveViewImpl.WaveletFactory;
 
-import javax.annotation.Nullable;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -92,9 +96,10 @@ import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.annotation.Nullable;
+
 /**
  * @author danilatos@google.com (Daniel Danilatos)
- *
  */
 public class WaveIndexer {
   public static class UserIndexEntry {
@@ -203,6 +208,7 @@ public class WaveIndexer {
   private final UserDataWaveletDirectory udwDirectory;
   private final AccountStore users;
   private final RandomBase64Generator random;
+  private final ConvMetadataStore convMetadataStore;
 
   @Inject
   public WaveIndexer(CheckedDatastore datastore,
@@ -211,7 +217,8 @@ public class WaveIndexer {
       UserDataWaveletDirectory udwDirectory,
       IndexManager indexManager,
       AccountStore users,
-      RandomBase64Generator random) {
+      RandomBase64Generator random,
+      ConvMetadataStore convMetadataStore) {
     this.datastore = datastore;
     this.convStore = convStore;
     this.udwStore = udwStore;
@@ -219,9 +226,9 @@ public class WaveIndexer {
     this.indexManager = indexManager;
     this.users = users;
     this.random = random;
+    this.convMetadataStore = convMetadataStore;
     this.serializer = new WaveSerializer(
         new ServerMessageSerializer(), new DocumentFactory<ObservablePluggableMutableDocument>() {
-
           @Override
           public ObservablePluggableMutableDocument create(
               WaveletId waveletId, String docId, DocInitialization content) {
@@ -234,7 +241,8 @@ public class WaveIndexer {
   /**
    * Indexes the wave for all users
    */
-  public void indexConversation(SlobId convId) throws RetryableFailure, PermanentFailure {
+  public void indexConversation(SlobId convId) throws RetryableFailure, PermanentFailure, 
+      WaveletLockedException {
     // TODO(danilatos): Handle waves for participants that have been removed.
     // Currently they will remain in the inbox but they won't have access until
     // we implement snapshotting of the waves at the point the participants
@@ -253,7 +261,7 @@ public class WaveIndexer {
       log.info("Indexing " + convId.getId() + " for " + participant.getAddress() +
           (udwId != null ? " with udw " + udwId : ""));
 
-      Supplement supplement = udwId == null ? null : getSupplement(load(udwStore, udwId));
+      Supplement supplement = udwId == null ? null : getSupplement(loadUdw(convId, udwId));
       index(convFields, participant, supplement);
     }
   }
@@ -261,33 +269,44 @@ public class WaveIndexer {
   /**
    * Indexes the wave only for the user of the given user data wavelet
    */
-  public void indexSupplement(SlobId udwId) throws PermanentFailure, RetryableFailure {
+  public void indexSupplement(SlobId udwId)
+      throws PermanentFailure, RetryableFailure, WaveletLockedException {
     log.info("Indexing conversation for participant with udwId " + udwId);
-    PrimitiveSupplement supplement = getPrimitiveSupplement(load(udwStore, udwId));
-    // NOTE(danilatos): This trick (grabbing the only "read wavelet" in the supplement)
-    // won't work if we ever support private replies...
-    // it only works if there is only 1 conversation per wave.
-    for (WaveletId waveletId : supplement.getReadWavelets()) {
-      SlobId convId = IdHack.objectIdFromWaveletId(waveletId);
-
-      // Is there a better way to get the participant id from the supplement?
-      List<ConvUdwMapping> convUserMappings = udwDirectory.getAllUdwIds(convId);
-      for (ConvUdwMapping m : convUserMappings) {
-        if (m.getUdwId().equals(udwId)) {
-          index(getConvFields(convId), users.get(m.getKey().getUserId()).getParticipantId(),
-              new SupplementImpl(supplement));
-
-          return;
-        }
+    StateAndVersion raw;
+    SlobId convId;
+    StableUserId udwOwner;
+    CheckedTransaction tx = datastore.beginTransaction();
+    try {
+      MutationLog l = udwStore.create(tx, udwId);
+      ObsoleteWaveletMetadataGsonImpl metadata;
+      String metadataString = l.getMetadata();
+      try {
+        metadata = GsonProto.fromGson(new ObsoleteWaveletMetadataGsonImpl(), metadataString);
+      } catch (MessageException e) {
+        throw new RuntimeException("Failed to parse obsolete metadata: " + metadataString);
       }
-      throw new RuntimeException("Unexpectedly did not find the supplement " + udwId +
-          " associated with its conversation");
+      Assert.check(metadata.hasUdwMetadata(), "Metadata not udw: %s, %s", udwId, metadataString);
+      convId = new SlobId(metadata.getUdwMetadata().getAssociatedConvId());
+      udwOwner = new StableUserId(metadata.getUdwMetadata().getOwner());
+      raw = l.reconstruct(null);
+    } finally {
+      tx.rollback();
     }
+    WaveletName waveletName = IdHack.udwWaveletNameFromConvObjectIdAndUdwObjectId(convId, udwId);
+    // TODO(ohler): avoid serialization/deserialization here
+    WaveletDataImpl waveletData = deserializeWavelet(waveletName, raw.getState().snapshot());
+    Assert.check(raw.getVersion() == waveletData.getVersion(),
+        "Raw version %s does not match wavelet version %s",
+        raw.getVersion(), waveletData.getVersion());
+    PrimitiveSupplement supplement = getPrimitiveSupplement(waveletData);
+    index(getConvFields(convId), users.get(udwOwner).getParticipantId(),
+        new SupplementImpl(supplement));
   }
 
-  private ConvFields getConvFields(SlobId convId) throws PermanentFailure, RetryableFailure {
+  private ConvFields getConvFields(SlobId convId) throws PermanentFailure, RetryableFailure,
+      WaveletLockedException {
     ConvFields fields = new ConvFields();
-    WaveletDataImpl convData = load(convStore, convId);
+    WaveletDataImpl convData = loadConv(convId);
 
     fields.slobId = convId;
     fields.title = Util.extractTitle(convData);
@@ -304,7 +323,6 @@ public class WaveIndexer {
 
   private void index(ConvFields conv, ParticipantId user, @Nullable Supplement supplement)
       throws RetryableFailure, PermanentFailure {
-
     boolean isArchived = false;
     boolean isFollowed = true;
     @Nullable Integer unreadCount = conv.blipCount;
@@ -414,29 +432,48 @@ public class WaveIndexer {
     return WaveletBasedSupplement.create(OpBasedWavelet.createReadOnly(udwData));
   }
 
-  private WaveletDataImpl load(MutationLogFactory store, SlobId id)
-      throws PermanentFailure, RetryableFailure {
-
+  private WaveletDataImpl loadConv(SlobId id)
+      throws PermanentFailure, RetryableFailure, WaveletLockedException {
     StateAndVersion raw;
     CheckedTransaction tx = datastore.beginTransaction();
     try {
-      MutationLog l = store.create(tx, id);
+      ConvMetadata metadata = convMetadataStore.get(tx, id);
+      if (metadata.hasImportMetadata()
+          && !metadata.getImportMetadata().getImportFinished()) {
+        throw new WaveletLockedException("Conv " + id + " locked: " + metadata);
+      }
+      MutationLog l = convStore.create(tx, id);
       raw = l.reconstruct(null);
     } finally {
       tx.rollback();
     }
-
     WaveletName waveletName = IdHack.convWaveletNameFromConvObjectId(id);
-
+    // TODO(ohler): avoid serialization/deserialization here
     WaveletDataImpl waveletData = deserializeWavelet(waveletName,
         raw.getState().snapshot());
+    Assert.check(raw.getVersion() == waveletData.getVersion(),
+        "Raw version %s does not match wavelet version %s",
+        raw.getVersion(), waveletData.getVersion());
+    return waveletData;
+  }
 
-    if (raw.getVersion() != waveletData.getVersion()) {
-      throw new AssertionError("Raw version " + raw.getVersion() +
-          " does not match wavelet version " + waveletData.getVersion());
+  private WaveletDataImpl loadUdw(SlobId convId, SlobId udwId)
+      throws PermanentFailure, RetryableFailure {
+    StateAndVersion raw;
+    CheckedTransaction tx = datastore.beginTransaction();
+    try {
+      MutationLog l = udwStore.create(tx, udwId);
+      raw = l.reconstruct(null);
+    } finally {
+      tx.rollback();
     }
-
-
+    WaveletName waveletName = IdHack.udwWaveletNameFromConvObjectIdAndUdwObjectId(convId, udwId);
+    // TODO(ohler): avoid serialization/deserialization here
+    WaveletDataImpl waveletData = deserializeWavelet(waveletName,
+        raw.getState().snapshot());
+    Assert.check(raw.getVersion() == waveletData.getVersion(),
+        "Raw version %s does not match wavelet version %s",
+        raw.getVersion(), waveletData.getVersion());
     return waveletData;
   }
 
