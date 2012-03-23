@@ -38,6 +38,7 @@ import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTrans
 import com.google.walkaround.wave.server.conv.PermissionCache.PermissionSource;
 import com.google.walkaround.wave.server.model.WaveObjectStoreModel;
 import com.google.walkaround.wave.server.model.WaveObjectStoreModel.ReadableWaveletObject;
+import com.google.walkaround.wave.server.robot.NotifyAllRobotsPreCommitAction;
 import com.google.walkaround.wave.server.wavemanager.WaveIndex;
 import com.google.walkaround.wave.server.wavemanager.WaveManager;
 
@@ -78,6 +79,9 @@ public class ConvStoreModule extends PrivateModule {
             index.get().update(tx, objectId, (ReadableWaveletObject) resultingState);
           }
         });
+
+    // Add the pre-commit hook for robots.
+    preCommitActions.addBinding().toInstance(new NotifyAllRobotsPreCommitAction());
 
     final Provider<SlobManager> manager = getProvider(SlobManager.class);
     bind(PostMutateHook.class).toInstance(
