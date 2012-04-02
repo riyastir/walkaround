@@ -232,15 +232,20 @@ public class HistorySynthesizer {
     }
   }
 
-  private void checkLastModifiedTime(GoogleWavelet w, List<GoogleDocument> docs) {
+  private long getLastModifiedTimeMillis(GoogleWavelet w, List<GoogleDocument> docs) {
     long lastDocumentModificationTimeMillis = Long.MIN_VALUE;
     for (GoogleDocument doc : docs) {
       lastDocumentModificationTimeMillis = Math.max(lastDocumentModificationTimeMillis,
           doc.getLastModifiedTimeMillis());
     }
-    Assert.check(w.getLastModifiedTimeMillis() >= lastDocumentModificationTimeMillis,
-        "Wavelet last modified %s, last document %s",
-        w.getLastModifiedTimeMillis(), lastDocumentModificationTimeMillis);
+    if (w.getLastModifiedTimeMillis() >= lastDocumentModificationTimeMillis) {
+      return w.getLastModifiedTimeMillis();
+    } else {
+      // This occurs on some wavelets, work around it.
+      log.warning("Wavelet last modified " + w.getLastModifiedTimeMillis()
+          + " < last document " + lastDocumentModificationTimeMillis);
+      return lastDocumentModificationTimeMillis;
+    }
   }
 
   private void checkDisjoint(List<?> a, List<?> b) {
@@ -280,7 +285,7 @@ public class HistorySynthesizer {
     docs = selectNonEmptyDocuments(docs);
     checkParticipantsNormalized(w, docs);
     checkNoDuplicates(w.getParticipantList());
-    checkLastModifiedTime(w, docs);
+    long waveletLastModifiedTimeMillis = getLastModifiedTimeMillis(w, docs);
 
     List<GoogleDocument> blipsInArbitraryOrder = selectBlips(docs);
     List<GoogleDocument> dataDocsExceptManifestInArbitraryOrder =
@@ -332,11 +337,11 @@ public class HistorySynthesizer {
               doc.getDocumentId(), GoogleDeserializer.deserializeContent(doc.getContent())));
     }
     // 7
-    history.add(newNoOp(w.getCreator(), w.getLastModifiedTimeMillis()));
+    history.add(newNoOp(w.getCreator(), waveletLastModifiedTimeMillis));
     // 8
     if (!w.getParticipantList().contains(w.getCreator())) {
       history.add(
-          newRemoveParticipant(w.getCreator(), w.getLastModifiedTimeMillis(), w.getCreator()));
+          newRemoveParticipant(w.getCreator(), waveletLastModifiedTimeMillis, w.getCreator()));
     }
     return history;
   }
