@@ -292,8 +292,10 @@ public class HistorySynthesizer {
         selectDataDocumentsExceptManifest(docs);
     @Nullable GoogleDocument manifest = selectManifest(docs);
     checkDisjoint(blipsInArbitraryOrder, dataDocsExceptManifestInArbitraryOrder);
-    checkDisjoint(ImmutableList.of(manifest), blipsInArbitraryOrder);
-    checkDisjoint(ImmutableList.of(manifest), dataDocsExceptManifestInArbitraryOrder);
+    if (manifest != null) {
+      checkDisjoint(ImmutableList.of(manifest), blipsInArbitraryOrder);
+      checkDisjoint(ImmutableList.of(manifest), dataDocsExceptManifestInArbitraryOrder);
+    }
 
     List<GoogleDocument> docsInLastModifiedTimeOrder = sortedByLastModifiedTime(docs);
 
