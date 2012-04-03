@@ -17,6 +17,7 @@
 package com.google.walkaround.wave.server.servlet;
 
 import com.google.appengine.api.users.UserService;
+import com.google.apphosting.api.ApiProxy;
 import com.google.common.base.Throwables;
 import com.google.gxp.html.HtmlClosure;
 import com.google.gxp.html.HtmlClosures;
@@ -68,10 +69,22 @@ public class ServerExceptionFilter implements Filter {
 
   @Override public void destroy() {}
 
+  private boolean isOverQuota(Throwable t) {
+    while (t != null) {
+      if (t instanceof ApiProxy.OverQuotaException) {
+        return true;
+      }
+      t = t.getCause();
+    }
+    return false;
+  }
+
   private void sendError(HttpServletRequest req, HttpServletResponse response, Level logLevel,
     int errorCode, String publicMessage, Throwable t) throws IOException {
+    boolean isOverQuota = isOverQuota(t);
     log.log(logLevel,
-        t.getClass().getSimpleName() + "; sending " + errorCode + ": " + publicMessage,
+        t.getClass().getSimpleName() + "; overQuota=" + isOverQuota
+            + "; sending " + errorCode + ": " + publicMessage,
         t);
     try {
       log.info("Trust status: " + trusted.get());
@@ -82,7 +95,7 @@ public class ServerExceptionFilter implements Filter {
       String userEmail = service.isUserLoggedIn()
           ? service.getCurrentUser().getEmail() : "(not logged in)";
       pageSkinWriter.get().write("Error " + errorCode, userEmail,
-          ErrorPage.getGxpClosure(userEmail, "" + errorCode, isTrusted, publicMessage,
+          ErrorPage.getGxpClosure(userEmail, "" + errorCode, isOverQuota, isTrusted, publicMessage,
               renderInternalMessage(Throwables.getStackTraceAsString(t))));
       log.info("Successfully sent GXP error page");
     } catch (RuntimeException e) {
@@ -109,6 +122,8 @@ public class ServerExceptionFilter implements Filter {
     } catch (HttpException e) {
       sendError(request, response, Level.INFO, e.getResponseCode(), e.getPublicMessage(), e);
     } catch (Throwable t) {
+      // Perhaps the over quota check should be here; but there are
+      // advantages to having it orthogonal as well.
       sendError(request, response, Level.SEVERE, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
           "Internal server error", t);
     }
