@@ -26,6 +26,7 @@
 
   <gxp:param name='userEmail' type='String'/>
   <gxp:param name='errorCode' type='String'/>
+  <gxp:param name='overQuota' type='boolean'/>
   <gxp:param name='userTrusted' type='boolean'/>
   <gxp:param name='publicMessage' type='String'/>
   <gxp:param name='internalMessage' type='HtmlClosure'/>
@@ -74,6 +75,9 @@
   <div id='panel'>
     <gxp:nomsg>
       <h3 class='error'>Error <gxp:eval expr='errorCode'/></h3>
+      <gxp:if cond='overQuota'>
+        <div class='message'><strong>OVER QUOTA</strong></div>
+      </gxp:if>
       <div class='message'><strong><gxp:eval expr='publicMessage'/></strong></div>
     </gxp:nomsg>
     <span style='font-size:80%'>
