@@ -25,8 +25,12 @@ import com.google.appengine.api.channel.ChannelService;
 import com.google.appengine.api.channel.ChannelServiceFactory;
 import com.google.appengine.api.datastore.Blob;
 import com.google.appengine.api.datastore.DatastoreService;
+import com.google.appengine.api.datastore.DatastoreServiceConfig;
+import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.ImplicitTransactionManagementPolicy;
 import com.google.appengine.api.datastore.KeyFactory;
+import com.google.appengine.api.datastore.ReadPolicy;
 import com.google.appengine.api.images.ImagesService;
 import com.google.appengine.api.images.ImagesServiceFactory;
 import com.google.appengine.api.memcache.MemcacheService;
@@ -217,8 +221,11 @@ public class WalkaroundServerModule extends AbstractModule {
   }
 
   @Provides
-  DatastoreService provideDatastore() {
-    return DatastoreProvider.strongReads();
+  DatastoreService provideDatastore(@DatastoreTimeoutMillis long datastoreTimeoutMillis) {
+    return DatastoreServiceFactory.getDatastoreService(DatastoreServiceConfig.Builder
+        .withDeadline(datastoreTimeoutMillis * 1000.0)
+        .implicitTransactionManagementPolicy(ImplicitTransactionManagementPolicy.NONE)
+        .readPolicy(new ReadPolicy(ReadPolicy.Consistency.STRONG)));
   }
 
   @Provides
