@@ -509,8 +509,8 @@ public class ImportWaveletProcessor {
                 }
                 // TODO(ohler): Share more code with LocalMutationProcessor; having to call this
                 // stuff here rather than just commit() is error-prone.
-                appender.finish();
                 convSlobFacilities.getLocalMutationProcessor().runPreCommit(tx, convId, appender);
+                appender.finish();
                 convSlobFacilities.getLocalMutationProcessor().schedulePostCommit(
                     tx, convId, appender);
                 tx.commit();

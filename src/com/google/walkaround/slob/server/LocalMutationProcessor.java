@@ -321,8 +321,8 @@ public class LocalMutationProcessor {
         tx.rollback();
         return;
       }
-      appender.finish();
       runPreCommit(tx, objectId, appender);
+      appender.finish();
       schedulePostCommit(tx, objectId, appender);
       log.info("Committing...");
       try {
@@ -359,9 +359,15 @@ public class LocalMutationProcessor {
 
   public void runPreCommit(CheckedTransaction tx, SlobId slobId, MutationLog.Appender appender)
       throws PermanentFailure, RetryableFailure {
+    ImmutableList<ChangeData<String>> stagedDeltas = ImmutableList.copyOf(
+        appender.getStagedDeltas());
+    Preconditions.checkArgument(!stagedDeltas.isEmpty(),
+        // TODO(ohler): make this less error-prone.
+        "No deltas staged; must call runPreCommit() before appender.finish()");
     for (PreCommitAction action : preCommitActions) {
       log.info("Calling pre-commit action " + action);
-      action.run(tx, slobId, appender.getStagedVersion(), appender.getStagedState());
+      action.run(tx, slobId, stagedDeltas,
+          appender.getStagedVersion(), appender.getStagedState());
     }
   }
 

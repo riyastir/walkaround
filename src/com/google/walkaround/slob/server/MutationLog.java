@@ -498,6 +498,14 @@ public class MutationLog {
       return !stagedDeltaEntries.isEmpty();
     }
 
+    public List<ChangeData<String>> getStagedDeltas() {
+      ImmutableList.Builder<ChangeData<String>> out = ImmutableList.builder();
+      for (DeltaEntry delta : stagedDeltaEntries) {
+        out.add(delta.data);
+      }
+      return out.build();
+    }
+
     /**
      * Calls {@code put()} on all staged deltas and snapshots, etc.
      */

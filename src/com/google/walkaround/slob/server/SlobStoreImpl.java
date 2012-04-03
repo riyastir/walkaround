@@ -297,9 +297,11 @@ public class SlobStoreImpl implements SlobStore {
       throw new IllegalArgumentException("Invalid initial history: " + initialHistory, e);
     }
     l.putMetadata(metadata);
-    appender.finish();
     if (!inhibitPreAndPostCommit) {
       localProcessor.runPreCommit(tx, slobId, appender);
+    }
+    appender.finish();
+    if (!inhibitPreAndPostCommit) {
       localProcessor.schedulePostCommit(tx, slobId, appender);
     }
   }

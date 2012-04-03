@@ -37,10 +37,10 @@ import com.google.appengine.api.search.SortSpec.SortDirection;
 import com.google.appengine.api.search.StatusCode;
 import com.google.appengine.api.search.checkers.FieldChecker;
 import com.google.appengine.api.utils.SystemProperty;
-import com.google.appengine.repackaged.com.google.common.collect.Iterables;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -117,7 +117,8 @@ public class WaveIndexer {
   // Unavailable index prefixes:
   // "USRIDX-".
   // "USRIDX2-".
-  private static final String USER_WAVE_INDEX_PREFIX = "USRIDX3-";
+  // "USRIDX3-".
+  private static final String USER_WAVE_INDEX_PREFIX = "USRIDX4-";
 
   // Unavailable field names:
   // "blips"
@@ -231,7 +232,7 @@ public class WaveIndexer {
   private final MutationLogFactory convStore;
   private final MutationLogFactory udwStore;
   private final UserDataWaveletDirectory udwDirectory;
-  private final AccountStore users;
+  private final AccountStore accountStore;
   private final RandomBase64Generator random;
   private final ConvMetadataStore convMetadataStore;
 
@@ -249,7 +250,7 @@ public class WaveIndexer {
     this.udwStore = udwStore;
     this.udwDirectory = udwDirectory;
     this.indexManager = indexManager;
-    this.users = users;
+    this.accountStore = users;
     this.random = random;
     this.convMetadataStore = convMetadataStore;
     this.serializer = new WaveSerializer(
@@ -278,17 +279,34 @@ public class WaveIndexer {
     List<ConvUdwMapping> convUserMappings = udwDirectory.getAllUdwIds(convId);
     Map<ParticipantId, SlobId> participantsToUdws = Maps.newHashMap();
     for (ConvUdwMapping m : convUserMappings) {
-      participantsToUdws.put(users.get(m.getKey().getUserId()).getParticipantId(), m.getUdwId());
+      participantsToUdws.put(accountStore.get(m.getKey().getUserId()).getParticipantId(), m.getUdwId());
     }
+
+    log.info("Participants: " + convFields.model.getParticipantIds().size()
+        + ", UDWs: " + participantsToUdws.size());
 
     for (ParticipantId participant : convFields.model.getParticipantIds()) {
       SlobId udwId = participantsToUdws.get(participant);
       log.info("Indexing " + convId.getId() + " for " + participant.getAddress() +
-          (udwId != null ? " with udw " + udwId : ""));
+          (udwId != null ? " with udw " + udwId : " with no udw"));
 
       Supplement supplement = udwId == null ? null : getSupplement(loadUdw(convId, udwId));
       index(convFields, participant, supplement);
     }
+  }
+
+  // "possibly" removed because they could have been re-added and we need
+  // to deal with that possible race condition.
+  public void unindexConversationForPossiblyRemovedParticipants(SlobId convId,
+      Set<ParticipantId> possiblyRemovedParticipants)
+          throws RetryableFailure, PermanentFailure, WaveletLockedException {
+    for (ParticipantId removed : possiblyRemovedParticipants) {
+      log.info("Unindexing " + convId + " for " + removed);
+      getIndex(removed).remove(convId.getId());
+    }
+    // As an easy way to avoid the race condition, we re-index the whole conv slob
+    // strictly after removing.
+    indexConversation(convId);
   }
 
   /**
@@ -324,8 +342,14 @@ public class WaveIndexer {
         "Raw version %s does not match wavelet version %s",
         raw.getVersion(), waveletData.getVersion());
     PrimitiveSupplement supplement = getPrimitiveSupplement(waveletData);
-    index(getConvFields(convId), users.get(udwOwner).getParticipantId(),
-        new SupplementImpl(supplement));
+    ConvFields convFields = getConvFields(convId);
+    ParticipantId participantId = accountStore.get(udwOwner).getParticipantId();
+    if (!convFields.model.getParticipantIds().contains(participantId)) {
+      log.info(participantId + " is not currently a participant on " + convId
+          + ", not indexing");
+      return;
+    }
+    index(convFields, participantId, new SupplementImpl(supplement));
   }
 
   private ConvFields getConvFields(SlobId convId) throws PermanentFailure, RetryableFailure,

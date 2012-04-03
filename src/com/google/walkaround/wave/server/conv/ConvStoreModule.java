@@ -19,23 +19,16 @@ package com.google.walkaround.wave.server.conv;
 import com.google.appengine.api.taskqueue.Queue;
 import com.google.appengine.api.taskqueue.QueueFactory;
 import com.google.inject.PrivateModule;
-import com.google.inject.Provider;
 import com.google.inject.multibindings.Multibinder;
 import com.google.walkaround.slob.server.AccessChecker;
 import com.google.walkaround.slob.server.PostCommitAction;
 import com.google.walkaround.slob.server.PostCommitActionQueue;
 import com.google.walkaround.slob.server.PreCommitAction;
 import com.google.walkaround.slob.server.StoreModuleHelper;
-import com.google.walkaround.slob.shared.SlobId;
 import com.google.walkaround.slob.shared.SlobModel;
-import com.google.walkaround.slob.shared.SlobModel.ReadableSlob;
-import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
-import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
-import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTransaction;
 import com.google.walkaround.wave.server.conv.PermissionCache.PermissionSource;
 import com.google.walkaround.wave.server.index.IndexTask;
 import com.google.walkaround.wave.server.model.WaveObjectStoreModel;
-import com.google.walkaround.wave.server.model.WaveObjectStoreModel.ReadableWaveletObject;
 import com.google.walkaround.wave.server.wavemanager.WaveManager;
 
 import java.util.logging.Logger;
@@ -61,6 +54,10 @@ public class ConvStoreModule extends PrivateModule {
     bind(SlobModel.class).to(WaveObjectStoreModel.class);
     bind(AccessChecker.class).to(ConvAccessChecker.class);
     bind(PermissionSource.class).to(WaveManager.class);
+
+    Multibinder<PreCommitAction> preCommitActions =
+        Multibinder.newSetBinder(binder(), PreCommitAction.class);
+    preCommitActions.addBinding().to(IndexTask.ConvPreCommit.class);
 
     Multibinder<PostCommitAction> postCommitActions =
         Multibinder.newSetBinder(binder(), PostCommitAction.class);
