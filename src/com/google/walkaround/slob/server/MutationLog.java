@@ -23,9 +23,9 @@ import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query;
-import com.google.appengine.api.datastore.Text;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.SortDirection;
+import com.google.appengine.api.datastore.Text;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -41,23 +41,27 @@ import com.google.walkaround.slob.shared.ClientId;
 import com.google.walkaround.slob.shared.InvalidSnapshot;
 import com.google.walkaround.slob.shared.SlobId;
 import com.google.walkaround.slob.shared.SlobModel;
-import com.google.walkaround.slob.shared.StateAndVersion;
 import com.google.walkaround.slob.shared.SlobModel.ReadableSlob;
+import com.google.walkaround.slob.shared.StateAndVersion;
 import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
 import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
-import com.google.walkaround.util.server.appengine.DatastoreUtil;
+import com.google.walkaround.util.server.appengine.CheckedDatastore;
 import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedIterator;
 import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTransaction;
+import com.google.walkaround.util.server.appengine.DatastoreUtil;
+import com.google.walkaround.util.server.appengine.OversizedPropertyMover;
+import com.google.walkaround.util.server.appengine.OversizedPropertyMover.MovableProperty;
 import com.google.walkaround.util.shared.Assert;
+import com.google.walkaround.util.shared.ConcatenatingList;
 
 import org.waveprotocol.wave.model.util.Pair;
-
-import javax.annotation.Nullable;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+
+import javax.annotation.Nullable;
 
 /**
  * Functionality for traversing and appending to the mutation log.
@@ -145,8 +149,12 @@ public class MutationLog {
   private static final Logger log = Logger.getLogger(MutationLog.class.getName());
 
   @VisibleForTesting static final String DELTA_OP_PROPERTY = "op";
+  @VisibleForTesting static final String DELTA_OVERSIZED_OP_PROPERTY = "op__oversized";
   @VisibleForTesting static final String DELTA_CLIENT_ID_PROPERTY = "sid";
+
   @VisibleForTesting static final String SNAPSHOT_DATA_PROPERTY = "Data";
+  @VisibleForTesting static final String SNAPSHOT_OVERSIZED_DATA_PROPERTY = "Data__oversized";
+
   private static final String METADATA_PROPERTY = "Metadata";
 
   // Datastore does not allow ids to be 0.
@@ -324,7 +332,9 @@ public class MutationLog {
     DeltaEntry peekEntry() throws PermanentFailure, RetryableFailure {
       if (peeked == null) {
         // Let it.next() throw if there is no next.
-        peeked = parseDelta(it.next());
+        Entity entity = it.next();
+        deltaPropertyMover.postGet(entity);
+        peeked = parseDelta(entity);
         checkVersion(peeked);
       }
       return peeked;
@@ -521,14 +531,19 @@ public class MutationLog {
 
   private final StateCache stateCache;
 
+  private final OversizedPropertyMover deltaPropertyMover;
+  private final OversizedPropertyMover snapshotPropertyMover;
+
   @AssistedInject
-  public MutationLog(@SlobRootEntityKind String entityGroupKind,
+  public MutationLog(CheckedDatastore datastore,
+      @SlobRootEntityKind String entityGroupKind,
       @SlobDeltaEntityKind String deltaEntityKind,
       @SlobSnapshotEntityKind String snapshotEntityKind,
       DeltaEntityConverter deltaEntityConverter,
       @Assisted CheckedTransaction tx, @Assisted SlobId objectId,
       SlobModel model,
-      StateCache stateCache) {
+      StateCache stateCache,
+      OversizedPropertyMover.BlobWriteListener oversizedPropertyBlobWriteListener) {
     this.entityGroupKind = entityGroupKind;
     this.deltaEntityKind = deltaEntityKind;
     this.snapshotEntityKind = snapshotEntityKind;
@@ -537,6 +552,20 @@ public class MutationLog {
     this.objectId = Preconditions.checkNotNull(objectId, "Null objectId");
     this.model = Preconditions.checkNotNull(model, "Null model");
     this.stateCache = stateCache;
+    snapshotPropertyMover =
+        new OversizedPropertyMover(
+            datastore,
+            ImmutableList.of(
+                new MovableProperty(SNAPSHOT_DATA_PROPERTY, SNAPSHOT_OVERSIZED_DATA_PROPERTY,
+                    MovableProperty.PropertyType.TEXT)),
+            oversizedPropertyBlobWriteListener);
+    deltaPropertyMover =
+        new OversizedPropertyMover(
+            datastore,
+            ImmutableList.of(
+                new MovableProperty(DELTA_OP_PROPERTY, DELTA_OVERSIZED_OP_PROPERTY,
+                    MovableProperty.PropertyType.TEXT)),
+            oversizedPropertyBlobWriteListener);
   }
 
   /** @see #forwardHistory(long, Long, FetchOptions) */
@@ -868,22 +897,29 @@ public class MutationLog {
       throws PermanentFailure, RetryableFailure {
     Preconditions.checkNotNull(newDeltas, "null newEntries");
     Preconditions.checkNotNull(newSnapshots, "null newSnapshots");
-    List<Entity> entities = Lists.newArrayListWithCapacity(newDeltas.size() + newSnapshots.size());
+    List<Entity> deltaEntities = Lists.newArrayListWithCapacity(newDeltas.size());
     for (DeltaEntry entry : newDeltas) {
       Key key = makeDeltaKey(entry);
       Entity newEntity = new Entity(key);
       populateDeltaEntity(entry, newEntity);
       parseDelta(newEntity); // Verify it parses with no exceptions.
-      entities.add(newEntity);
+      deltaEntities.add(newEntity);
     }
+    List<Entity> snapshotEntities = Lists.newArrayListWithCapacity(newSnapshots.size());
     for (SnapshotEntry entry : newSnapshots) {
       Key key = makeSnapshotKey(entry);
       Entity newEntity = new Entity(key);
       populateSnapshotEntity(entry, newEntity);
       parseSnapshot(newEntity); // Verify it parses with no exceptions.
-      entities.add(newEntity);
+      snapshotEntities.add(newEntity);
     }
-    tx.put(entities);
+    for (Entity entity : deltaEntities) {
+      deltaPropertyMover.prePut(entity);
+    }
+    for (Entity entity : snapshotEntities) {
+      snapshotPropertyMover.prePut(entity);
+    }
+    tx.put(ConcatenatingList.of(snapshotEntities, deltaEntities));
   }
 
   @Nullable private SnapshotEntry getSnapshotEntryAtOrBefore(@Nullable Long atOrBeforeVersion)
@@ -897,7 +933,12 @@ public class MutationLog {
     }
     Entity e = tx.prepare(q).getFirstResult();
     log.info("query " + q + " returned first result " + e);
-    return e == null ? null : parseSnapshot(e);
+    if (e == null) {
+      return null;
+    } else {
+      snapshotPropertyMover.postGet(e);
+      return parseSnapshot(e);
+    }
   }
 
   private StateAndVersion createObject(long version, @Nullable String snapshot) {

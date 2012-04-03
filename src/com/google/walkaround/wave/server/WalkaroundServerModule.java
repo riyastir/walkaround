@@ -47,30 +47,31 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Named;
+import com.google.walkaround.slob.server.AffinityMutationProcessor.StoreBackendInstanceCount;
+import com.google.walkaround.slob.server.AffinityMutationProcessor.StoreBackendName;
 import com.google.walkaround.slob.server.MutationLog;
 import com.google.walkaround.slob.server.PostCommitActionIntervalMillis;
 import com.google.walkaround.slob.server.PostCommitTaskUrl;
 import com.google.walkaround.slob.server.SlobLocalCacheExpirationMillis;
-import com.google.walkaround.slob.server.AffinityMutationProcessor.StoreBackendInstanceCount;
-import com.google.walkaround.slob.server.AffinityMutationProcessor.StoreBackendName;
 import com.google.walkaround.slob.server.SlobMessageRouter.SlobChannelExpirationSeconds;
 import com.google.walkaround.util.server.RetryHelper;
-import com.google.walkaround.util.server.Util;
 import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
 import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
+import com.google.walkaround.util.server.Util;
 import com.google.walkaround.util.server.appengine.CheckedDatastore;
+import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTransaction;
 import com.google.walkaround.util.server.appengine.DatastoreUtil;
 import com.google.walkaround.util.server.appengine.MemcacheDeletionQueue;
 import com.google.walkaround.util.server.appengine.MemcacheTable;
-import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTransaction;
+import com.google.walkaround.util.server.appengine.OversizedPropertyMover;
 import com.google.walkaround.util.server.auth.DigestUtils2.Secret;
 import com.google.walkaround.util.server.flags.FlagDeclaration;
 import com.google.walkaround.util.server.flags.FlagFormatException;
 import com.google.walkaround.util.server.flags.JsonFlags;
-import com.google.walkaround.util.server.gwt.ZipSymbolMapsDirectory;
 import com.google.walkaround.util.server.gwt.StackTraceDeobfuscator.SymbolMapsDirectory;
-import com.google.walkaround.util.shared.RandomProviderAdapter;
+import com.google.walkaround.util.server.gwt.ZipSymbolMapsDirectory;
 import com.google.walkaround.util.shared.RandomBase64Generator.RandomProvider;
+import com.google.walkaround.util.shared.RandomProviderAdapter;
 import com.google.walkaround.wave.server.auth.OAuthInterstitialHandler.Scopes;
 import com.google.walkaround.wave.server.conv.PermissionCache.PermissionCacheExpirationSeconds;
 import com.google.walkaround.wave.server.googleimport.ImportTaskQueue;
@@ -137,6 +138,9 @@ public class WalkaroundServerModule extends AbstractModule {
 
     bind(MessageSerializer.class).to(ServerMessageSerializer.class);
     bind(MutationLog.DeltaEntityConverter.class).to(LegacyDeltaEntityConverter.class);
+
+    bind(OversizedPropertyMover.BlobWriteListener.class).toInstance(
+        OversizedPropertyMover.NULL_LISTENER);
 
     JsonFlags.bind(binder(), Arrays.asList(FlagName.values()),
         binder().getProvider(
