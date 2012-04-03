@@ -31,6 +31,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
+import com.google.common.primitives.Ints;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.Assisted;
@@ -880,7 +881,14 @@ public class MutationLog {
     long startVersion = state.getVersion();
     Assert.check(atVersion == null || startVersion <= atVersion);
 
-    DeltaIterator it = forwardHistory(startVersion, atVersion);
+    DeltaIterator it = forwardHistory(startVersion, atVersion,
+        FetchOptions.Builder.withPrefetchSize(
+            atVersion == null ?
+                // We have to fetch everything; hopefully it will fit in
+                // a single RPC / in memory.
+                9999
+                // Fetch what we need, all at once.  Again, hope it fits.
+                : Ints.checkedCast(atVersion - startVersion)));
     while (it.hasNext()) {
       ChangeData<String> delta = it.next();
       try {
