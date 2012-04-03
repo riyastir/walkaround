@@ -446,7 +446,7 @@
        ant -e. -->
   <target name="run" depends="war"
       description="Starts the development server.">
-    <dev_appserver war="${build.war}" port="8080" address="0.0.0.0">
+    <dev_appserver war="${build.war}" port="${port}" address="0.0.0.0">
       <options>
         <arg value="--jvm_flag=-XX:+ClassUnloading"/>
         <arg value="--jvm_flag=-Ddatastore.default_high_rep_job_policy_unapplied_job_pct=30"/>
@@ -456,7 +456,7 @@
 
   <target name="run-debug" depends="war"
       description="Starts the development server and waits for a debugger to be attached.">
-    <dev_appserver war="${build.war}" port="8080">
+    <dev_appserver war="${build.war}" port="${port}">
       <options>
         <arg value="--jvm_flag=-XX:+ClassUnloading"/>
         <arg value="--jvm_flag=-Ddatastore.default_high_rep_job_policy_unapplied_job_pct=30"/>
