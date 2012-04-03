@@ -118,19 +118,24 @@ public class WaveIndexer {
   // "USRIDX-".
   // "USRIDX2-".
   // "USRIDX3-".
-  private static final String USER_WAVE_INDEX_PREFIX = "USRIDX4-";
+  private static final String USER_WAVE_INDEX_PREFIX = "USRIDX5-";
 
-  // Unavailable field names:
-  // "blips"
-  // "modified"
-  private static final String UNREAD_BLIP_COUNT_FIELD = "unread";
-  private static final String BLIP_COUNT_FIELD = "blips2";
-  private static final String IN_FOLDER_FIELD = "in";
+  private static final String ID_FIELD = "id";
   private static final String CREATOR_FIELD = "creator";
   private static final String TITLE_FIELD = "title";
   private static final String CONTENT_FIELD = "content";
   // We use minutes since epoch because numeric fields can be at most 2.14...E9.
-  private static final String MODIFIED_MINUTES_FIELD = "modified2";
+  private static final String MODIFIED_MINUTES_FIELD = "modified";
+  private static final String UNREAD_BLIP_COUNT_FIELD = "unread";
+  private static final String BLIP_COUNT_FIELD = "blips";
+  private static final String IN_FOLDER_FIELD = "in";
+  private static final String IS_FIELD = "is";
+
+  private static final String IN_INBOX_TEXT = "inbox";
+  private static final String IS_UNREAD_ATOM = "unread";
+  private static final String IS_READ_ATOM = "read";
+  private static final String IS_ARCHIVED_ATOM = "archived";
+  private static final String IS_FOLLOWED_ATOM = "followed";
 
   public static class UserIndexEntry {
     private final SlobId objectId;
@@ -396,33 +401,41 @@ public class WaveIndexer {
       throws RetryableFailure, PermanentFailure {
     boolean isArchived = false;
     boolean isFollowed = true;
-    @Nullable Integer unreadCount = conv.blipCount;
+    int unreadBlips = conv.blipCount;
+    boolean participantsUnread = true;
     if (supplement != null) {
-      unreadCount = unreadCount(conv.model, conv.waveletId, conv.version, supplement);
       isArchived = supplement.isArchived(conv.waveletId, conv.version);
       isFollowed = supplement.isFollowed(true);
+      unreadBlips = countUnreadBlips(conv.model, conv.waveletId, conv.version, supplement);
+      participantsUnread = isParticipantListUnread(conv.model, conv.version, supplement);
     }
 
-    log.info("Unread count: " + unreadCount + " has supplement: " + (supplement != null));
+    log.info("Unread blips: " + unreadBlips + "; participants unread: " + participantsUnread
+        + "; has supplement: " + (supplement != null));
 
     Document.Builder builder = Document.newBuilder();
     builder.setId(conv.slobId.getId());
-    builder.addField(Field.newBuilder().setName(CONTENT_FIELD).setText(
-        shortenTextMaybe(conv.indexableText)));
+    builder.addField(Field.newBuilder().setName(ID_FIELD).setAtom(conv.slobId.getId()));
+    builder.addField(Field.newBuilder().setName(CREATOR_FIELD).setText(conv.creator));
     builder.addField(Field.newBuilder().setName(TITLE_FIELD).setText(
         shortenTextMaybe(conv.title)));
-    builder.addField(Field.newBuilder().setName(CREATOR_FIELD).setText(conv.creator));
+    builder.addField(Field.newBuilder().setName(CONTENT_FIELD).setText(
+        shortenTextMaybe(conv.indexableText)));
     builder.addField(Field.newBuilder().setName(MODIFIED_MINUTES_FIELD).setNumber(
         conv.lastModifiedMillis / 1000 / 60));
-    builder.addField(Field.newBuilder().setName(IN_FOLDER_FIELD).setText("inbox"));
     builder.addField(Field.newBuilder().setName(BLIP_COUNT_FIELD).setNumber(conv.blipCount));
-    builder.addField(Field.newBuilder().setName(UNREAD_BLIP_COUNT_FIELD).setText(
-        unreadCount == null ? "no" : ("" + unreadCount)));
-    builder.addField(Field.newBuilder().setName("is").setText(
-        (unreadCount == null ? "read " : "unread ")
-        + (isArchived ? "archived " : "")
-        + (isFollowed ? "followed " : ""))
-        );
+    builder.addField(Field.newBuilder().setName(UNREAD_BLIP_COUNT_FIELD).setNumber(unreadBlips));
+    if (!isArchived) {
+      builder.addField(Field.newBuilder().setName(IN_FOLDER_FIELD).setText(IN_INBOX_TEXT));
+    }
+    builder.addField(Field.newBuilder().setName(IS_FIELD).setAtom(
+        unreadBlips == 0 && !participantsUnread ? IS_READ_ATOM : IS_UNREAD_ATOM));
+    if (isArchived) {
+      builder.addField(Field.newBuilder().setName(IS_FIELD).setAtom(IS_ARCHIVED_ATOM));
+    }
+    if (isFollowed) {
+      builder.addField(Field.newBuilder().setName(IS_FIELD).setAtom(IS_FOLLOWED_ATOM));
+    }
     Document doc = builder.build();
 
     Index idx = getIndex(user);
@@ -447,14 +460,7 @@ public class WaveIndexer {
     return Iterables.size(BlipIterators.breadthFirst(conv));
   }
 
-  /**
-   * Returns the number of unread blips, and returns 0 if there are no unread
-   * blips but the participant list or any other non-blip part of the wave is
-   * "unread".
-   *
-   * Returns null if the conversation is fully read.
-   */
-  private Integer unreadCount(Conversation conv, WaveletId convId, int convVersion,
+  private int countUnreadBlips(Conversation conv, WaveletId convId, int convVersion,
       Supplement supplement) {
     int unreadBlips = 0;
     for (ConversationBlip blip : BlipIterators.breadthFirst(conv)) {
@@ -464,16 +470,16 @@ public class WaveIndexer {
         unreadBlips++;
       }
     }
-
-    if (unreadBlips > 0) {
-      return unreadBlips;
-    }
-//    TODO(danilatos): Get this bit to work...  probably something wrong with the version.
-//    if (supplement.isParticipantsUnread(convId, convVersion)) {
-//      return 0;
-//    }
-
-    return null;
+    return unreadBlips;
+  }
+  
+  private boolean isParticipantListUnread(Conversation conv, int convVersion,
+      Supplement supplement) {
+//  TODO(danilatos): Get this bit to work...  probably something wrong with the version.
+//  if (supplement.isParticipantsUnread(convId, convVersion)) {
+//    return 0;
+//  }
+    return false;
   }
 
   private static final WaveletFactory<OpBasedWavelet> STUB_FACTORY =
@@ -631,12 +637,14 @@ public class WaveIndexer {
       // Workaround for bug where all fields come back empty in local dev mode.
       boolean HACK = SystemProperty.environment.value()
           == SystemProperty.Environment.Value.Development;
-      String unreadCount;
+      Integer unreadCount;
       if (HACK) {
         int c = new Random().nextInt(5);
-        unreadCount = c == 0 ? "no" : "" + c * 7;
+        unreadCount = c == 0 ? null : c * 7;
       } else {
-        unreadCount = getRequiredStringField(doc, UNREAD_BLIP_COUNT_FIELD);
+        int unreadBlips = getRequiredIntField(doc, UNREAD_BLIP_COUNT_FIELD);
+        boolean isUnread = getAtomFields(doc, IS_FIELD).contains(IS_UNREAD_ATOM);
+        unreadCount = unreadBlips == 0 && !isUnread ? null : unreadBlips;
       }
       entries.add(new UserIndexEntry(
           new SlobId(doc.getId()),
@@ -647,8 +655,7 @@ public class WaveIndexer {
           HACK ? 1L : getRequiredLongField(doc, MODIFIED_MINUTES_FIELD)
               * 60 * 1000,
           Ints.checkedCast(HACK ? 23 : getRequiredLongField(doc, BLIP_COUNT_FIELD)),
-          "no".equals(unreadCount) ? null : Integer.parseInt(unreadCount)
-          ));
+          unreadCount));
     }
     return entries;
   }
@@ -681,6 +688,23 @@ public class WaveIndexer {
     return (long) getRequiredUniqueField(doc, name).getNumber().doubleValue();
   }
 
+  private int getRequiredIntField(Document doc, String name) {
+    return (int) getRequiredUniqueField(doc, name).getNumber().doubleValue();
+  }
+
+  private List<String> getAtomFields(Document doc, String name) {
+    Iterable<Field> fields = doc.getField(name);
+    if (fields == null) {
+      return ImmutableList.of();
+    }
+    ImmutableList.Builder<String> out = ImmutableList.builder();
+    for (Field f : fields) {
+      Preconditions.checkArgument(f.getAtom() != null,
+          "%s: Expected atoms for field name %s, not %s", doc, name, f);
+      out.add(f.getAtom());
+    }
+    return out.build();
+  }
   private String describe(Document doc) {
     return "doc[" + doc.getId() + " with " + doc.getFields() + "]";
   }
