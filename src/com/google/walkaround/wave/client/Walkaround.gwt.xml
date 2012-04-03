@@ -35,11 +35,16 @@
 
   <set-property name="user.agent" value="safari,gecko1_8,ie6,ie8,opera"/>
 
-  <!-- For now, we emulate stack traces for Chrome, which otherwise only provides
-       the top few (~10) stack frames. The performance hit doesn't seem to be very
-       noticable from casual use. -->
   <set-property name="compiler.emulatedStack" value="true">
-    <when-property-is name="user.agent" value="safari"/>
+    <any>
+      <!-- For now, we emulate stack traces for Chrome, which otherwise only provides
+           the top few (~10) stack frames. The performance hit doesn't seem to be very
+           noticable from casual use. -->
+      <when-property-is name="user.agent" value="safari"/>
+      <!-- Also for IE where we get no stack traces otherwise. -->
+      <when-property-is name="user.agent" value="ie6"/>
+      <when-property-is name="user.agent" value="ie8"/>
+    </any>
   </set-property>
 
   <!-- Hack to get Opera to work. -->

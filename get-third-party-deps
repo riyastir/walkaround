@@ -84,6 +84,19 @@ Index: src/org/waveprotocol/wave/migration/helpers/FixLinkAnnotationsFilter.java
        try {
          return linkValueFromWaveValue(oldHref.substring(OLD_PREFIX.length()));
        } catch (InvalidWaveRefException e) {
+Index: src/org/waveprotocol/wave/client/wavepanel/impl/edit/KeepFocusInView.java
+===================================================================
+--- src/org/waveprotocol/wave/client/wavepanel/impl/edit/KeepFocusInView.java	(revision 1213039)
++++ src/org/waveprotocol/wave/client/wavepanel/impl/edit/KeepFocusInView.java	(working copy)
+@@ -108,7 +108,7 @@
+       // mutate the DOM, so the subsequent measurement queries will force
+       // synchronous layout, which can be slow.
+       OffsetPosition p = NativeSelectionUtil.slowGetPosition();
+-      if (p != null) {
++      if (p != null && p.offsetParent != null) {
+         Extent viewportInContent = scroller.getViewport();
+         double focusInViewport = measurer.top(viewport, p.offsetParent) + p.top;
+         double focusInContent = focusInViewport + viewportInContent.getStart();
 Index: src/org/waveprotocol/wave/client/wavepanel/view/dom/ParticipantAvatarDomImpl.java
 ===================================================================
 --- src/org/waveprotocol/wave/client/wavepanel/view/dom/ParticipantAvatarDomImpl.java	(revision 1213039)

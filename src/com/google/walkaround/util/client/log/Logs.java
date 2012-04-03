@@ -253,9 +253,27 @@ public class Logs {
         // handler, because that will likely cause an infinite loop!
         // TODO(danilatos): Don't Window.alert() in real production, parametrise
         // this with some debug mode if statement thing.
-        Window.alert("Log handler threw " + t);
+        Window.alert("Log handler threw\n" + getStackTraceAsString(t));
       }
     }
+  }
+
+  private static String getStackTraceAsString(Throwable t) {
+    // I assume we can't use t.printStackTrace(PrintStream) in GWT but didn't
+    // confirm this.
+    StringBuilder out = new StringBuilder();
+    do {
+      out.append(t + "\n");
+      for (StackTraceElement e : t.getStackTrace()) {
+        out.append("\tat " + e.getClassName() + "." + e.getMethodName()
+            + "(" + e.getFileName() + ":" + e.getLineNumber() + ")\n");
+      }
+      t = t.getCause();
+      if (t != null) {
+        out.append("Caused by: ");
+      }
+    } while (t != null);
+    return "" + out;
   }
 
   /**
