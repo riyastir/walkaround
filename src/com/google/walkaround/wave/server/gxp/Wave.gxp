@@ -30,7 +30,7 @@
   <gxp:param name='gwtBootstrap' type='HtmlClosure'/>
   <gxp:param name='channelApiUrl' type='String'/>
 
-  <html>
+  <html gxp:doctype='transitional'>
     <head>
       <meta http-equiv='Content-type' content='text/html;charset=UTF-8'/>
       <meta name='gwt:property' content='locale=en'/>

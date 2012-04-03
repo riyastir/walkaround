@@ -30,7 +30,6 @@
   <gxp:param name='analyticsAccount' type='String'/>
   <gxp:param name='errorMessage' type='String'/>
 
-  <!-- Generate doctype to trigger standards mode -->
   <html gxp:doctype='transitional'>
     <head>
       <meta http-equiv='Content-type' content='text/html;charset=UTF-8'/>

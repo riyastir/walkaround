@@ -29,7 +29,7 @@
   <gxp:param name='analyticsAccount' type='String'/>
   <gxp:param name='content' type='HtmlClosure'/>
 
-  <html>
+  <html gxp:doctype='transitional'>
     <head>
       <title><gxp:eval expr='title'/></title>
       <call:AnalyticsFragment account='analyticsAccount'/>

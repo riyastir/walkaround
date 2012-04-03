@@ -28,7 +28,6 @@
   <gxp:param name='content' type='HtmlClosure'/>
 
   <gxp:nomsg>
-  <!-- Generate doctype to trigger standards mode -->
   <html gxp:doctype='transitional'>
     <head>
       <meta http-equiv='Content-type' content='text/html;charset=UTF-8'/>
