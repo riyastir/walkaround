@@ -62,6 +62,7 @@ import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTrans
 import com.google.walkaround.util.server.appengine.DatastoreUtil;
 import com.google.walkaround.util.server.appengine.MemcacheDeletionQueue;
 import com.google.walkaround.util.server.appengine.MemcacheTable;
+import com.google.walkaround.util.server.appengine.OversizedPropertyMover;
 import com.google.walkaround.util.server.auth.DigestUtils2.Secret;
 import com.google.walkaround.util.server.flags.FlagDeclaration;
 import com.google.walkaround.util.server.flags.FlagFormatException;
@@ -138,6 +139,9 @@ public class WalkaroundServerModule extends AbstractModule {
     bind(MessageSerializer.class).to(ServerMessageSerializer.class);
     bind(SlobManager.class).to(WaveManager.class);
     bind(MutationLog.DeltaEntityConverter.class).to(LegacyDeltaEntityConverter.class);
+
+    bind(OversizedPropertyMover.BlobWriteListener.class).toInstance(
+        OversizedPropertyMover.NULL_LISTENER);
 
     JsonFlags.bind(binder(), Arrays.asList(FlagName.values()),
         binder().getProvider(
