@@ -27,7 +27,7 @@
   <gxp:param name='analyticsAccount' type='String'/>
   <gxp:param name='attachmentId' type='String'/>
 
-  <html>
+  <html gxp:doctype='transitional'>
     <head>
       <title><gxp:msg>Upload Result</gxp:msg></title>
       <script type='text/javascript'>
