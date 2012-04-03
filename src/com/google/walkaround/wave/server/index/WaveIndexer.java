@@ -32,12 +32,19 @@ import com.google.appengine.api.search.SearchQueryException;
 import com.google.appengine.api.search.SearchRequest;
 import com.google.appengine.api.search.SearchResponse;
 import com.google.appengine.api.search.SearchResult;
+import com.google.appengine.api.search.SortSpec;
+import com.google.appengine.api.search.SortSpec.SortDirection;
 import com.google.appengine.api.search.StatusCode;
+import com.google.appengine.api.search.checkers.FieldChecker;
 import com.google.appengine.api.utils.SystemProperty;
 import com.google.appengine.repackaged.com.google.common.collect.Iterables;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.primitives.Ints;
 import com.google.inject.Inject;
 import com.google.walkaround.proto.ConvMetadata;
 import com.google.walkaround.proto.gson.ObsoleteWaveletMetadataGsonImpl;
@@ -89,10 +96,12 @@ import org.waveprotocol.wave.model.wave.opbased.WaveViewImpl.WaveletConfigurator
 import org.waveprotocol.wave.model.wave.opbased.WaveViewImpl.WaveletFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -102,6 +111,26 @@ import javax.annotation.Nullable;
  * @author danilatos@google.com (Daniel Danilatos)
  */
 public class WaveIndexer {
+
+  private static final Logger log = Logger.getLogger(WaveIndexer.class.getName());
+
+  // Unavailable index prefixes:
+  // "USRIDX-".
+  // "USRIDX2-".
+  private static final String USER_WAVE_INDEX_PREFIX = "USRIDX3-";
+
+  // Unavailable field names:
+  // "blips"
+  // "modified"
+  private static final String UNREAD_BLIP_COUNT_FIELD = "unread";
+  private static final String BLIP_COUNT_FIELD = "blips2";
+  private static final String IN_FOLDER_FIELD = "in";
+  private static final String CREATOR_FIELD = "creator";
+  private static final String TITLE_FIELD = "title";
+  private static final String CONTENT_FIELD = "content";
+  // We use minutes since epoch because numeric fields can be at most 2.14...E9.
+  private static final String MODIFIED_MINUTES_FIELD = "modified2";
+
   public static class UserIndexEntry {
     private final SlobId objectId;
     private final ParticipantId creator;
@@ -189,16 +218,12 @@ public class WaveIndexer {
     String indexableText;
     String title;
     String creator;
-    String lastModified;
+    long lastModifiedMillis;
     int version;
     WaveletId waveletId;
     Conversation model;
     int blipCount;
   }
-
-  private static final Logger log = Logger.getLogger(WaveIndexer.class.getName());
-
-  private static final String USER_WAVE_INDEX_PREFIX = "USRIDX-";
 
   private final WaveSerializer serializer;
   private final IndexManager indexManager;
@@ -311,7 +336,7 @@ public class WaveIndexer {
     fields.slobId = convId;
     fields.title = Util.extractTitle(convData);
     fields.creator = convData.getCreator().getAddress();
-    fields.lastModified = convData.getLastModifiedTime() + "";
+    fields.lastModifiedMillis = convData.getLastModifiedTime();
     fields.version = (int) convData.getVersion();
     fields.waveletId = convData.getWaveletId();
     fields.model = getConversation(convData);
@@ -319,6 +344,28 @@ public class WaveIndexer {
     fields.blipCount = countBlips(fields.model);
 
     return fields;
+  }
+
+  private String shortenTextMaybe(String in) {
+    if (in.length() <= FieldChecker.MAXIMUM_TEXT_LENGTH) {
+      return in;
+    }
+    // Not sure what the best strategy is; for now, remove duplicate tokens.
+    String[] tokens = in.split("\\s", -1);
+    Set<String> noDups = Sets.newLinkedHashSet(Arrays.asList(tokens));
+    StringBuilder b = new StringBuilder();
+    for (String s : noDups) {
+      b.append(s + "\n");
+    }
+    String out = b.toString();
+    if (out.length() <= FieldChecker.MAXIMUM_TEXT_LENGTH) {
+      log.info("Shortened " + in.length() + " to " + out.length());
+      return out;
+    } else {
+      log.warning("Shortened " + in.length() + " to " + out.length()
+          + "; still too long, truncating");
+      return out.substring(0, FieldChecker.MAXIMUM_TEXT_LENGTH);
+    }
   }
 
   private void index(ConvFields conv, ParticipantId user, @Nullable Supplement supplement)
@@ -336,13 +383,16 @@ public class WaveIndexer {
 
     Document.Builder builder = Document.newBuilder();
     builder.setId(conv.slobId.getId());
-    builder.addField(Field.newBuilder().setName("content").setText(conv.indexableText));
-    builder.addField(Field.newBuilder().setName("title").setText(conv.title));
-    builder.addField(Field.newBuilder().setName("creator").setText(conv.creator));
-    builder.addField(Field.newBuilder().setName("modified").setText(conv.lastModified));
-    builder.addField(Field.newBuilder().setName("in").setText("inbox"));
-    builder.addField(Field.newBuilder().setName("blips").setText("" + conv.blipCount)); //use num?
-    builder.addField(Field.newBuilder().setName("unread").setText(
+    builder.addField(Field.newBuilder().setName(CONTENT_FIELD).setText(
+        shortenTextMaybe(conv.indexableText)));
+    builder.addField(Field.newBuilder().setName(TITLE_FIELD).setText(
+        shortenTextMaybe(conv.title)));
+    builder.addField(Field.newBuilder().setName(CREATOR_FIELD).setText(conv.creator));
+    builder.addField(Field.newBuilder().setName(MODIFIED_MINUTES_FIELD).setNumber(
+        conv.lastModifiedMillis / 1000 / 60));
+    builder.addField(Field.newBuilder().setName(IN_FOLDER_FIELD).setText("inbox"));
+    builder.addField(Field.newBuilder().setName(BLIP_COUNT_FIELD).setNumber(conv.blipCount));
+    builder.addField(Field.newBuilder().setName(UNREAD_BLIP_COUNT_FIELD).setText(
         unreadCount == null ? "no" : ("" + unreadCount)));
     builder.addField(Field.newBuilder().setName("is").setText(
         (unreadCount == null ? "read " : "unread ")
@@ -505,13 +555,20 @@ public class WaveIndexer {
     query = query.trim();
 
     log.info("Searching for " + query);
+    // TODO(ohler): Avoid these deprecated classes.  However, the new API isn't quite ready
+    // (specifically, SortDirection is package-private), so we can't yet.
     SearchRequest request;
     try {
       request = SearchRequest.newBuilder()
           .setQuery(query)
-          .setFieldsToSnippet("content")
+          .setFieldsToSnippet(CONTENT_FIELD)
           .setOffset(offset)
           .setLimit(limit)
+          .addSortSpec(SortSpec.newBuilder()
+              .setType(SortSpec.SortType.CUSTOM)
+              .setExpression(MODIFIED_MINUTES_FIELD)
+              .setDirection(SortDirection.DESCENDING)
+              .setDefaultValueNumeric(0))
           .build();
     } catch (SearchQueryException e) {
       log.log(Level.WARNING, "Problem building query " + query, e);
@@ -555,30 +612,49 @@ public class WaveIndexer {
         int c = new Random().nextInt(5);
         unreadCount = c == 0 ? "no" : "" + c * 7;
       } else {
-        unreadCount = getField(doc, "unread");
+        unreadCount = getRequiredStringField(doc, UNREAD_BLIP_COUNT_FIELD);
       }
       entries.add(new UserIndexEntry(
           new SlobId(doc.getId()),
-          ParticipantId.ofUnsafe(HACK ? "hack@hack.com" : getField(doc, "creator")),
-          HACK ? "XXX" : getField(doc, "title"),
+          ParticipantId.ofUnsafe(
+              HACK ? "hack@hack.com" : getRequiredStringField(doc, CREATOR_FIELD)),
+          HACK ? "XXX" : getRequiredStringField(doc, TITLE_FIELD),
           snippetHtml,
-          Long.parseLong(HACK ? "1" : getField(doc, "modified")),
-          Integer.parseInt(HACK ? "23" : getField(doc, "blips")),
+          HACK ? 1L : getRequiredLongField(doc, MODIFIED_MINUTES_FIELD)
+              * 60 * 1000,
+          Ints.checkedCast(HACK ? 23 : getRequiredLongField(doc, BLIP_COUNT_FIELD)),
           "no".equals(unreadCount) ? null : Integer.parseInt(unreadCount)
           ));
     }
     return entries;
   }
 
-  private String getField(Document doc, String field) {
-    Iterable<Field> fields = doc.getField(field);
+  @Nullable private Field getOptionalUniqueField(Document doc, String name) {
+    Iterable<Field> fields = doc.getField(name);
     if (fields == null) {
-      throw new RuntimeException("No field " + field + " in doc " + describe(doc));
+      return null;
     }
-    for (Field f : fields) {
-      return f.getText();
+    List<Field> list = ImmutableList.copyOf(fields);
+    if (list.isEmpty()) {
+      return null;
     }
-    throw new RuntimeException("Empty field list for " + field + " in doc " + describe(doc));
+    Preconditions.checkArgument(list.size() == 1, "%s: Field %s not unique, found %s: %s",
+        doc, name, list.size(), list);
+    return Iterables.getOnlyElement(list);
+  }
+
+  private Field getRequiredUniqueField(Document doc, String name) {
+    Field field = getOptionalUniqueField(doc, name);
+    Preconditions.checkArgument(field != null, "%s: No field %s", doc, name);
+    return field;
+  }
+
+  private String getRequiredStringField(Document doc, String name) {
+    return getRequiredUniqueField(doc, name).getText();
+  }
+
+  private long getRequiredLongField(Document doc, String name) {
+    return (long) getRequiredUniqueField(doc, name).getNumber().doubleValue();
   }
 
   private String describe(Document doc) {
