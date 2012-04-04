@@ -4466,6 +4466,427 @@ public final class GoogleImport {
     // @@protoc_insertion_point(class_scope:google_import_proto.FindRemoteWavesTask)
   }
   
+  public static final class FindWaveletsForRemoteWaveTask extends
+      com.google.protobuf.GeneratedMessage {
+    // Use FindWaveletsForRemoteWaveTask.newBuilder() to construct.
+    private FindWaveletsForRemoteWaveTask() {
+      initFields();
+    }
+    private FindWaveletsForRemoteWaveTask(boolean noInit) {}
+    
+    private static final FindWaveletsForRemoteWaveTask defaultInstance;
+    public static FindWaveletsForRemoteWaveTask getDefaultInstance() {
+      return defaultInstance;
+    }
+    
+    public FindWaveletsForRemoteWaveTask getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+    
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.google.walkaround.proto.GoogleImport.internal_static_google_import_proto_FindWaveletsForRemoteWaveTask_descriptor;
+    }
+    
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.google.walkaround.proto.GoogleImport.internal_static_google_import_proto_FindWaveletsForRemoteWaveTask_fieldAccessorTable;
+    }
+    
+    // required string instance = 1;
+    public static final int INSTANCE_FIELD_NUMBER = 1;
+    private boolean hasInstance;
+    private java.lang.String instance_ = "";
+    public boolean hasInstance() { return hasInstance; }
+    public java.lang.String getInstance() { return instance_; }
+    
+    // required .google_import_proto.RobotSearchDigest wave_digest = 2;
+    public static final int WAVE_DIGEST_FIELD_NUMBER = 2;
+    private boolean hasWaveDigest;
+    private com.google.walkaround.proto.GoogleImport.RobotSearchDigest waveDigest_;
+    public boolean hasWaveDigest() { return hasWaveDigest; }
+    public com.google.walkaround.proto.GoogleImport.RobotSearchDigest getWaveDigest() { return waveDigest_; }
+    
+    // optional .google_import_proto.ImportSettings auto_import_settings = 4;
+    public static final int AUTO_IMPORT_SETTINGS_FIELD_NUMBER = 4;
+    private boolean hasAutoImportSettings;
+    private com.google.walkaround.proto.GoogleImport.ImportSettings autoImportSettings_;
+    public boolean hasAutoImportSettings() { return hasAutoImportSettings; }
+    public com.google.walkaround.proto.GoogleImport.ImportSettings getAutoImportSettings() { return autoImportSettings_; }
+    
+    private void initFields() {
+      waveDigest_ = com.google.walkaround.proto.GoogleImport.RobotSearchDigest.getDefaultInstance();
+      autoImportSettings_ = com.google.walkaround.proto.GoogleImport.ImportSettings.getDefaultInstance();
+    }
+    public final boolean isInitialized() {
+      if (!hasInstance) return false;
+      if (!hasWaveDigest) return false;
+      if (!getWaveDigest().isInitialized()) return false;
+      if (hasAutoImportSettings()) {
+        if (!getAutoImportSettings().isInitialized()) return false;
+      }
+      return true;
+    }
+    
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (hasInstance()) {
+        output.writeString(1, getInstance());
+      }
+      if (hasWaveDigest()) {
+        output.writeMessage(2, getWaveDigest());
+      }
+      if (hasAutoImportSettings()) {
+        output.writeMessage(4, getAutoImportSettings());
+      }
+      getUnknownFields().writeTo(output);
+    }
+    
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+    
+      size = 0;
+      if (hasInstance()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeStringSize(1, getInstance());
+      }
+      if (hasWaveDigest()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(2, getWaveDigest());
+      }
+      if (hasAutoImportSettings()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(4, getAutoImportSettings());
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+    
+    public static com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return newBuilder().mergeFrom(data).buildParsed();
+    }
+    public static com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return newBuilder().mergeFrom(data, extensionRegistry)
+               .buildParsed();
+    }
+    public static com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return newBuilder().mergeFrom(data).buildParsed();
+    }
+    public static com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return newBuilder().mergeFrom(data, extensionRegistry)
+               .buildParsed();
+    }
+    public static com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return newBuilder().mergeFrom(input).buildParsed();
+    }
+    public static com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return newBuilder().mergeFrom(input, extensionRegistry)
+               .buildParsed();
+    }
+    public static com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      Builder builder = newBuilder();
+      if (builder.mergeDelimitedFrom(input)) {
+        return builder.buildParsed();
+      } else {
+        return null;
+      }
+    }
+    public static com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      Builder builder = newBuilder();
+      if (builder.mergeDelimitedFrom(input, extensionRegistry)) {
+        return builder.buildParsed();
+      } else {
+        return null;
+      }
+    }
+    public static com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return newBuilder().mergeFrom(input).buildParsed();
+    }
+    public static com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return newBuilder().mergeFrom(input, extensionRegistry)
+               .buildParsed();
+    }
+    
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+    
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> {
+      private com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask result;
+      
+      // Construct using com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask.newBuilder()
+      private Builder() {}
+      
+      private static Builder create() {
+        Builder builder = new Builder();
+        builder.result = new com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask();
+        return builder;
+      }
+      
+      protected com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask internalGetResult() {
+        return result;
+      }
+      
+      public Builder clear() {
+        if (result == null) {
+          throw new IllegalStateException(
+            "Cannot call clear() after build().");
+        }
+        result = new com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask();
+        return this;
+      }
+      
+      public Builder clone() {
+        return create().mergeFrom(result);
+      }
+      
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask.getDescriptor();
+      }
+      
+      public com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask getDefaultInstanceForType() {
+        return com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask.getDefaultInstance();
+      }
+      
+      public boolean isInitialized() {
+        return result.isInitialized();
+      }
+      public com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask build() {
+        if (result != null && !isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return buildPartial();
+      }
+      
+      private com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask buildParsed()
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        if (!isInitialized()) {
+          throw newUninitializedMessageException(
+            result).asInvalidProtocolBufferException();
+        }
+        return buildPartial();
+      }
+      
+      public com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask buildPartial() {
+        if (result == null) {
+          throw new IllegalStateException(
+            "build() has already been called on this Builder.");
+        }
+        com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask returnMe = result;
+        result = null;
+        return returnMe;
+      }
+      
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask) {
+          return mergeFrom((com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+      
+      public Builder mergeFrom(com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask other) {
+        if (other == com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask.getDefaultInstance()) return this;
+        if (other.hasInstance()) {
+          setInstance(other.getInstance());
+        }
+        if (other.hasWaveDigest()) {
+          mergeWaveDigest(other.getWaveDigest());
+        }
+        if (other.hasAutoImportSettings()) {
+          mergeAutoImportSettings(other.getAutoImportSettings());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+      
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder(
+            this.getUnknownFields());
+        while (true) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              this.setUnknownFields(unknownFields.build());
+              return this;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                this.setUnknownFields(unknownFields.build());
+                return this;
+              }
+              break;
+            }
+            case 10: {
+              setInstance(input.readString());
+              break;
+            }
+            case 18: {
+              com.google.walkaround.proto.GoogleImport.RobotSearchDigest.Builder subBuilder = com.google.walkaround.proto.GoogleImport.RobotSearchDigest.newBuilder();
+              if (hasWaveDigest()) {
+                subBuilder.mergeFrom(getWaveDigest());
+              }
+              input.readMessage(subBuilder, extensionRegistry);
+              setWaveDigest(subBuilder.buildPartial());
+              break;
+            }
+            case 34: {
+              com.google.walkaround.proto.GoogleImport.ImportSettings.Builder subBuilder = com.google.walkaround.proto.GoogleImport.ImportSettings.newBuilder();
+              if (hasAutoImportSettings()) {
+                subBuilder.mergeFrom(getAutoImportSettings());
+              }
+              input.readMessage(subBuilder, extensionRegistry);
+              setAutoImportSettings(subBuilder.buildPartial());
+              break;
+            }
+          }
+        }
+      }
+      
+      
+      // required string instance = 1;
+      public boolean hasInstance() {
+        return result.hasInstance();
+      }
+      public java.lang.String getInstance() {
+        return result.getInstance();
+      }
+      public Builder setInstance(java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  result.hasInstance = true;
+        result.instance_ = value;
+        return this;
+      }
+      public Builder clearInstance() {
+        result.hasInstance = false;
+        result.instance_ = getDefaultInstance().getInstance();
+        return this;
+      }
+      
+      // required .google_import_proto.RobotSearchDigest wave_digest = 2;
+      public boolean hasWaveDigest() {
+        return result.hasWaveDigest();
+      }
+      public com.google.walkaround.proto.GoogleImport.RobotSearchDigest getWaveDigest() {
+        return result.getWaveDigest();
+      }
+      public Builder setWaveDigest(com.google.walkaround.proto.GoogleImport.RobotSearchDigest value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        result.hasWaveDigest = true;
+        result.waveDigest_ = value;
+        return this;
+      }
+      public Builder setWaveDigest(com.google.walkaround.proto.GoogleImport.RobotSearchDigest.Builder builderForValue) {
+        result.hasWaveDigest = true;
+        result.waveDigest_ = builderForValue.build();
+        return this;
+      }
+      public Builder mergeWaveDigest(com.google.walkaround.proto.GoogleImport.RobotSearchDigest value) {
+        if (result.hasWaveDigest() &&
+            result.waveDigest_ != com.google.walkaround.proto.GoogleImport.RobotSearchDigest.getDefaultInstance()) {
+          result.waveDigest_ =
+            com.google.walkaround.proto.GoogleImport.RobotSearchDigest.newBuilder(result.waveDigest_).mergeFrom(value).buildPartial();
+        } else {
+          result.waveDigest_ = value;
+        }
+        result.hasWaveDigest = true;
+        return this;
+      }
+      public Builder clearWaveDigest() {
+        result.hasWaveDigest = false;
+        result.waveDigest_ = com.google.walkaround.proto.GoogleImport.RobotSearchDigest.getDefaultInstance();
+        return this;
+      }
+      
+      // optional .google_import_proto.ImportSettings auto_import_settings = 4;
+      public boolean hasAutoImportSettings() {
+        return result.hasAutoImportSettings();
+      }
+      public com.google.walkaround.proto.GoogleImport.ImportSettings getAutoImportSettings() {
+        return result.getAutoImportSettings();
+      }
+      public Builder setAutoImportSettings(com.google.walkaround.proto.GoogleImport.ImportSettings value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        result.hasAutoImportSettings = true;
+        result.autoImportSettings_ = value;
+        return this;
+      }
+      public Builder setAutoImportSettings(com.google.walkaround.proto.GoogleImport.ImportSettings.Builder builderForValue) {
+        result.hasAutoImportSettings = true;
+        result.autoImportSettings_ = builderForValue.build();
+        return this;
+      }
+      public Builder mergeAutoImportSettings(com.google.walkaround.proto.GoogleImport.ImportSettings value) {
+        if (result.hasAutoImportSettings() &&
+            result.autoImportSettings_ != com.google.walkaround.proto.GoogleImport.ImportSettings.getDefaultInstance()) {
+          result.autoImportSettings_ =
+            com.google.walkaround.proto.GoogleImport.ImportSettings.newBuilder(result.autoImportSettings_).mergeFrom(value).buildPartial();
+        } else {
+          result.autoImportSettings_ = value;
+        }
+        result.hasAutoImportSettings = true;
+        return this;
+      }
+      public Builder clearAutoImportSettings() {
+        result.hasAutoImportSettings = false;
+        result.autoImportSettings_ = com.google.walkaround.proto.GoogleImport.ImportSettings.getDefaultInstance();
+        return this;
+      }
+      
+      // @@protoc_insertion_point(builder_scope:google_import_proto.FindWaveletsForRemoteWaveTask)
+    }
+    
+    static {
+      defaultInstance = new FindWaveletsForRemoteWaveTask(true);
+      com.google.walkaround.proto.GoogleImport.internalForceInit();
+      defaultInstance.initFields();
+    }
+    
+    // @@protoc_insertion_point(class_scope:google_import_proto.FindWaveletsForRemoteWaveTask)
+  }
+  
   public static final class ImportSettings extends
       com.google.protobuf.GeneratedMessage {
     // Use ImportSettings.newBuilder() to construct.
@@ -7115,10 +7536,18 @@ public final class GoogleImport {
     public boolean hasFetchAttachmentsTask() { return hasFetchAttachmentsTask; }
     public com.google.walkaround.proto.GoogleImport.FetchAttachmentsAndImportWaveletTask getFetchAttachmentsTask() { return fetchAttachmentsTask_; }
     
+    // optional .google_import_proto.FindWaveletsForRemoteWaveTask find_wavelets_task = 4;
+    public static final int FIND_WAVELETS_TASK_FIELD_NUMBER = 4;
+    private boolean hasFindWaveletsTask;
+    private com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask findWaveletsTask_;
+    public boolean hasFindWaveletsTask() { return hasFindWaveletsTask; }
+    public com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask getFindWaveletsTask() { return findWaveletsTask_; }
+    
     private void initFields() {
       findWavesTask_ = com.google.walkaround.proto.GoogleImport.FindRemoteWavesTask.getDefaultInstance();
       importWaveletTask_ = com.google.walkaround.proto.GoogleImport.ImportWaveletTask.getDefaultInstance();
       fetchAttachmentsTask_ = com.google.walkaround.proto.GoogleImport.FetchAttachmentsAndImportWaveletTask.getDefaultInstance();
+      findWaveletsTask_ = com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask.getDefaultInstance();
     }
     public final boolean isInitialized() {
       if (hasFindWavesTask()) {
@@ -7129,6 +7558,9 @@ public final class GoogleImport {
       }
       if (hasFetchAttachmentsTask()) {
         if (!getFetchAttachmentsTask().isInitialized()) return false;
+      }
+      if (hasFindWaveletsTask()) {
+        if (!getFindWaveletsTask().isInitialized()) return false;
       }
       return true;
     }
@@ -7144,6 +7576,9 @@ public final class GoogleImport {
       }
       if (hasFetchAttachmentsTask()) {
         output.writeMessage(3, getFetchAttachmentsTask());
+      }
+      if (hasFindWaveletsTask()) {
+        output.writeMessage(4, getFindWaveletsTask());
       }
       getUnknownFields().writeTo(output);
     }
@@ -7165,6 +7600,10 @@ public final class GoogleImport {
       if (hasFetchAttachmentsTask()) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(3, getFetchAttachmentsTask());
+      }
+      if (hasFindWaveletsTask()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(4, getFindWaveletsTask());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -7333,6 +7772,9 @@ public final class GoogleImport {
         if (other.hasFetchAttachmentsTask()) {
           mergeFetchAttachmentsTask(other.getFetchAttachmentsTask());
         }
+        if (other.hasFindWaveletsTask()) {
+          mergeFindWaveletsTask(other.getFindWaveletsTask());
+        }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
@@ -7383,6 +7825,15 @@ public final class GoogleImport {
               }
               input.readMessage(subBuilder, extensionRegistry);
               setFetchAttachmentsTask(subBuilder.buildPartial());
+              break;
+            }
+            case 34: {
+              com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask.Builder subBuilder = com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask.newBuilder();
+              if (hasFindWaveletsTask()) {
+                subBuilder.mergeFrom(getFindWaveletsTask());
+              }
+              input.readMessage(subBuilder, extensionRegistry);
+              setFindWaveletsTask(subBuilder.buildPartial());
               break;
             }
           }
@@ -7501,6 +7952,43 @@ public final class GoogleImport {
         return this;
       }
       
+      // optional .google_import_proto.FindWaveletsForRemoteWaveTask find_wavelets_task = 4;
+      public boolean hasFindWaveletsTask() {
+        return result.hasFindWaveletsTask();
+      }
+      public com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask getFindWaveletsTask() {
+        return result.getFindWaveletsTask();
+      }
+      public Builder setFindWaveletsTask(com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        result.hasFindWaveletsTask = true;
+        result.findWaveletsTask_ = value;
+        return this;
+      }
+      public Builder setFindWaveletsTask(com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask.Builder builderForValue) {
+        result.hasFindWaveletsTask = true;
+        result.findWaveletsTask_ = builderForValue.build();
+        return this;
+      }
+      public Builder mergeFindWaveletsTask(com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask value) {
+        if (result.hasFindWaveletsTask() &&
+            result.findWaveletsTask_ != com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask.getDefaultInstance()) {
+          result.findWaveletsTask_ =
+            com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask.newBuilder(result.findWaveletsTask_).mergeFrom(value).buildPartial();
+        } else {
+          result.findWaveletsTask_ = value;
+        }
+        result.hasFindWaveletsTask = true;
+        return this;
+      }
+      public Builder clearFindWaveletsTask() {
+        result.hasFindWaveletsTask = false;
+        result.findWaveletsTask_ = com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask.getDefaultInstance();
+        return this;
+      }
+      
       // @@protoc_insertion_point(builder_scope:google_import_proto.ImportTaskPayload)
     }
     
@@ -7563,6 +8051,11 @@ public final class GoogleImport {
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_google_import_proto_FindRemoteWavesTask_fieldAccessorTable;
+  private static com.google.protobuf.Descriptors.Descriptor
+    internal_static_google_import_proto_FindWaveletsForRemoteWaveTask_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_google_import_proto_FindWaveletsForRemoteWaveTask_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
     internal_static_google_import_proto_ImportSettings_descriptor;
   private static
@@ -7645,41 +8138,48 @@ public final class GoogleImport {
       "WavesTask\022\020\n\010instance\030\001 \002(\t\022\030\n\020on_or_aft" +
       "er_days\030\002 \002(\003\022\023\n\013before_days\030\003 \002(\003\022A\n\024au" +
       "to_import_settings\030\004 \001(\0132#.google_import" +
-      "_proto.ImportSettings\"\307\001\n\016ImportSettings" +
-      "\022K\n\014sharing_mode\030\001 \002(\01625.google_import_p",
-      "roto.ImportSettings.ImportSharingMode\022\032\n" +
-      "\022synthesize_history\030\002 \002(\010\"L\n\021ImportShari" +
-      "ngMode\022\013\n\007PRIVATE\020\000\022\n\n\006SHARED\020\001\022\036\n\032PRIVA" +
-      "TE_UNLESS_PARTICIPANT\020\002\"\257\002\n\021ImportWavele" +
-      "tTask\022\020\n\010instance\030\001 \002(\t\022\017\n\007wave_id\030\002 \002(\t" +
-      "\022\022\n\nwavelet_id\030\003 \002(\t\0225\n\010settings\030\004 \002(\0132#" +
-      ".google_import_proto.ImportSettings\022M\n\na" +
-      "ttachment\030\005 \003(\01329.google_import_proto.Im" +
-      "portWaveletTask.ImportedAttachment\022\"\n\032ex" +
-      "isting_slob_id_to_ignore\030\006 \001(\t\0329\n\022Import",
-      "edAttachment\022\021\n\tremote_id\030\001 \002(\t\022\020\n\010local" +
-      "_id\030\002 \001(\t\"\266\004\n$FetchAttachmentsAndImportW" +
-      "aveletTask\022D\n\024original_import_task\030\001 \002(\013" +
-      "2&.google_import_proto.ImportWaveletTask" +
-      "\022a\n\tto_import\030\002 \003(\0132N.google_import_prot" +
-      "o.FetchAttachmentsAndImportWaveletTask.R" +
-      "emoteAttachmentInfo\022b\n\010imported\030\003 \003(\0132P." +
-      "google_import_proto.FetchAttachmentsAndI" +
-      "mportWaveletTask.ImportedAttachmentInfo\032" +
-      "o\n\024RemoteAttachmentInfo\022\021\n\tremote_id\030\001 \002",
-      "(\t\022\020\n\010filename\030\002 \001(\t\022\021\n\tsizeBytes\030\003 \001(\003\022" +
-      "\021\n\tmime_type\030\004 \001(\t\022\014\n\004path\030\005 \002(\t\032\217\001\n\026Imp" +
-      "ortedAttachmentInfo\022c\n\013remote_info\030\001 \002(\013" +
-      "2N.google_import_proto.FetchAttachmentsA" +
-      "ndImportWaveletTask.RemoteAttachmentInfo" +
-      "\022\020\n\010local_id\030\002 \001(\t\"\366\001\n\021ImportTaskPayload" +
-      "\022A\n\017find_waves_task\030\001 \001(\0132(.google_impor" +
-      "t_proto.FindRemoteWavesTask\022C\n\023import_wa" +
-      "velet_task\030\002 \001(\0132&.google_import_proto.I" +
-      "mportWaveletTask\022Y\n\026fetch_attachments_ta",
-      "sk\030\003 \001(\01329.google_import_proto.FetchAtta" +
-      "chmentsAndImportWaveletTaskB+\n\033com.googl" +
-      "e.walkaround.protoB\014GoogleImport"
+      "_proto.ImportSettings\"\261\001\n\035FindWaveletsFo" +
+      "rRemoteWaveTask\022\020\n\010instance\030\001 \002(\t\022;\n\013wav",
+      "e_digest\030\002 \002(\0132&.google_import_proto.Rob" +
+      "otSearchDigest\022A\n\024auto_import_settings\030\004" +
+      " \001(\0132#.google_import_proto.ImportSetting" +
+      "s\"\307\001\n\016ImportSettings\022K\n\014sharing_mode\030\001 \002" +
+      "(\01625.google_import_proto.ImportSettings." +
+      "ImportSharingMode\022\032\n\022synthesize_history\030" +
+      "\002 \002(\010\"L\n\021ImportSharingMode\022\013\n\007PRIVATE\020\000\022" +
+      "\n\n\006SHARED\020\001\022\036\n\032PRIVATE_UNLESS_PARTICIPAN" +
+      "T\020\002\"\257\002\n\021ImportWaveletTask\022\020\n\010instance\030\001 " +
+      "\002(\t\022\017\n\007wave_id\030\002 \002(\t\022\022\n\nwavelet_id\030\003 \002(\t",
+      "\0225\n\010settings\030\004 \002(\0132#.google_import_proto" +
+      ".ImportSettings\022M\n\nattachment\030\005 \003(\01329.go" +
+      "ogle_import_proto.ImportWaveletTask.Impo" +
+      "rtedAttachment\022\"\n\032existing_slob_id_to_ig" +
+      "nore\030\006 \001(\t\0329\n\022ImportedAttachment\022\021\n\tremo" +
+      "te_id\030\001 \002(\t\022\020\n\010local_id\030\002 \001(\t\"\266\004\n$FetchA" +
+      "ttachmentsAndImportWaveletTask\022D\n\024origin" +
+      "al_import_task\030\001 \002(\0132&.google_import_pro" +
+      "to.ImportWaveletTask\022a\n\tto_import\030\002 \003(\0132" +
+      "N.google_import_proto.FetchAttachmentsAn",
+      "dImportWaveletTask.RemoteAttachmentInfo\022" +
+      "b\n\010imported\030\003 \003(\0132P.google_import_proto." +
+      "FetchAttachmentsAndImportWaveletTask.Imp" +
+      "ortedAttachmentInfo\032o\n\024RemoteAttachmentI" +
+      "nfo\022\021\n\tremote_id\030\001 \002(\t\022\020\n\010filename\030\002 \001(\t" +
+      "\022\021\n\tsizeBytes\030\003 \001(\003\022\021\n\tmime_type\030\004 \001(\t\022\014" +
+      "\n\004path\030\005 \002(\t\032\217\001\n\026ImportedAttachmentInfo\022" +
+      "c\n\013remote_info\030\001 \002(\0132N.google_import_pro" +
+      "to.FetchAttachmentsAndImportWaveletTask." +
+      "RemoteAttachmentInfo\022\020\n\010local_id\030\002 \001(\t\"\306",
+      "\002\n\021ImportTaskPayload\022A\n\017find_waves_task\030" +
+      "\001 \001(\0132(.google_import_proto.FindRemoteWa" +
+      "vesTask\022C\n\023import_wavelet_task\030\002 \001(\0132&.g" +
+      "oogle_import_proto.ImportWaveletTask\022Y\n\026" +
+      "fetch_attachments_task\030\003 \001(\01329.google_im" +
+      "port_proto.FetchAttachmentsAndImportWave" +
+      "letTask\022N\n\022find_wavelets_task\030\004 \001(\01322.go" +
+      "ogle_import_proto.FindWaveletsForRemoteW" +
+      "aveTaskB+\n\033com.google.walkaround.protoB\014" +
+      "GoogleImport"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -7766,8 +8266,16 @@ public final class GoogleImport {
               new java.lang.String[] { "Instance", "OnOrAfterDays", "BeforeDays", "AutoImportSettings", },
               com.google.walkaround.proto.GoogleImport.FindRemoteWavesTask.class,
               com.google.walkaround.proto.GoogleImport.FindRemoteWavesTask.Builder.class);
-          internal_static_google_import_proto_ImportSettings_descriptor =
+          internal_static_google_import_proto_FindWaveletsForRemoteWaveTask_descriptor =
             getDescriptor().getMessageTypes().get(5);
+          internal_static_google_import_proto_FindWaveletsForRemoteWaveTask_fieldAccessorTable = new
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+              internal_static_google_import_proto_FindWaveletsForRemoteWaveTask_descriptor,
+              new java.lang.String[] { "Instance", "WaveDigest", "AutoImportSettings", },
+              com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask.class,
+              com.google.walkaround.proto.GoogleImport.FindWaveletsForRemoteWaveTask.Builder.class);
+          internal_static_google_import_proto_ImportSettings_descriptor =
+            getDescriptor().getMessageTypes().get(6);
           internal_static_google_import_proto_ImportSettings_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_google_import_proto_ImportSettings_descriptor,
@@ -7775,7 +8283,7 @@ public final class GoogleImport {
               com.google.walkaround.proto.GoogleImport.ImportSettings.class,
               com.google.walkaround.proto.GoogleImport.ImportSettings.Builder.class);
           internal_static_google_import_proto_ImportWaveletTask_descriptor =
-            getDescriptor().getMessageTypes().get(6);
+            getDescriptor().getMessageTypes().get(7);
           internal_static_google_import_proto_ImportWaveletTask_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_google_import_proto_ImportWaveletTask_descriptor,
@@ -7791,7 +8299,7 @@ public final class GoogleImport {
               com.google.walkaround.proto.GoogleImport.ImportWaveletTask.ImportedAttachment.class,
               com.google.walkaround.proto.GoogleImport.ImportWaveletTask.ImportedAttachment.Builder.class);
           internal_static_google_import_proto_FetchAttachmentsAndImportWaveletTask_descriptor =
-            getDescriptor().getMessageTypes().get(7);
+            getDescriptor().getMessageTypes().get(8);
           internal_static_google_import_proto_FetchAttachmentsAndImportWaveletTask_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_google_import_proto_FetchAttachmentsAndImportWaveletTask_descriptor,
@@ -7815,11 +8323,11 @@ public final class GoogleImport {
               com.google.walkaround.proto.GoogleImport.FetchAttachmentsAndImportWaveletTask.ImportedAttachmentInfo.class,
               com.google.walkaround.proto.GoogleImport.FetchAttachmentsAndImportWaveletTask.ImportedAttachmentInfo.Builder.class);
           internal_static_google_import_proto_ImportTaskPayload_descriptor =
-            getDescriptor().getMessageTypes().get(8);
+            getDescriptor().getMessageTypes().get(9);
           internal_static_google_import_proto_ImportTaskPayload_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_google_import_proto_ImportTaskPayload_descriptor,
-              new java.lang.String[] { "FindWavesTask", "ImportWaveletTask", "FetchAttachmentsTask", },
+              new java.lang.String[] { "FindWavesTask", "ImportWaveletTask", "FetchAttachmentsTask", "FindWaveletsTask", },
               com.google.walkaround.proto.GoogleImport.ImportTaskPayload.class,
               com.google.walkaround.proto.GoogleImport.ImportTaskPayload.Builder.class);
           return null;

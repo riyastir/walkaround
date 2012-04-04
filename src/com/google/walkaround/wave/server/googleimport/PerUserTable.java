@@ -161,7 +161,7 @@ public class PerUserTable {
     Key key = makeWaveletKey(userId, w.getSourceInstance(), getWaveletName(w));
     Entity e = new Entity(key);
     DatastoreUtil.setNonNullUnindexedProperty(e, WAVELET_DIGEST_PROPERTY,
-        new Text(GsonProto.toJson((RobotSearchDigestGsonImpl) w.getDigest())));
+        new Text(GsonProto.toJson(new RobotSearchDigestGsonImpl(w.getDigest()))));
     DatastoreUtil.setNonNullIndexedProperty(e, WAVELET_LAST_MODIFIED_MILLIS_PROPERTY,
         w.getDigest().getLastModifiedMillis());
     DatastoreUtil.setOrRemoveIndexedProperty(e, WAVELET_PRIVATE_LOCAL_ID_PROPERTY,
