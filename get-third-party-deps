@@ -67,7 +67,7 @@ dir third_party_src
   dir wave
   [[ -d trunk ]] || (
     set -x
-    svn co -r 1213039 -q https://svn.apache.org/repos/asf/incubator/wave/trunk
+    svn co -r 1309189 -q https://svn.apache.org/repos/asf/incubator/wave/trunk
     cd trunk
     # TODO(ohler): submit to Apache Wave
     patch -p0 <<EOF
