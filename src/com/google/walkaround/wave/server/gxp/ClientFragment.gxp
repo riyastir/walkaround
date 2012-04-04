@@ -23,9 +23,9 @@
   xmlns:expr='http://google.com/2001/gxp/expressions'
   xmlns:gxp='http://google.com/2001/gxp'
   xmlns:nomsg='http://google.com/2001/gxp/nomsg'>
- 
+
   <gxp:param name='announcementHtml' type='HtmlClosure'/>
- 
+
   <style type='text/css'>
       #left-pane, #right-pane {
         position: absolute;
@@ -65,7 +65,7 @@
         overflow: auto;
       }
   </style>
- 
+
   <gxp:if cond='announcementHtml != null'>
     <div id='announcement'><gxp:eval expr='announcementHtml'/></div>
     <p/>
@@ -75,6 +75,6 @@
     <iframe src='/inbox?embedded=true'/>
   </div>
   <div id='right-pane'>
-    <iframe name='wave' style='background:#D8D8D8'/>
+    <iframe name='wave'/>
   </div>
 </gxp:template>
