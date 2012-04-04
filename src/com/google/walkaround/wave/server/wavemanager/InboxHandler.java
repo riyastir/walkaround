@@ -74,9 +74,9 @@ public class InboxHandler extends AbstractHandler {
     int page;
     try {
       String pageParam = req.getParameter("page");
-      page = pageParam == null ? 0 : Integer.parseInt(pageParam);
+      page = pageParam == null ? 1 : Integer.parseInt(pageParam);
     } catch (NumberFormatException e) {
-      page = 0;
+      page = 1;
     }
 
     if (query == null || query.trim().isEmpty()) {
@@ -85,7 +85,7 @@ public class InboxHandler extends AbstractHandler {
 
     String displayQuery = query.equals(DEFAULT_QUERY) ? "" : query;
     List<InboxDisplayRecord> waveRecords = searcher.searchWaves(query,
-        page * RESULTS_PER_PAGE, RESULTS_PER_PAGE);
+        (page - 1) * RESULTS_PER_PAGE, RESULTS_PER_PAGE);
     boolean embedded = "true".equals(req.getParameter("embedded"));
     NoSkin.write(resp.getWriter(), new GxpContext(req.getLocale()),
         "Walkaround", analyticsAccount,
