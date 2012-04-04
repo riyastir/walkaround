@@ -23,11 +23,13 @@ import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;
 import com.google.inject.Inject;
 import com.google.walkaround.proto.FindRemoteWavesTask;
+import com.google.walkaround.proto.FindWaveletsForRemoteWaveTask;
 import com.google.walkaround.proto.ImportSettings;
 import com.google.walkaround.proto.ImportTaskPayload;
 import com.google.walkaround.proto.ImportWaveletTask;
 import com.google.walkaround.proto.RobotSearchDigest;
 import com.google.walkaround.proto.gson.FindRemoteWavesTaskGsonImpl;
+import com.google.walkaround.proto.gson.FindWaveletsForRemoteWaveTaskGsonImpl;
 import com.google.walkaround.proto.gson.ImportTaskPayloadGsonImpl;
 import com.google.walkaround.proto.gson.ImportWaveletTaskGsonImpl;
 import com.google.walkaround.util.server.RetryHelper;
@@ -227,6 +229,38 @@ public class FindRemoteWavesProcessor {
     log.info("Successfully added " + results.size() + " remote waves");
   }
 
+  private void scheduleFindWaveletTasks(final SourceInstance instance,
+      List<RobotSearchDigest> results, @Nullable final ImportSettings autoImportSettings)
+      throws PermanentFailure {
+    for (final List<RobotSearchDigest> partition : Iterables.partition(results,
+            // 5 tasks per transaction.
+            5)) {
+      new RetryHelper().run(
+          new RetryHelper.VoidBody() {
+            @Override public void run() throws RetryableFailure, PermanentFailure {
+              CheckedTransaction tx = datastore.beginTransaction();
+              try {
+                for (RobotSearchDigest result : partition) {
+                  FindWaveletsForRemoteWaveTask task = new FindWaveletsForRemoteWaveTaskGsonImpl();
+                  task.setInstance(instance.serialize());
+                  task.setWaveDigest(result);
+                  if (autoImportSettings != null) {
+                    task.setAutoImportSettings(autoImportSettings);
+                  }
+                  ImportTaskPayload payload = new ImportTaskPayloadGsonImpl();
+                  payload.setFindWaveletsTask(task);
+                  perUserTable.addTask(tx, userId, payload);
+                }
+                tx.commit();
+              } finally {
+                tx.close();
+              }
+            }
+          });
+    }
+    log.info("Successfully scheduled import of " + results.size() + " waves");
+  }
+
   private void scheduleImportTasks(List<RemoteConvWavelet> results,
       final ImportSettings autoImportSettings) throws PermanentFailure {
     for (final List<RemoteConvWavelet> partition : Iterables.partition(results,
@@ -258,28 +292,40 @@ public class FindRemoteWavesProcessor {
   }
 
   private List<RemoteConvWavelet> expandPrivateReplies(SourceInstance instance,
-      List<RobotSearchDigest> digests) throws IOException {
+      RobotSearchDigest digest) throws IOException {
     RobotApi api = robotApiFactory.create(instance.getApiUrl());
     ImmutableList.Builder<RemoteConvWavelet> wavelets = ImmutableList.builder();
-    for (RobotSearchDigest digest : digests) {
-      WaveId waveId = WaveId.deserialise(digest.getWaveId());
-      // The robot API only allows access to waves with ids that start with "w".
-      if (!waveId.getId().startsWith(IdUtil.WAVE_PREFIX + "+")) {
-        log.info("Wave " + waveId + " not accessible through Robot API, skipping");
-      } else {
-        log.info("Getting wave view for " + waveId);
-        List<WaveletId> waveletIds = api.getWaveView(waveId);
-        log.info("Wave view for " + waveId + ": " + waveletIds);
-        for (WaveletId waveletId : waveletIds) {
-          if (IdUtil.isConversationalId(waveletId)) {
-            wavelets.add(new RemoteConvWavelet(instance, digest, waveletId, null, null));
-          } else {
-            log.info("Skipping non-conv wavelet " + waveletId);
-          }
+    WaveId waveId = WaveId.deserialise(digest.getWaveId());
+    // The robot API only allows access to waves with ids that start with "w".
+    if (!waveId.getId().startsWith(IdUtil.WAVE_PREFIX + "+")) {
+      log.info("Wave " + waveId + " not accessible through Robot API, skipping");
+    } else {
+      log.info("Getting wave view for " + waveId);
+      List<WaveletId> waveletIds = api.getWaveView(waveId);
+      log.info("Wave view for " + waveId + ": " + waveletIds);
+      for (WaveletId waveletId : waveletIds) {
+        if (IdUtil.isConversationalId(waveletId)) {
+          wavelets.add(new RemoteConvWavelet(instance, digest, waveletId, null, null));
+        } else {
+          log.info("Skipping non-conv wavelet " + waveletId);
         }
       }
     }
     return wavelets.build();
+  }
+
+  public List<ImportTaskPayload> findWavelets(FindWaveletsForRemoteWaveTask task)
+      throws IOException, PermanentFailure {
+    SourceInstance instance = sourceInstanceFactory.parseUnchecked(task.getInstance());
+    List<RemoteConvWavelet> wavelets = expandPrivateReplies(instance, task.getWaveDigest());
+    if (wavelets.isEmpty()) {
+      return ImmutableList.of();
+    }
+    storeResults(wavelets);
+    if (task.hasAutoImportSettings()) {
+      scheduleImportTasks(wavelets, task.getAutoImportSettings());
+    }
+    return ImmutableList.of();
   }
 
   public List<ImportTaskPayload> findWaves(FindRemoteWavesTask task)
@@ -288,17 +334,16 @@ public class FindRemoteWavesProcessor {
     long onOrAfterDays = task.getOnOrAfterDays();
     long beforeDays = task.getBeforeDays();
     List<RobotSearchDigest> results = searchBetween(instance, onOrAfterDays, beforeDays);
-    List<RemoteConvWavelet> wavelets = expandPrivateReplies(instance, results);
-    @Nullable ImportSettings autoImportSettings =
-        task.hasAutoImportSettings() ? task.getAutoImportSettings() : null;
-    log.info("Search found " + results.size() + " waves, " + wavelets.size() + " wavelets");
+    log.info("Search found " + results.size() + " waves");
     if (results.isEmpty()) {
       return ImmutableList.of();
     }
-    storeResults(wavelets);
-    if (autoImportSettings != null) {
-      scheduleImportTasks(wavelets, autoImportSettings);
-    }
+    @Nullable ImportSettings autoImportSettings =
+        task.hasAutoImportSettings() ? task.getAutoImportSettings() : null;
+    // NOTE(ohler): Having many concurrent tasks like this that all need to write to
+    // the PerUserTable leads to a lot of write contention.  We'll just have to
+    // keep max-concurrent-requests low.
+    scheduleFindWaveletTasks(instance, results, autoImportSettings);
     if (results.size() >= MAX_RESULTS) {
       // Result list is most likely truncated, repeat with smaller intervals.
       log.info("Got " + results.size() + " results between "  + onOrAfterDays + " and " + beforeDays

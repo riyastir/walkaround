@@ -23,6 +23,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.walkaround.proto.FetchAttachmentsAndImportWaveletTask;
 import com.google.walkaround.proto.FindRemoteWavesTask;
+import com.google.walkaround.proto.FindWaveletsForRemoteWaveTask;
 import com.google.walkaround.proto.ImportTaskPayload;
 import com.google.walkaround.proto.ImportWaveletTask;
 import com.google.walkaround.proto.ImportSettings.ImportSharingMode;
@@ -77,8 +78,6 @@ public class TaskDispatcher {
       return "(over " + days + " days old) ";
     } else if (hours > 1) {
       return "(over " + hours + " hours old) ";
-    } else if (minutes > 5) {
-      return "(over " + minutes + " minutes old) ";
     } else {
       // Not worth mentioning.
       return "";
@@ -93,6 +92,12 @@ public class TaskDispatcher {
           + sourceInstanceFactory.parseUnchecked(t.getInstance()).getShortName()
           + " between " + DaysSinceEpoch.toLocalDate(t.getOnOrAfterDays())
           + " and " + DaysSinceEpoch.toLocalDate(t.getBeforeDays());
+    } else if (task.getPayload().hasFindWaveletsTask()) {
+        FindWaveletsForRemoteWaveTask t = task.getPayload().getFindWaveletsTask();
+        return taskAgePrefix(task)
+            + (t.hasAutoImportSettings() ? "Find and import" : "Find")
+            + " wavelets in wave " + t.getWaveDigest().getWaveId() + " on "
+            + sourceInstanceFactory.parseUnchecked(t.getInstance()).getShortName();
     } else if (task.getPayload().hasImportWaveletTask()) {
       ImportWaveletTask t = task.getPayload().getImportWaveletTask();
       String sharingMode;
@@ -143,6 +148,8 @@ public class TaskDispatcher {
     for (ImportTask task : tasksInProgress) {
       if (task.getPayload().hasFindWavesTask()) {
         // nothing
+      } else if (task.getPayload().hasFindWaveletsTask()) {
+        // nothing
       } else {
         ImportWaveletTask t;
         if (task.getPayload().hasFetchAttachmentsTask()) {
@@ -169,12 +176,15 @@ public class TaskDispatcher {
   public List<ImportTaskPayload> processTask(ImportTask task) throws IOException {
     Preconditions.checkArgument(exactlyOneTrue(
             task.getPayload().hasFindWavesTask(),
+            task.getPayload().hasFindWaveletsTask(),
             task.getPayload().hasImportWaveletTask(),
             task.getPayload().hasFetchAttachmentsTask()),
         "Need exactly one type of payload: %s", task);
     try {
       if (task.getPayload().hasFindWavesTask()) {
         return findWavesProcessor.get().findWaves(task.getPayload().getFindWavesTask());
+      } else if (task.getPayload().hasFindWaveletsTask()) {
+        return findWavesProcessor.get().findWavelets(task.getPayload().getFindWaveletsTask());
       } else if (task.getPayload().hasImportWaveletTask()) {
         return importWaveProcessor.get().importWavelet(task.getPayload().getImportWaveletTask());
       } else if (task.getPayload().hasFetchAttachmentsTask()) {

@@ -133,7 +133,17 @@ message FindRemoteWavesTask {
   required int64 on_or_after_days = 2;
   // End of time period to search in days since Unix epoch.  Exclusive.
   required int64 before_days = 3;
-  // If present, import all waves found, with these settings.
+  // If present, import all wavelets on all waves found, with these settings.
+  optional ImportSettings auto_import_settings = 4;
+}
+
+// Task to find wavelets to import.
+message FindWaveletsForRemoteWaveTask {
+  // Source instance in serialized form.
+  required string instance = 1;
+  // Search digest of the wave to find wavelets for.
+  required RobotSearchDigest wave_digest = 2;
+  // If present, import all wavelets found, with these settings.
   optional ImportSettings auto_import_settings = 4;
 }
 
@@ -229,4 +239,5 @@ message ImportTaskPayload {
   optional FindRemoteWavesTask find_waves_task = 1;
   optional ImportWaveletTask import_wavelet_task = 2;
   optional FetchAttachmentsAndImportWaveletTask fetch_attachments_task = 3;
+  optional FindWaveletsForRemoteWaveTask find_wavelets_task = 4;
 }
