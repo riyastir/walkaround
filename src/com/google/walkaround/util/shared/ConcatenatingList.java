@@ -44,7 +44,13 @@ public class ConcatenatingList<T> extends AbstractList<T> {
 
   @Override
   public T get(int index) {
-    return index < a.size() ? a.get(index) : b.get(index - a.size());
+    // The default javac on Mac OS thinks this returns Object rather than T.
+    //return index < a.size() ? a.get(index) : b.get(index - a.size());
+    if (index < a.size()) {
+      return a.get(index);
+    } else {
+      return b.get(index - a.size());
+    }
   }
 
   @Override
