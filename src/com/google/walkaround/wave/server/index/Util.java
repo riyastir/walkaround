@@ -16,16 +16,21 @@
 
 package com.google.walkaround.wave.server.index;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import org.waveprotocol.wave.model.conversation.TitleHelper;
-import org.waveprotocol.wave.model.document.Document;
 import org.waveprotocol.wave.model.document.Doc.E;
+import org.waveprotocol.wave.model.document.Document;
 import org.waveprotocol.wave.model.document.operation.impl.DocOpUtil;
 import org.waveprotocol.wave.model.document.util.DocHelper;
 import org.waveprotocol.wave.model.document.util.Range;
 import org.waveprotocol.wave.model.id.IdConstants;
+import org.waveprotocol.wave.model.wave.data.impl.BlipDataImpl;
 import org.waveprotocol.wave.model.wave.data.impl.WaveletDataImpl;
 
 import java.util.logging.Logger;
+
+import javax.annotation.Nullable;
 
 /**
 *
@@ -35,6 +40,7 @@ class Util {
   private static final Logger log = Logger.getLogger(Util.class.getName());
 
   static String extractTitle(WaveletDataImpl conv) {
+    checkNotNull(conv, "Null conv");
     Document manifest = getDoc(conv, IdConstants.MANIFEST_DOCUMENT_ID);
     if (manifest == null) {
       return "";
@@ -60,8 +66,9 @@ class Util {
     return DocHelper.getText(rootDoc, range.getStart(), range.getEnd());
   }
 
-  private static Document getDoc(WaveletDataImpl conv, String id) {
-    return (Document) conv.getDocument(id).getContent();
+  @Nullable private static Document getDoc(WaveletDataImpl conv, String id) {
+    BlipDataImpl doc = conv.getDocument(id);
+    return doc == null ? null : (Document) conv.getDocument(id).getContent();
   }
 
   static String describe(WaveletDataImpl udwData) {
