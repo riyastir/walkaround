@@ -16,6 +16,7 @@
 
 package com.google.walkaround.wave.server.googleimport;
 
+import com.google.appengine.api.backends.BackendServiceFactory;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
@@ -334,6 +335,9 @@ public class PerUserTable {
         "Payload mismatch: %s, %s", payload, written);
     tx.enqueueTask(taskQueue,
         TaskOptions.Builder.withUrl(WalkaroundServletModule.IMPORT_TASK_PATH)
+            .header("Host",
+                BackendServiceFactory.getBackendService().getBackendAddress(
+                    "import-worker"))
             .method(TaskOptions.Method.POST)
             .param(ImportTaskHandler.USER_ID_HEADER, userId.getId())
             .param(ImportTaskHandler.TASK_ID_HEADER, "" + written.getTaskId()));

@@ -14,11 +14,13 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<!-- NOTE(ohler): This template is not used if if ${num-slob-backends} is 0. -->
 <backends>
-  <backend name="${slob-backend-name}">
-    <instances>${num-slob-backends}</instances>
-    <class>${slob-backend-class}</class>
+  <backend name="import-worker">
+    <instances>3</instances>
+    <class>B8</class>
     <max-concurrent-requests>50</max-concurrent-requests>
+    <options>
+      <dynamic>true</dynamic>
+    </options>
   </backend>
 </backends>
