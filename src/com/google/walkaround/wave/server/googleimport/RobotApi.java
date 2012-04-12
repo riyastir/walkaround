@@ -231,7 +231,7 @@ public class RobotApi {
             }
           });
     } catch (PermanentFailure e) {
-      throw new IOException("PermanentFailure with " + method + ": " + req);
+      throw new IOException("PermanentFailure with " + method + ": " + req, e);
     }
   }
 

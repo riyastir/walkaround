@@ -427,18 +427,13 @@
   </target>
 
   <target name="war-step-2" depends="war-step-1"
-      unless="enable-slob-backends">
-    <delete file="${webinf}/backends.xml"/>
-  </target>
-
-  <target name="war-step-3" depends="war-step-2"
       if="enable-site-verification">
     <echo file="${build.war}/google${google-site-verification-code}.html">
       google-site-verification: google${google-site-verification-code}.html
     </echo>
   </target>
 
-  <target name="war" depends="war-step-3"/>
+  <target name="war" depends="war-step-2"/>
 
   <!-- Running these from inside ant is not ideal; ants default of
        prefixing every line with [java] gets in the way.  Perhaps we

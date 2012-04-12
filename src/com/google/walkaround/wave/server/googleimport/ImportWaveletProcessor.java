@@ -408,6 +408,10 @@ public class ImportWaveletProcessor {
             new FetchAttachmentsAndImportWaveletTaskGsonImpl();
         newTask.setOriginalImportTask(task);
         populateAttachmentInfo(newTask, documents, attachmentDocs);
+        if (newTask.getToImportSize() == 0) {
+          log.info("There are attachments but none can be imported");
+          return ImmutableMap.of();
+        }
         ImportTaskPayload payload = new ImportTaskPayloadGsonImpl();
         payload.setFetchAttachmentsTask(newTask);
         throw TaskCompleted.withFollowup(payload);
