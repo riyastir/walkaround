@@ -226,6 +226,7 @@ public class FetchAttachmentsProcessor {
         WaveId.deserialise(waveletTask.getWaveId()),
         WaveletId.deserialise(waveletTask.getWaveletId()));
     LinkedList<RemoteAttachmentInfo> toImport = Lists.newLinkedList(task.getToImport());
+    log.info("Need attachments for " + waveletName + ": " + toImport);
     int infosFetchedThisTask = 0;
     while (!toImport.isEmpty() && infosFetchedThisTask < MAX_FETCHES_PER_TASK) {
       RemoteAttachmentInfo info = toImport.removeFirst();
