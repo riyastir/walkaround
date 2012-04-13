@@ -17,15 +17,16 @@
 package com.google.walkaround.wave.server.servlet;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.walkaround.util.server.servlet.AbstractHandler;
 import com.google.walkaround.wave.server.util.RequestUtil;
 import com.google.walkaround.wave.server.wavemanager.InboxHandler;
 
+import java.io.IOException;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import java.io.IOException;
 
 /**
  * Make the root page display one of two pages depending on user agent.
@@ -33,16 +34,17 @@ import java.io.IOException;
  * @author danilatos@google.com (Daniel Danilatos)
  */
 public class IndexHandler extends AbstractHandler {
-  @Inject private ClientHandler clientHandler;
-  @Inject private InboxHandler inboxHandler;
+  // Providers because only one is needed in each code path.
+  @Inject private Provider<ClientHandler> clientHandler;
+  @Inject private Provider<InboxHandler> inboxHandler;
 
   @Override
   public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException,
-          ServletException {
+      ServletException {
     if (RequestUtil.isMobile(req)) {
-      inboxHandler.doGet(req, resp);
+      inboxHandler.get().doGet(req, resp);
     } else {
-      clientHandler.doGet(req, resp);
+      clientHandler.get().doGet(req, resp);
     }
   }
 }

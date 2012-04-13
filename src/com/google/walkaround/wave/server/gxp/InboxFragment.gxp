@@ -195,11 +195,12 @@
         <input type='hidden' name='embedded' value='true'/>
       </gxp:if>
       <div id='paging'>
-        <gxp:msg>Showing results page:</gxp:msg> <strong><gxp:eval expr='page'/></strong>
+        <gxp:msg>Results page: </gxp:msg>
         <button name='page' expr:value='page - 1' 
-            expr:disabled='page == 0'>Previous</button>
+            expr:disabled='page == 0'>&lt;</button>
+        <gxp:eval expr='page + 1'/>
         <button name='page' expr:value='page + 1' 
-            expr:disabled='waveRecords.isEmpty()'>Next</button>
+            expr:disabled='waveRecords.isEmpty()'>&gt;</button>
         <div id='nav-links'>
           <gxp:msg>Go to:</gxp:msg>
           <a href='javascript:search("")'>Inbox</a> |

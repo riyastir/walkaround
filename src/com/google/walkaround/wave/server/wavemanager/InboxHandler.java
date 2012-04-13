@@ -64,19 +64,18 @@ public class InboxHandler extends AbstractHandler {
   @Inject PageSkinWriter pageSkinWriter;
   @Inject @Flag(FlagName.ANNOUNCEMENT_HTML) String announcementHtml;
 
-
-
   @Override
   public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    resp.setHeader("Cache-Control", "no-store, must-revalidate");
     resp.setContentType("text/html");
     resp.setCharacterEncoding("UTF-8");
     String query = req.getParameter("q");
     int page;
     try {
       String pageParam = req.getParameter("page");
-      page = pageParam == null ? 1 : Integer.parseInt(pageParam);
+      page = pageParam == null ? 0 : Integer.parseInt(pageParam);
     } catch (NumberFormatException e) {
-      page = 1;
+      page = 0;
     }
 
     if (query == null || query.trim().isEmpty()) {
@@ -85,7 +84,7 @@ public class InboxHandler extends AbstractHandler {
 
     String displayQuery = query.equals(DEFAULT_QUERY) ? "" : query;
     List<InboxDisplayRecord> waveRecords = searcher.searchWaves(query,
-        (page - 1) * RESULTS_PER_PAGE, RESULTS_PER_PAGE);
+        page * RESULTS_PER_PAGE, RESULTS_PER_PAGE);
     boolean embedded = "true".equals(req.getParameter("embedded"));
     NoSkin.write(resp.getWriter(), new GxpContext(req.getLocale()),
         "Walkaround", analyticsAccount,
