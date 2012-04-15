@@ -16,7 +16,9 @@
 -->
 <backends>
   <backend name="import-worker">
-    <instances>3</instances>
+    <!-- max-concurrent-requests defaults to 1, so no point in having
+         more than one instance. -->
+    <instances>1</instances>
     <class>B8</class>
     <max-concurrent-requests>50</max-concurrent-requests>
     <options>
