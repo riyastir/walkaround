@@ -717,11 +717,20 @@ public class ImportWaveletProcessor {
             List<ProtocolAppliedWaveletDelta> rawDeltas =
                 robotApi.getRawDeltas(waveletName, version);
             for (ProtocolAppliedWaveletDelta rawDelta : rawDeltas) {
-              WaveletDelta delta = CoreWaveletOperationSerializer.deserialize(ProtocolWaveletDelta
-                  .parseFrom(rawDelta.getSignedOriginalDelta().getDelta()));
-              for (WaveletOperation op : delta) {
+              WaveletDelta delta = CoreWaveletOperationSerializer.deserialize(
+                  ProtocolWaveletDelta.parseFrom(rawDelta.getSignedOriginalDelta().getDelta()));
+              for (WaveletOperation badOp : delta) {
+                Preconditions.checkState(badOp.getContext().getTimestamp() == -1,
+                    "Unexpected timestamp: %s in delta %s", badOp, delta);
+                // TODO(ohler): Rename
+                // CoreWaveletOperationSerializer.deserialize() to
+                // deserializeWithNoTimestamp() or something.
+                WaveletOperation withTimestamp = WaveletOperation.cloneOp(badOp,
+                    new WaveletOperationContext(badOp.getContext().getCreator(),
+                        rawDelta.getApplicationTimestamp(),
+                        badOp.getContext().getVersionIncrement()));
                 WaveletOperation converted =
-                    converter.convertAndApply(convertGooglewaveToGmail(op));
+                    converter.convertAndApply(convertGooglewaveToGmail(withTimestamp));
                 //log.info(version + ": " + op + " -> " + converted);
                 historyWriter.append(converted);
                 version++;
