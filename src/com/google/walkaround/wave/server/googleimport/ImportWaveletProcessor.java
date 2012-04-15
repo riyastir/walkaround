@@ -694,15 +694,26 @@ public class ImportWaveletProcessor {
       convMetadata.setImportMetadata(importMetadata);
       final SlobId newId;
       if (!preserveHistory) {
-        List<WaveletOperation> initialHistory = Lists.newArrayList();
+        List<WaveletOperation> history = Lists.newArrayList();
         WaveletHistoryConverter converter = new WaveletHistoryConverter(
             getConvNindoConverter(attachmentMapping));
         for (WaveletOperation op :
             new HistorySynthesizer().synthesizeHistory(wavelet, snapshot.getSecond())) {
-          initialHistory.add(converter.convertAndApply(convertGooglewaveToGmail(op)));
+          history.add(converter.convertAndApply(convertGooglewaveToGmail(op)));
         }
-        initialHistory.addAll(participantFixup);
-        newId = waveletCreator.newConvWithGeneratedId(initialHistory, convMetadata, true);
+        history.addAll(participantFixup);
+        newId = waveletCreator.newConvWithGeneratedId(
+            ImmutableList.<WaveletOperation>of(), convMetadata, true);
+        ConvHistoryWriter historyWriter = new ConvHistoryWriter(newId);
+        try {
+          for (WaveletOperation op : history) {
+            historyWriter.append(op);
+          }
+          historyWriter.finish();
+        } catch (ChangeRejected e) {
+          log.warning("Synthesized history rejected: " + history);
+          throw new RuntimeException("Synthesized history rejected", e);
+        }
       } else {
         long version = 0;
         newId = waveletCreator.newConvWithGeneratedId(
