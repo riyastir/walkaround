@@ -71,9 +71,56 @@ dir third_party_src
     cd trunk
     # TODO(ohler): submit to Apache Wave
     patch -p0 <<EOF
+Index: src/org/waveprotocol/wave/model/waveref/WaverefEncoder.java
+===================================================================
+--- src/org/waveprotocol/wave/model/waveref/WaverefEncoder.java	(revision 1309189)
++++ src/org/waveprotocol/wave/model/waveref/WaverefEncoder.java	(working copy)
+@@ -229,11 +229,10 @@
+     }
+     String waveletIdStr = decode(tokens[3]);
+     WaveletId waveletId = null;
+-
+     try {
+       waveletId = WaveletId.of(waveletDomain, waveletIdStr);
+     } catch (IllegalArgumentException e) {
+-      throw new InvalidWaveRefException(path, "Invalid WaveletID:" + e.getMessage());
++      throw new InvalidWaveRefException(path, "Invalid WaveletID", e);
+     }
+ 
+     if (tokens.length == 4) {
+@@ -251,7 +250,11 @@
+    * @param string a percent-encoded US-ASCII string
+    * @return the decoded string
+    */
+-  public String decode(String string) {
+-    return encoderDecoder.decode(string);
++  private String decode(String string) throws InvalidWaveRefException {
++    try {
++      return encoderDecoder.decode(string);
++    } catch (IllegalArgumentException e) {
++      throw new InvalidWaveRefException(string, "Failed to decode", e);
++    }
+   }
+ }
+Index: src/org/waveprotocol/wave/model/waveref/InvalidWaveRefException.java
+===================================================================
+--- src/org/waveprotocol/wave/model/waveref/InvalidWaveRefException.java	(revision 1309189)
++++ src/org/waveprotocol/wave/model/waveref/InvalidWaveRefException.java	(working copy)
+@@ -31,6 +31,11 @@
+     this.ref = ref;
+   }
+ 
++  public InvalidWaveRefException(String ref, String message, Throwable cause) {
++    super(message, cause);
++    this.ref = ref;
++  }
++
+   public String getId() {
+     return ref;
+   }
 Index: src/org/waveprotocol/wave/migration/helpers/FixLinkAnnotationsFilter.java
 ===================================================================
---- src/org/waveprotocol/wave/migration/helpers/FixLinkAnnotationsFilter.java	(revision 1213039)
+--- src/org/waveprotocol/wave/migration/helpers/FixLinkAnnotationsFilter.java	(revision 1309189)
 +++ src/org/waveprotocol/wave/migration/helpers/FixLinkAnnotationsFilter.java	(working copy)
 @@ -136,7 +136,7 @@
    }
@@ -86,7 +133,7 @@ Index: src/org/waveprotocol/wave/migration/helpers/FixLinkAnnotationsFilter.java
        } catch (InvalidWaveRefException e) {
 Index: src/org/waveprotocol/wave/client/wavepanel/impl/edit/KeepFocusInView.java
 ===================================================================
---- src/org/waveprotocol/wave/client/wavepanel/impl/edit/KeepFocusInView.java	(revision 1213039)
+--- src/org/waveprotocol/wave/client/wavepanel/impl/edit/KeepFocusInView.java	(revision 1309189)
 +++ src/org/waveprotocol/wave/client/wavepanel/impl/edit/KeepFocusInView.java	(working copy)
 @@ -108,7 +108,7 @@
        // mutate the DOM, so the subsequent measurement queries will force
@@ -99,7 +146,7 @@ Index: src/org/waveprotocol/wave/client/wavepanel/impl/edit/KeepFocusInView.java
          double focusInContent = focusInViewport + viewportInContent.getStart();
 Index: src/org/waveprotocol/wave/client/wavepanel/view/dom/ParticipantAvatarDomImpl.java
 ===================================================================
---- src/org/waveprotocol/wave/client/wavepanel/view/dom/ParticipantAvatarDomImpl.java	(revision 1213039)
+--- src/org/waveprotocol/wave/client/wavepanel/view/dom/ParticipantAvatarDomImpl.java	(revision 1309189)
 +++ src/org/waveprotocol/wave/client/wavepanel/view/dom/ParticipantAvatarDomImpl.java	(working copy)
 @@ -32,7 +32,7 @@
      this.self = self.cast();
@@ -121,7 +168,7 @@ Index: src/org/waveprotocol/wave/client/wavepanel/view/dom/ParticipantAvatarDomI
  
 Index: src/org/waveprotocol/wave/client/wavepanel/view/dom/FullStructure.java
 ===================================================================
---- src/org/waveprotocol/wave/client/wavepanel/view/dom/FullStructure.java	(revision 1213039)
+--- src/org/waveprotocol/wave/client/wavepanel/view/dom/FullStructure.java	(revision 1309189)
 +++ src/org/waveprotocol/wave/client/wavepanel/view/dom/FullStructure.java	(working copy)
 @@ -80,7 +80,7 @@
   * Implements structural accessors and mutators for wave-panel views.
