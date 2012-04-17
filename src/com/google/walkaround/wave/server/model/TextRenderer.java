@@ -16,6 +16,8 @@
 
 package com.google.walkaround.wave.server.model;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import org.waveprotocol.wave.model.conversation.BlipIterators;
 import org.waveprotocol.wave.model.conversation.Conversation;
 import org.waveprotocol.wave.model.conversation.ConversationBlip;
@@ -38,6 +40,7 @@ public final class TextRenderer {
    * Renders a wavelet into text.
    */
   public static String renderToText(Conversation conv) {
+    checkNotNull(conv, "Null conv");
     StringBuilder b = new StringBuilder();
     for (ConversationBlip blip : BlipIterators.breadthFirst(conv)) {
       render(blip.getContent().toInitialization(), b);
@@ -49,6 +52,8 @@ public final class TextRenderer {
    * Renders a document as a paragraph of plain text.
    */
   public static void render(DocInitialization doc, final StringBuilder out) {
+    checkNotNull(doc, "Null doc");
+    checkNotNull(out, "Null out");
     doc.apply(new DocInitializationCursor() {
       @Override
       public void characters(String chars) {
