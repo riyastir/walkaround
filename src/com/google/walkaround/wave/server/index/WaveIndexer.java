@@ -470,7 +470,7 @@ public class WaveIndexer {
     int unreadBlips = 0;
     for (ConversationBlip blip : BlipIterators.breadthFirst(conv)) {
       if (supplement.isBlipUnread(
-              convId, blip.getId(), Versions.truncate(blip.getLastModifiedVersion)())) {
+              convId, blip.getId(), Versions.truncate(blip.getLastModifiedVersion()))) {
         unreadBlips++;
       }
     }
