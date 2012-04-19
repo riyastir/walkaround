@@ -24,16 +24,17 @@ import com.google.appengine.api.search.Consistency;
 import com.google.appengine.api.search.Document;
 import com.google.appengine.api.search.Field;
 import com.google.appengine.api.search.Index;
-import com.google.appengine.api.search.IndexManager;
 import com.google.appengine.api.search.IndexSpec;
 import com.google.appengine.api.search.OperationResult;
+import com.google.appengine.api.search.Query;
+import com.google.appengine.api.search.QueryOptions;
+import com.google.appengine.api.search.Results;
+import com.google.appengine.api.search.ScoredDocument;
 import com.google.appengine.api.search.SearchException;
 import com.google.appengine.api.search.SearchQueryException;
-import com.google.appengine.api.search.SearchRequest;
-import com.google.appengine.api.search.SearchResponse;
-import com.google.appengine.api.search.SearchResult;
-import com.google.appengine.api.search.SortSpec;
-import com.google.appengine.api.search.SortSpec.SortDirection;
+import com.google.appengine.api.search.SearchService;
+import com.google.appengine.api.search.SortExpression;
+import com.google.appengine.api.search.SortOptions;
 import com.google.appengine.api.search.StatusCode;
 import com.google.appengine.api.search.checkers.FieldChecker;
 import com.google.appengine.api.utils.SystemProperty;
@@ -97,6 +98,7 @@ import org.waveprotocol.wave.model.wave.opbased.WaveViewImpl.WaveletConfigurator
 import org.waveprotocol.wave.model.wave.opbased.WaveViewImpl.WaveletFactory;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -234,7 +236,7 @@ public class WaveIndexer {
   }
 
   private final WaveSerializer serializer;
-  private final IndexManager indexManager;
+  private final SearchService searchService;
   private final CheckedDatastore datastore;
   private final MutationLogFactory convStore;
   private final MutationLogFactory udwStore;
@@ -248,7 +250,7 @@ public class WaveIndexer {
       @ConvStore MutationLogFactory convStore,
       @UdwStore MutationLogFactory udwStore,
       UserDataWaveletDirectory udwDirectory,
-      IndexManager indexManager,
+      SearchService searchService,
       AccountStore users,
       RandomBase64Generator random,
       ConvMetadataStore convMetadataStore) {
@@ -256,7 +258,7 @@ public class WaveIndexer {
     this.convStore = convStore;
     this.udwStore = udwStore;
     this.udwDirectory = udwDirectory;
-    this.indexManager = indexManager;
+    this.searchService = searchService;
     this.accountStore = users;
     this.random = random;
     this.convMetadataStore = convMetadataStore;
@@ -562,7 +564,7 @@ public class WaveIndexer {
   }
 
   private Index getIndex(ParticipantId participant) {
-    return indexManager.getIndex(
+    return searchService.getIndex(
         IndexSpec.newBuilder().setName(getIndexName(participant))
         // We could consider making this global, though the documentation
         // says not more than 1 update per second, which is a bit borderline.
@@ -582,37 +584,59 @@ public class WaveIndexer {
     }
   }
 
-  public List<UserIndexEntry> findWaves(ParticipantId user, String query, int offset, int limit)
+  public List<UserIndexEntry> findWaves(ParticipantId user, String queryString, int offset, int limit)
       throws IOException {
     // Trailing whitespace causes parse exceptions...
-    query = query.trim();
+    queryString = queryString.trim();
+    log.info("Searching for " + queryString);
 
-    log.info("Searching for " + query);
-    // TODO(ohler): Avoid these deprecated classes.  However, the new API isn't quite ready
-    // (specifically, SortDirection is package-private), so we can't yet.
-    SearchRequest request;
+    SortExpression.Builder sortExpression = SortExpression.newBuilder()
+        .setExpression(MODIFIED_MINUTES_FIELD)
+        .setDefaultValueNumeric(0);
+
+    // HACK(ohler): SortExpression.SortDirection is package-private but we need
+    // it.  The following block implements the statement:
+    // sortExpression.setDirection(SortExpression.SortDirection.DESCENDING)
+    {
+      Class<?> clazz;
+      try {
+        clazz = Class.forName("com.google.appengine.api.search.SortExpression$SortDirection");
+      } catch (ClassNotFoundException e) {
+        throw new RuntimeException(e);
+      }
+      try {
+        SortExpression.Builder.class.getDeclaredMethod("setDirection", clazz)
+            .invoke(sortExpression, clazz.getEnumConstants()[1]);
+      } catch (IllegalAccessException e) {
+        throw new RuntimeException(e);
+      } catch (InvocationTargetException e) {
+        throw new RuntimeException(e);
+      } catch (NoSuchMethodException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    Query query;
     try {
-      request = SearchRequest.newBuilder()
-          .setQuery(query)
-          .setFieldsToSnippet(CONTENT_FIELD)
-          .setOffset(offset)
-          .setLimit(limit)
-          .addSortSpec(SortSpec.newBuilder()
-              .setType(SortSpec.SortType.CUSTOM)
-              .setExpression(MODIFIED_MINUTES_FIELD)
-              .setDirection(SortDirection.DESCENDING)
-              .setDefaultValueNumeric(0))
-          .build();
+      query = Query.newBuilder()
+          .setOptions(QueryOptions.newBuilder()
+              .setFieldsToSnippet(CONTENT_FIELD)
+              .setOffset(offset)
+              .setLimit(limit)
+              .setSortOptions(SortOptions.newBuilder()
+                  .addSortExpression(sortExpression))
+              .build())
+          .build(queryString);
     } catch (SearchQueryException e) {
-      log.log(Level.WARNING, "Problem building query " + query, e);
+      log.log(Level.WARNING, "Problem building query " + queryString, e);
       return Collections.emptyList();
     }
 
     // TODO(danilatos): Figure out why this throws unchecked exceptions for bad searches
     // but also returns status codes...?
-    SearchResponse response;
+    Results<ScoredDocument> response;
     try {
-      response = getIndex(user).search(request);
+      response = getIndex(user).search(query);
     } catch (SearchException e) {
       // This seems to happen for certain queries that the user can type, for some
       // reason they are not caught at the parse stage above with SearchQueryException,
@@ -626,9 +650,7 @@ public class WaveIndexer {
           + ", response: " + responseCode + " " + response.getOperationResult().getMessage());
     }
     List<UserIndexEntry> entries = Lists.newArrayList();
-    for (SearchResult result : response) {
-      Document doc = result.getDocument();
-
+    for (ScoredDocument result : response) {
       List<Field> expressions = result.getExpressions();
       assert expressions.size() == 1;
       String snippetHtml = expressions.get(0).getHTML();
@@ -645,19 +667,19 @@ public class WaveIndexer {
         int c = new Random().nextInt(5);
         unreadCount = c == 0 ? null : c * 7;
       } else {
-        int unreadBlips = getRequiredIntField(doc, UNREAD_BLIP_COUNT_FIELD);
-        boolean isUnread = getAtomFields(doc, IS_FIELD).contains(IS_UNREAD_ATOM);
+        int unreadBlips = getRequiredIntField(result, UNREAD_BLIP_COUNT_FIELD);
+        boolean isUnread = getAtomFields(result, IS_FIELD).contains(IS_UNREAD_ATOM);
         unreadCount = unreadBlips == 0 && !isUnread ? null : unreadBlips;
       }
       entries.add(new UserIndexEntry(
-          new SlobId(doc.getId()),
+          new SlobId(result.getId()),
           ParticipantId.ofUnsafe(
-              HACK ? "hack@hack.com" : getRequiredStringField(doc, CREATOR_FIELD)),
-          HACK ? "XXX" : getRequiredStringField(doc, TITLE_FIELD),
+              HACK ? "hack@hack.com" : getRequiredStringField(result, CREATOR_FIELD)),
+          HACK ? "XXX" : getRequiredStringField(result, TITLE_FIELD),
           snippetHtml,
-          HACK ? 1L : getRequiredLongField(doc, MODIFIED_MINUTES_FIELD)
+          HACK ? 1L : getRequiredLongField(result, MODIFIED_MINUTES_FIELD)
               * 60 * 1000,
-          Ints.checkedCast(HACK ? 23 : getRequiredLongField(doc, BLIP_COUNT_FIELD)),
+          Ints.checkedCast(HACK ? 23 : getRequiredLongField(result, BLIP_COUNT_FIELD)),
           unreadCount));
     }
     return entries;
@@ -677,21 +699,21 @@ public class WaveIndexer {
     return Iterables.getOnlyElement(list);
   }
 
-  private Field getRequiredUniqueField(Document doc, String name) {
+  private Field getRequiredUniqueField(ScoredDocument doc, String name) {
     Field field = getOptionalUniqueField(doc, name);
     Preconditions.checkArgument(field != null, "%s: No field %s", doc, name);
     return field;
   }
 
-  private String getRequiredStringField(Document doc, String name) {
+  private String getRequiredStringField(ScoredDocument doc, String name) {
     return getRequiredUniqueField(doc, name).getText();
   }
 
-  private long getRequiredLongField(Document doc, String name) {
+  private long getRequiredLongField(ScoredDocument doc, String name) {
     return (long) getRequiredUniqueField(doc, name).getNumber().doubleValue();
   }
 
-  private int getRequiredIntField(Document doc, String name) {
+  private int getRequiredIntField(ScoredDocument doc, String name) {
     return (int) getRequiredUniqueField(doc, name).getNumber().doubleValue();
   }
 

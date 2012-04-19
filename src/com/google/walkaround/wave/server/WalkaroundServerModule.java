@@ -35,8 +35,8 @@ import com.google.appengine.api.images.ImagesService;
 import com.google.appengine.api.images.ImagesServiceFactory;
 import com.google.appengine.api.memcache.MemcacheService;
 import com.google.appengine.api.memcache.MemcacheServiceFactory;
-import com.google.appengine.api.search.IndexManager;
-import com.google.appengine.api.search.IndexManagerFactory;
+import com.google.appengine.api.search.SearchService;
+import com.google.appengine.api.search.SearchServiceFactory;
 import com.google.appengine.api.taskqueue.Queue;
 import com.google.appengine.api.taskqueue.QueueFactory;
 import com.google.appengine.api.urlfetch.URLFetchService;
@@ -267,10 +267,9 @@ public class WalkaroundServerModule extends AbstractModule {
     return BackendServiceFactory.getBackendService();
   }
 
-  @Singleton // NOTE(danilatos): The indexing documentation recommends a singleton.
   @Provides
-  IndexManager provideIndexManager() {
-    return IndexManagerFactory.newIndexManager();
+  SearchService provideIndexManager() {
+    return SearchServiceFactory.getSearchService();
   }
 
   @Provides
