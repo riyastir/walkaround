@@ -44,8 +44,9 @@ public class NotifyAllRobotsPreCommitAction implements PreCommitAction {
       throws RetryableFailure, PermanentFailure {
     ReadableWaveletObject wavelet = (ReadableWaveletObject) resultingState;
     if (RobotIdHelper.containsRobotId(wavelet.getParticipants())) {
-      DeferredTask notifyAllRobotsTask = new NotifyAllRobots(objectId, resultingVersion);
-      tx.enqueueTask(QUEUE, TaskOptions.Builder.withPayload(notifyAllRobotsTask));
+      DeferredTask notifyAllRobots =
+          new NotifyAllRobots(objectId, resultingVersion);
+      tx.enqueueTask(QUEUE, TaskOptions.Builder.withPayload(notifyAllRobots));
     }
   }
 }

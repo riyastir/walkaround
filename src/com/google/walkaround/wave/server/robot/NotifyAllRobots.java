@@ -17,8 +17,26 @@
 package com.google.walkaround.wave.server.robot;
 
 import com.google.appengine.api.taskqueue.DeferredTask;
+import com.google.appengine.api.taskqueue.Queue;
+import com.google.appengine.api.taskqueue.QueueFactory;
+import com.google.appengine.api.taskqueue.TaskOptions;
+import com.google.inject.Inject;
+import com.google.walkaround.slob.server.MutationLog;
+import com.google.walkaround.slob.server.SlobFacilities;
 import com.google.walkaround.slob.shared.SlobId;
+import com.google.walkaround.slob.shared.StateAndVersion;
+import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
+import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
+import com.google.walkaround.util.server.appengine.CheckedDatastore;
+import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTransaction;
+import com.google.walkaround.util.shared.Assert;
+import com.google.walkaround.wave.server.GuiceSetup;
+import com.google.walkaround.wave.server.conv.ConvStore;
+import com.google.walkaround.wave.server.model.WaveObjectStoreModel.ReadableWaveletObject;
 
+import org.waveprotocol.wave.model.wave.ParticipantId;
+
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -33,20 +51,63 @@ public class NotifyAllRobots implements DeferredTask {
 
   public static final String ROBOT_QUEUE_NAME = "robot-notifications";
 
-  @SuppressWarnings("unused")
-  private final SlobId waveletId;
-  @SuppressWarnings("unused")
+  private static class Worker {
+    @Inject
+    CheckedDatastore datastore;
+    @Inject
+    @ConvStore
+    SlobFacilities slobFacilities;
+
+
+    private ReadableWaveletObject getWavelet(SlobId id, long expectedMinVersion)
+        throws PermanentFailure, RetryableFailure {
+      StateAndVersion raw;
+      CheckedTransaction tx = datastore.beginTransaction();
+      try {
+        MutationLog l = slobFacilities.getMutationLogFactory().create(tx, id);
+        raw = l.reconstruct(null);
+      } finally {
+        tx.rollback();
+      }
+      Assert.check(
+          raw.getVersion() >= expectedMinVersion, "%s < %s", raw.getVersion(), expectedMinVersion);
+      return (ReadableWaveletObject) raw.getState();
+    }
+
+    public void run(SlobId convSlobId, long newVersion) throws PermanentFailure, RetryableFailure {
+      // TODO(ljv): Deal with the case where robots are removed from a wave.
+      ReadableWaveletObject wavelet = getWavelet(convSlobId, newVersion);
+      List<ParticipantId> robots = RobotIdHelper.getAllRobotIds(wavelet.getParticipants());
+
+      // TODO(ljv): Shortcut for a wave with a single robot.
+      for (ParticipantId robotId : robots) {
+        DeferredTask notifyRobot = new NotifyRobot(convSlobId, newVersion, robotId);
+        Queue queue = QueueFactory.getQueue(ROBOT_QUEUE_NAME);
+        queue.add(TaskOptions.Builder.withPayload(notifyRobot));
+      }
+
+      log.info("The task that should notify robots has run!");
+    }
+  }
+
+  private final SlobId convSlobId;
   private final long newVersion;
 
-  public NotifyAllRobots(SlobId waveletId, long newVersion) {
-    this.waveletId = waveletId;
+  public NotifyAllRobots(SlobId convSlobId, long newVersion) {
+    this.convSlobId = convSlobId;
     this.newVersion = newVersion;
   }
 
   @Override
   public void run() {
-    // TODO(ljv): Implement the process of notifying robots and applying their
-    // responses.
-    log.info("The task that should notify robots has run!");
+    try {
+      GuiceSetup.getInjectorForTaskQueueTask()
+          .getInstance(Worker.class).run(convSlobId, newVersion);
+    } catch (PermanentFailure e) {
+      throw new RuntimeException(e);
+    } catch (RetryableFailure e) {
+      // TODO: retry
+      throw new RuntimeException(e);
+    }
   }
 }

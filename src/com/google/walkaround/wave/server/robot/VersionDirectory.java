@@ -35,7 +35,8 @@ import org.waveprotocol.wave.model.wave.ParticipantId;
  *
  * @author ljv@google.com (Lennard de Rijk)
  */
-public class VersionDirectory extends AbstractDirectory<RobotNotified, Pair<SlobId, ParticipantId>> {
+public class VersionDirectory
+    extends AbstractDirectory<RobotNotified, Pair<SlobId, ParticipantId>> {
 
   private static final String VERSION_PROPERTY = "Version";
 
