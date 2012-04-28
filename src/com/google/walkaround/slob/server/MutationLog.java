@@ -618,11 +618,12 @@ public class MutationLog {
    * Returns the current version of the object.
    */
   public long getVersion() throws PermanentFailure, RetryableFailure {
-    DeltaIterator it = reverseHistory(0, null, FetchOptions.Builder.withLimit(1));
-    if (!it.hasNext()) {
+    CheckedIterator deltaKeys = getDeltaEntityIterator(0, null,
+        FetchOptions.Builder.withChunkSize(1).limit(1).prefetchSize(1), false, true);
+    if (!deltaKeys.hasNext()) {
       return 0;
     }
-    return it.nextEntry().getResultingVersion();
+    return versionFromDeltaId(deltaKeys.next().getKey().getId());
   }
 
   static interface DeltaIteratorProvider {
