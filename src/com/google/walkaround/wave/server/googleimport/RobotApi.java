@@ -198,7 +198,8 @@ public class RobotApi {
     req.setHeader(new HTTPHeader("Content-Type", "application/json; charset=UTF-8"));
     req.setPayload(ops.toString().getBytes(Charsets.UTF_8));
     try {
-      return new RetryHelper().run(new RetryHelper.Body<JSONObject>() {
+      return new RetryHelper(RetryHelper.backoffStrategy(0, 1000, 10 * 60 * 1000))
+          .run(new RetryHelper.Body<JSONObject>() {
             @Override public JSONObject run() throws RetryableFailure, PermanentFailure {
               JSONObject result;
               try {
