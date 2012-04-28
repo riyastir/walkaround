@@ -29,7 +29,7 @@
   <macrodef name="protoc" description="Runs the protobuf compiler">
     <attribute name="proto" description="The protobuf source"/>
     <sequential>
-      <exec executable="${protoc}">
+      <exec executable="${protoc}" failonerror="true">
         <arg value="--proto_path=${src}:${descriptor-path}"/>
         <arg value="--java_out=proto_src"/>
         <arg value="@{proto}"/>
