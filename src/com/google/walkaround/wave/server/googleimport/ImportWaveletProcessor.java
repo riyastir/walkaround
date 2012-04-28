@@ -725,6 +725,7 @@ public class ImportWaveletProcessor {
           // NOTE(ohler): We have to stop at snapshot.getFirst().getVersion() even if
           // getRawDeltas gives us more, since otherwise, participantFixup may be out-of-date.
           while (version < snapshot.getFirst().getVersion()) {
+            log.info("converter state: " + converter);
             List<ProtocolAppliedWaveletDelta> rawDeltas =
                 robotApi.getRawDeltas(waveletName, version);
             for (ProtocolAppliedWaveletDelta rawDelta : rawDeltas) {

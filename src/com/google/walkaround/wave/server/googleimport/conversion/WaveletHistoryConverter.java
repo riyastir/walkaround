@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.MapMaker;
+import com.google.common.collect.Maps;
 import com.google.walkaround.util.shared.Assert;
 
 import org.waveprotocol.wave.model.document.operation.DocOp;
@@ -49,20 +49,15 @@ import java.util.Map;
  */
 public class WaveletHistoryConverter {
 
-  // See commit ebb4736368b6d371a1bf5005541d96b88dcac504 for my failed attempt
-  // at using CacheBuilder.  TODO(ohler): Figure out the right solution to this.
-  @SuppressWarnings("deprecation")
-  private final Map<String, DocumentHistoryConverter> docConverters =
-      new MapMaker().makeComputingMap(
-          new Function<String, DocumentHistoryConverter>() {
-            @Override public DocumentHistoryConverter apply(String documentId) {
-              return new DocumentHistoryConverter(documentId, nindoConverter);
-            }
-          });
+  private final Map<String, DocumentHistoryConverter> docConverters = Maps.newHashMap();
   private final Function<Pair<String, Nindo>, Nindo> nindoConverter;
 
   public WaveletHistoryConverter(Function<Pair<String, Nindo>, Nindo> nindoConverter) {
     this.nindoConverter = checkNotNull(nindoConverter, "Null nindoConverter");
+  }
+
+  public String toString() {
+    return this.getClass().getSimpleName() + "(" + docConverters.size() + " entries in map)";
   }
 
   public WaveletOperation convertAndApply(final WaveletOperation op) {
@@ -95,14 +90,26 @@ public class WaveletHistoryConverter {
           final WaveletOperationContext context = waveletOp.getContext();
           waveletOp.getBlipOp().acceptVisitor(new BlipOperationVisitor() {
               @Override public void visitBlipContentOperation(BlipContentOperation blipOp) {
+                DocumentHistoryConverter docConverter = docConverters.get(documentId);
+                if (docConverter == null) {
+                  docConverter = new DocumentHistoryConverter(documentId, nindoConverter);
+                  docConverters.put(documentId, docConverter);
+                }
                 DocOp converted;
                 try {
-                  converted = docConverters.get(documentId).convertAndApply(blipOp.getContentOp());
+                  converted = docConverter.convertAndApply(blipOp.getContentOp());
                 } catch (OperationException e) {
                   throw new InvalidInputException("OperationException converting " + waveletOp, e);
                 }
                 setResult(new WaveletBlipOperation(
                     documentId, new BlipContentOperation(context, converted)));
+                if (docConverter.getCurrentState().size() == 0) {
+                  // HACK(ohler): Save memory.  This is not, strictly speaking,
+                  // safe; it assumes that DocumentHistoryConverter and all
+                  // nindo converters return to their initial state whenever the
+                  // document reaches the empty state.
+                  docConverters.remove(documentId);
+                }
               }
               @Override public void visitSubmitBlip(SubmitBlip blipOp) {
                 throw new AssertionError("Unexpected visitSubmitBlip(" + blipOp + ")");
