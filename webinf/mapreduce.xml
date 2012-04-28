@@ -54,4 +54,19 @@
     </property>
   </configuration>
 
+  <configuration name="(c) Retry all import tasks">
+    <property>
+      <name>mapreduce.map.class</name>
+      <value>com.google.walkaround.wave.server.googleimport.RetryTasksMapper</value>
+    </property>
+    <property>
+      <name>mapreduce.inputformat.class</name>
+      <value>com.google.appengine.tools.mapreduce.DatastoreInputFormat</value>
+    </property>
+    <property>
+      <name>mapreduce.mapper.inputformat.datastoreinputformat.entitykind</name>
+      <value>ImportTask4</value>
+    </property>
+  </configuration>
+
 </configurations>

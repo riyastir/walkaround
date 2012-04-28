@@ -22,8 +22,10 @@ import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.Text;
+import com.google.appengine.api.taskqueue.InternalFailureException;
 import com.google.appengine.api.taskqueue.Queue;
 import com.google.appengine.api.taskqueue.TaskOptions;
+import com.google.appengine.api.taskqueue.TransientFailureException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -77,7 +79,9 @@ public class PerUserTable {
   private static final String WAVELET_PRIVATE_LOCAL_ID_PROPERTY = "privateLocalId";
   private static final String WAVELET_SHARED_LOCAL_ID_PROPERTY = "sharedLocalId";
 
+  // NOTE: This is referenced from mapreduce.xml, need to keep in sync.
   private static final String TASK_ENTITY_KIND = "ImportTask4";
+
   private static final String TASK_CREATION_TIME_MILLIS_PROPERTY = "created";
   private static final String TASK_PAYLOAD_PROPERTY = "payload";
 
@@ -174,7 +178,7 @@ public class PerUserTable {
     return e;
   }
 
-  private ImportTask parseTaskEntity(Entity entity) {
+  ImportTask parseTaskEntity(Entity entity) {
     long taskId = entity.getKey().getId();
     StableUserId userId = new StableUserId(entity.getParent().getName());
     try {
@@ -333,15 +337,28 @@ public class PerUserTable {
     Assert.check(userId.equals(written.getUserId()), "User id mismatch: %s, %s", userId, written);
     Assert.check(payload.equals(written.getPayload()),
         "Payload mismatch: %s, %s", payload, written);
-    tx.enqueueTask(taskQueue,
-        TaskOptions.Builder.withUrl(WalkaroundServletModule.IMPORT_TASK_PATH)
-            .header("Host",
-                BackendServiceFactory.getBackendService().getBackendAddress(
-                    "import-worker"))
-            .method(TaskOptions.Method.POST)
-            .param(ImportTaskHandler.USER_ID_HEADER, userId.getId())
-            .param(ImportTaskHandler.TASK_ID_HEADER, "" + written.getTaskId()));
+    tx.enqueueTask(taskQueue, makeTaskOptions(userId, written.getTaskId()));
     return written;
+  }
+  
+  void rescheduleExistingTask(ImportTask task) throws RetryableFailure {
+    try {
+      taskQueue.add(makeTaskOptions(task.getUserId(), task.getTaskId()));
+    } catch (TransientFailureException e) {
+      throw new RetryableFailure(e);
+    } catch (InternalFailureException e) {
+      throw new RetryableFailure(e);
+    }
+  }
+  
+  private TaskOptions makeTaskOptions(StableUserId userId, long taskId) {
+    return TaskOptions.Builder.withUrl(WalkaroundServletModule.IMPORT_TASK_PATH)
+        .header("Host",
+            BackendServiceFactory.getBackendService().getBackendAddress(
+                "import-worker"))
+        .method(TaskOptions.Method.POST)
+        .param(ImportTaskHandler.USER_ID_HEADER, userId.getId())
+        .param(ImportTaskHandler.TASK_ID_HEADER, "" + taskId);
   }
 
   public List<ImportTask> getAllTasks(CheckedTransaction tx, StableUserId userId)
