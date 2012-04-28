@@ -209,9 +209,13 @@ public class WalkaroundServletModule extends ServletModule {
   }
 
   @Override protected void configureServlets() {
-    if (SystemProperty.environment.value() != SystemProperty.Environment.Value.Development) {
-      // Doesn't work in local dev server mode.
-      filter("*").through(AppstatsFilter.class, ImmutableMap.of("basePath", "/admin/appstats/"));
+    // Appstats disabled since it only returns memory once the request
+    // completes, leading to OOMs for very long requests.
+    if (false) {
+      if (SystemProperty.environment.value() != SystemProperty.Environment.Value.Development) {
+        // Doesn't work in local dev server mode.
+        filter("*").through(AppstatsFilter.class, ImmutableMap.of("basePath", "/admin/appstats/"));
+      }
     }
     filter("*").through(ServerExceptionFilter.class);
     // We want appstats and ServerExceptionFilter as the outermost layers.  We
