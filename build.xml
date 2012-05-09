@@ -337,7 +337,7 @@
       <!-- Do not include class and package names in compiled JS. -->
       <arg line="-XdisableClassMetadata"/>
       <arg line="-XdisableCastChecking"/>
-      <arg line="-localWorkers 8"/>
+      <arg line="-localWorkers ${gwt-compile-workers}"/>
       <arg line='-extra ${build.gwtextra}'/>
       <arg line='-war ${build.gwt}'/>
       <arg line="${gwt.args}"/>
