@@ -403,6 +403,13 @@ public class WaveIndexer {
 
   private void index(ConvFields fields, ParticipantId user, @Nullable Supplement supplement)
       throws RetryableFailure, PermanentFailure {
+    // We should probably do more checks (and also do them further up in the
+    // stack!) but this might be enough to help with
+    // http://code.google.com/p/walkaround/issues/detail?id=108 .
+    if (user.getAddress().contains(" ")) {
+      log.warning(fields.slobId + ": Bad participant: " + user);
+      return;
+    }
     boolean isArchived = false;
     boolean isFollowed = true;
     int unreadBlips = fields.blipCount;
