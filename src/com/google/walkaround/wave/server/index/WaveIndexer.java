@@ -37,6 +37,7 @@ import com.google.appengine.api.search.SortExpression;
 import com.google.appengine.api.search.SortOptions;
 import com.google.appengine.api.search.StatusCode;
 import com.google.appengine.api.search.checkers.FieldChecker;
+import com.google.appengine.api.search.checkers.IndexChecker;
 import com.google.appengine.api.utils.SystemProperty;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -311,8 +312,12 @@ public class WaveIndexer {
       Set<ParticipantId> possiblyRemovedParticipants)
           throws RetryableFailure, PermanentFailure, WaveletLockedException {
     for (ParticipantId removed : possiblyRemovedParticipants) {
-      log.info("Unindexing " + convId + " for " + removed);
-      getIndex(removed).remove(convId.getId());
+      if (!isParticipantValidForIndexing(removed)) {
+        log.info(convId + ": Removed participant not valid for indexing: " + removed);
+      } else {
+        log.info(convId + ": Unindexing for " + removed);
+        getIndex(removed).remove(convId.getId());
+      }
     }
     // As an easy way to avoid the race condition, we re-index the whole conv slob
     // strictly after removing.
@@ -401,13 +406,21 @@ public class WaveIndexer {
     }
   }
 
+  private boolean isParticipantValidForIndexing(ParticipantId user) {
+    String indexName = getIndexName(user);
+    try {
+      IndexChecker.checkName(indexName);
+    } catch (Exception e) {
+      log.log(Level.INFO, "Participant not valid for indexing: " + user, e);
+      return false;
+    }
+    return true;
+  }
+
   private void index(ConvFields fields, ParticipantId user, @Nullable Supplement supplement)
       throws RetryableFailure, PermanentFailure {
-    // We should probably do more checks (and also do them further up in the
-    // stack!) but this might be enough to help with
-    // http://code.google.com/p/walkaround/issues/detail?id=108 .
-    if (user.getAddress().contains(" ")) {
-      log.warning(fields.slobId + ": Bad participant: " + user);
+    if (!isParticipantValidForIndexing(user)) {
+      log.warning(fields.slobId + ": Participant not valid for indexing: " + user);
       return;
     }
     boolean isArchived = false;
