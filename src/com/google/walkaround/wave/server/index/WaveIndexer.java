@@ -524,9 +524,13 @@ public class WaveIndexer {
         ParticipantId.ofUnsafe("fake@fake.com"),
         WaveletConfigurator.ERROR);
     waveView.addWavelet(OpBasedWavelet.createReadOnly(convData));
-    WaveBasedConversationView convView = WaveBasedConversationView.create(
-        waveView, idGenerator);
-
+    WaveBasedConversationView convView;
+    try {
+      convView = WaveBasedConversationView.create(waveView, idGenerator);
+    } catch (Exception e) {
+      log.log(Level.WARNING, convData + ": Failed to create conversation view", e);
+      return null;
+    }
     return convView.getRoot();
   }
 
