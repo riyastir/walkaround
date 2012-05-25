@@ -18,8 +18,8 @@ package com.google.walkaround.wave.server.index;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.appengine.api.search.AddDocumentsException;
-import com.google.appengine.api.search.AddDocumentsResponse;
+import com.google.appengine.api.search.AddException;
+import com.google.appengine.api.search.AddResponse;
 import com.google.appengine.api.search.Consistency;
 import com.google.appengine.api.search.Document;
 import com.google.appengine.api.search.Field;
@@ -468,13 +468,13 @@ public class WaveIndexer {
     log.info("Saving index document  " + describe(doc));
 
     // TODO(danilatos): Factor out all the error handling?
-    AddDocumentsResponse resp;
+    AddResponse resp;
     try {
       resp = idx.add(doc);
-    } catch (AddDocumentsException e) {
+    } catch (AddException e) {
       throw new RetryableFailure("Error indexing " + fields.slobId, e);
     }
-    for (OperationResult result : resp.getResults()) {
+    for (OperationResult result : resp) {
       if (!result.getCode().equals(StatusCode.OK)) {
         throw new RetryableFailure("Error indexing " + fields.slobId + ", " + result.getMessage());
       }
