@@ -313,8 +313,8 @@ EOF
 
 [[ -f $out/appengine-sdk/sdk/bin/appcfg.sh ]] || (
   dir $out/appengine-sdk
-  version=1.6.4.1
-  checksum=cbb9a580427034dc6608592529cf3ac007dd05bc
+  version=1.6.6
+  checksum=bb67c8984606fc8d28ab4f49afc088b5b70d9097
   get http://googleappengine.googlecode.com/files/ appengine-java-sdk-$version.zip sha1 $checksum
   unzip -o -q appengine-java-sdk-$version.zip
   ln -sf appengine-java-sdk-$version sdk

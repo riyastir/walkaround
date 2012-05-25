@@ -47,7 +47,7 @@
 	<classpathentry kind="lib" path="third_party/gwt/gwt-user.jar"/>
 	<classpathentry kind="lib" path="third_party/gwt/validation-api-1.0.0.GA.jar"/>
 	<classpathentry kind="lib" path="third_party/gwt/validation-api-1.0.0.GA-sources.jar"/>
-	<classpathentry kind="lib" path="third_party/appengine-sdk/sdk/lib/user/appengine-api-1.0-sdk-1.6.4.1.jar"/>
+	<classpathentry kind="lib" path="third_party/appengine-sdk/sdk/lib/user/appengine-api-1.0-sdk-1.6.6.jar"/>
 	<classpathentry kind="lib" path="third_party/appengine-sdk/sdk/lib/impl/appengine-api-labs.jar"/>
 	<classpathentry kind="lib" path="third_party/appengine-sdk/sdk/lib/impl/appengine-api-stubs.jar"/>
 	<classpathentry kind="lib" path="third_party/appengine-sdk/sdk/lib/testing/appengine-testing.jar"/>
