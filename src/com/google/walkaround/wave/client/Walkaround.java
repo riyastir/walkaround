@@ -367,7 +367,7 @@ public class Walkaround implements EntryPoint {
 
       @Override
       protected AsyncHolder<StageTwo> createStageTwoLoader(final StageOne one) {
-        return new StageTwo.DefaultProvider(one) {
+        return new StageTwo.DefaultProvider(one, null) {
           WaveViewData waveData;
           StringMap<DocOp> diffMap = CollectionUtils.createStringMap();
 
