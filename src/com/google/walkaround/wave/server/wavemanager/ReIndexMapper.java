@@ -33,6 +33,7 @@ import com.google.walkaround.wave.server.index.WaveletLockedException;
 import org.apache.hadoop.io.NullWritable;
 
 import java.io.IOException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -57,7 +58,7 @@ public class ReIndexMapper extends AppEngineMapper<Key, Entity, NullWritable, Nu
             try {
               indexer.indexConversation(objectId);
             } catch (WaveletLockedException e) {
-              log.info("Ignoring locked wavelet: " + objectId);
+              log.log(Level.INFO, "Ignoring locked wavelet: " + objectId, e);
             }
           }
         });
