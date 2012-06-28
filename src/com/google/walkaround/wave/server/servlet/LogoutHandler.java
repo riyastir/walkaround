@@ -44,7 +44,7 @@ public class LogoutHandler extends AbstractHandler {
     @Override
     public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
       resp.setContentType("text/html");
-      AuthPopup.write(resp.getWriter(), new GxpContext(req.getLocale()),
+      AuthPopup.write(resp.getWriter(), new GxpContext(getLocale(req)),
           analyticsAccount, null);
     }
   }

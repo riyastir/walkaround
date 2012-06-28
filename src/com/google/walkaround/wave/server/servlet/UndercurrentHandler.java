@@ -143,7 +143,7 @@ public class UndercurrentHandler extends AbstractHandler {
     ErrorVarsGsonImpl errorVars = new ErrorVarsGsonImpl();
     errorVars.setErrorMessage(errorMessage);
     setResponseHeaders(resp);
-    Wave.write(resp.getWriter(), new GxpContext(req.getLocale()),
+    Wave.write(resp.getWriter(), new GxpContext(getLocale(req)),
         analyticsAccount, clientVarString(null, null, errorVars), true,
         inlineNocacheJs(), channelApiUrl);
   }
@@ -171,7 +171,7 @@ public class UndercurrentHandler extends AbstractHandler {
       vars.setUdw(udwLoadData);
     }
     setResponseHeaders(resp);
-    Wave.write(resp.getWriter(), new GxpContext(req.getLocale()),
+    Wave.write(resp.getWriter(), new GxpContext(getLocale(req)),
         analyticsAccount, clientVarString(vars, null, null), true,
         inlineNocacheJs(), channelApiUrl);
   }
@@ -185,7 +185,7 @@ public class UndercurrentHandler extends AbstractHandler {
     vars.setConvObjectId(wave.getConvObjectId().getId());
     vars.setConvSnapshot(wave.getConvSnapshotWithDiffs());
     setResponseHeaders(resp);
-    Wave.write(resp.getWriter(), new GxpContext(req.getLocale()),
+    Wave.write(resp.getWriter(), new GxpContext(getLocale(req)),
         analyticsAccount, clientVarString(null, vars, null), true,
         inlineNocacheJs(), channelApiUrl);
   }

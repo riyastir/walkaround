@@ -51,7 +51,7 @@ public class AttachmentFormHandler extends AbstractHandler {
     if (formAction == null) {
       throw new RuntimeException("Null blobstore upload url");
     }
-    UploadForm.write(resp.getWriter(), new GxpContext(req.getLocale()),
+    UploadForm.write(resp.getWriter(), new GxpContext(getLocale(req)),
         analyticsAccount, formAction);
   }
 }

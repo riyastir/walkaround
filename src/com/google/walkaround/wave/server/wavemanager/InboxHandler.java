@@ -86,7 +86,7 @@ public class InboxHandler extends AbstractHandler {
     List<InboxDisplayRecord> waveRecords = searcher.searchWaves(query,
         page * RESULTS_PER_PAGE, RESULTS_PER_PAGE);
     boolean embedded = "true".equals(req.getParameter("embedded"));
-    NoSkin.write(resp.getWriter(), new GxpContext(req.getLocale()),
+    NoSkin.write(resp.getWriter(), new GxpContext(getLocale(req)),
         "Walkaround", analyticsAccount,
         InboxFragment.getGxpClosure(xsrfHelper.createToken(XSRF_ACTION), displayQuery,
             embedded, embedded ? "wave" : "", waveRecords,

@@ -60,7 +60,7 @@ public class AttachmentUploadHandler extends AbstractHandler {
     log.info("blobKeys: " + blobKeys);
     BlobKey blobKey = Iterables.getOnlyElement(blobKeys);
     AttachmentId newId = rawAttachmentService.turnBlobIntoAttachment(blobKey);
-    UploadResult.write(resp.getWriter(), new GxpContext(req.getLocale()),
+    UploadResult.write(resp.getWriter(), new GxpContext(getLocale(req)),
         analyticsAccount, newId.getId());
   }
 
