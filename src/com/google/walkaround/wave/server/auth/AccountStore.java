@@ -233,8 +233,8 @@ public class AccountStore {
         new RetryHelper.Body<Entity>() {
           @Override public Entity run() throws RetryableFailure, PermanentFailure {
             CheckedPreparedQuery q = datastore.prepareNontransactionalQuery(
-                new Query(ENTRY_KIND).addFilter(
-                    USER_EMAIL_PROPERTY, FilterOperator.EQUAL, userEmail));
+                new Query(ENTRY_KIND).setFilter(
+                    FilterOperator.EQUAL.of(USER_EMAIL_PROPERTY, userEmail)));
             return q.asSingleEntity();
           }
         });

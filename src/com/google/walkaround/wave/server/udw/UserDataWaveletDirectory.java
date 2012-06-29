@@ -195,9 +195,8 @@ public class UserDataWaveletDirectory {
   public List<ConvUdwMapping> getAllUdwIds(SlobId convObjectId)
       throws PermanentFailure, RetryableFailure {
     Query q = new Query(ENTITY_KIND)
-      .addFilter(Entity.KEY_RESERVED_PROPERTY,
-          FilterOperator.GREATER_THAN_OR_EQUAL,
-          directory.makeKey(new Key(convObjectId, FIRST)))
+      .setFilter(FilterOperator.GREATER_THAN_OR_EQUAL.of(Entity.KEY_RESERVED_PROPERTY,
+          directory.makeKey(new Key(convObjectId, FIRST))))
       .addSort(Entity.KEY_RESERVED_PROPERTY, SortDirection.ASCENDING);
 
     List<ConvUdwMapping> entries = Lists.newArrayList();

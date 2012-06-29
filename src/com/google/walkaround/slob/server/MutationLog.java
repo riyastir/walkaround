@@ -847,16 +847,18 @@ public class MutationLog {
     if (endVersion != null && startVersion == endVersion) {
       return CheckedIterator.EMPTY;
     }
+    Query.Filter filter = FilterOperator.GREATER_THAN_OR_EQUAL.of(Entity.KEY_RESERVED_PROPERTY,
+        makeDeltaKey(objectId, startVersion));
+    if (endVersion != null) {
+      filter = Query.CompositeFilterOperator.and(filter,
+          FilterOperator.LESS_THAN.of(Entity.KEY_RESERVED_PROPERTY,
+              makeDeltaKey(objectId, endVersion)));
+    }
     Query q = new Query(deltaEntityKind)
         .setAncestor(makeRootEntityKey(objectId))
-        .addFilter(Entity.KEY_RESERVED_PROPERTY,
-            FilterOperator.GREATER_THAN_OR_EQUAL, makeDeltaKey(objectId, startVersion))
+        .setFilter(filter)
         .addSort(Entity.KEY_RESERVED_PROPERTY,
             forward ? SortDirection.ASCENDING : SortDirection.DESCENDING);
-    if (endVersion != null) {
-      q.addFilter(Entity.KEY_RESERVED_PROPERTY,
-          FilterOperator.LESS_THAN, makeDeltaKey(objectId, endVersion));
-    }
     if (keysOnly) {
       q.setKeysOnly();
     }
@@ -945,8 +947,8 @@ public class MutationLog {
         .setAncestor(makeRootEntityKey(objectId))
         .addSort(Entity.KEY_RESERVED_PROPERTY, SortDirection.DESCENDING);
     if (atOrBeforeVersion != null) {
-      q = q.addFilter(Entity.KEY_RESERVED_PROPERTY, FilterOperator.LESS_THAN_OR_EQUAL,
-          makeSnapshotKey(objectId, atOrBeforeVersion));
+      q.setFilter(FilterOperator.LESS_THAN_OR_EQUAL.of(Entity.KEY_RESERVED_PROPERTY,
+          makeSnapshotKey(objectId, atOrBeforeVersion)));
     }
     Entity e = tx.prepare(q).getFirstResult();
     log.info("query " + q + " returned first result " + e);
