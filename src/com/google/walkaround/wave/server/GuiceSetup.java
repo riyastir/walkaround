@@ -142,4 +142,20 @@ public class GuiceSetup {
         getTaskQueueTaskModule());
   }
 
+  public static Injector getInjectorForRobot(final String robotId) {
+    return Guice.createInjector(
+        // Stage.DEVELOPMENT here because this is meant to be called from
+        // task queue tasks which probably won't need all singletons.
+        Stage.DEVELOPMENT,
+        getRootModule(),
+        new AbstractModule() {
+          @Override public void configure() {
+            bind(User.class).toProvider(getThrowingProvider(User.class));
+            // HACK(ohler): Define what stable user ids for robots look like.
+            bind(StableUserId.class).toInstance(new StableUserId(robotId));
+            bind(ParticipantId.class).toInstance(new ParticipantId(robotId));
+          }
+        });
+  }
+
 }

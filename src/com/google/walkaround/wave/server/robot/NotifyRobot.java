@@ -1,17 +1,17 @@
 /*
  * Copyright 2012 Google Inc. All Rights Reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package com.google.walkaround.wave.server.robot;
@@ -21,9 +21,17 @@ import com.google.appengine.api.taskqueue.DeferredTask;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.walkaround.proto.ObjectSessionProto;
+import com.google.walkaround.proto.ServerMutateRequest;
+import com.google.walkaround.proto.gson.ObjectSessionProtoGsonImpl;
+import com.google.walkaround.proto.gson.ServerMutateRequestGsonImpl;
+import com.google.walkaround.slob.server.AccessDeniedException;
+import com.google.walkaround.slob.server.MutateResult;
 import com.google.walkaround.slob.server.MutationLog;
 import com.google.walkaround.slob.server.MutationLog.DeltaIterator;
 import com.google.walkaround.slob.server.SlobFacilities;
+import com.google.walkaround.slob.server.SlobNotFoundException;
+import com.google.walkaround.slob.server.SlobStoreSelector;
 import com.google.walkaround.slob.shared.MessageException;
 import com.google.walkaround.slob.shared.SlobId;
 import com.google.walkaround.slob.shared.StateAndVersion;
@@ -31,31 +39,37 @@ import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
 import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
 import com.google.walkaround.util.server.appengine.CheckedDatastore;
 import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTransaction;
+import com.google.walkaround.util.shared.RandomBase64Generator;
 import com.google.walkaround.wave.server.GuiceSetup;
 import com.google.walkaround.wave.server.conv.ConvStore;
 import com.google.walkaround.wave.server.model.ServerMessageSerializer;
 import com.google.walkaround.wave.server.robot.VersionDirectory.RobotNotified;
 import com.google.walkaround.wave.shared.IdHack;
 import com.google.walkaround.wave.shared.WaveSerializer;
-import com.google.wave.api.Context;
 import com.google.wave.api.OperationRequest;
 import com.google.wave.api.ProtocolVersion;
 import com.google.wave.api.data.converter.EventDataConverter;
 import com.google.wave.api.data.converter.EventDataConverterManager;
 import com.google.wave.api.event.Event;
-import com.google.wave.api.event.EventType;
 import com.google.wave.api.impl.EventMessageBundle;
-import com.google.wave.api.robot.Capability;
+import com.google.wave.api.robot.CapabilityFetchException;
 import com.google.wave.api.robot.RobotName;
 
-import com.googlecode.charts4j.collect.Maps;
-
 import org.waveprotocol.box.common.DeltaSequence;
+import org.waveprotocol.box.server.robots.OperationServiceRegistry;
+import org.waveprotocol.box.server.robots.RobotCapabilities;
+import org.waveprotocol.box.server.robots.RobotWaveletData;
 import org.waveprotocol.box.server.robots.passive.EventGenerator;
+import org.waveprotocol.box.server.robots.passive.OperationServiceRegistryImpl;
 import org.waveprotocol.box.server.robots.passive.WaveletAndDeltas;
 import org.waveprotocol.box.server.robots.util.ConversationUtil;
+import org.waveprotocol.box.server.robots.util.OperationUtil;
+import org.waveprotocol.wave.model.id.IdConstants;
+import org.waveprotocol.wave.model.id.SimplePrefixEscaper;
+import org.waveprotocol.wave.model.id.WaveletName;
 import org.waveprotocol.wave.model.operation.OperationException;
 import org.waveprotocol.wave.model.operation.wave.TransformedWaveletDelta;
+import org.waveprotocol.wave.model.operation.wave.WaveletDelta;
 import org.waveprotocol.wave.model.operation.wave.WaveletOperation;
 import org.waveprotocol.wave.model.operation.wave.WaveletOperationContext;
 import org.waveprotocol.wave.model.util.Pair;
@@ -64,7 +78,8 @@ import org.waveprotocol.wave.model.wave.ParticipantId;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
+import java.util.Map.Entry;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -79,6 +94,10 @@ public class NotifyRobot implements DeferredTask {
 
   private static final WaveSerializer SERIALIZER =
       new WaveSerializer(new ServerMessageSerializer());
+
+  // TODO(ljv): Implement the notify operation.
+  private static final OperationServiceRegistry PASSIVE_API =
+      new OperationServiceRegistryImpl(null);
 
   private final SlobId convSlobId;
   private final long newVersion;
@@ -99,19 +118,23 @@ public class NotifyRobot implements DeferredTask {
     CheckedDatastore datastore;
     @Inject
     @ConvStore
-    SlobFacilities slobFacilities;
+    SlobFacilities convFacilities;
     @Inject
     VersionDirectory versionDirectory;
     @Inject
     EventDataConverterManager converterManager;
     @Inject
     RobotConnector connector;
+    @Inject
+    SlobStoreSelector storeSelector;
+    @Inject
+    RandomBase64Generator random64;
 
     private WaveletAndDeltas getWaveletAndDeltas(SlobId id, long fromVersion)
         throws PermanentFailure, RetryableFailure {
       CheckedTransaction tx = datastore.beginTransaction();
       try {
-        MutationLog l = slobFacilities.getMutationLogFactory().create(tx, id);
+        MutationLog l = convFacilities.getMutationLogFactory().create(tx, id);
         StateAndVersion raw = l.reconstruct(null);
         DeltaIterator deltas = l.forwardHistory(
             fromVersion, null, FetchOptions.Builder.withDefaults());
@@ -168,7 +191,7 @@ public class NotifyRobot implements DeferredTask {
       WaveletAndDeltas waveletAndDeltas = getWaveletAndDeltas(convSlobId, lastSeen);
 
       // 1. Generate the events.
-      EventMessageBundle bundle = generatEventMessageBundle(robotId, waveletAndDeltas);
+      EventMessageBundle bundle = generateEventMessageBundle(robotId, waveletAndDeltas);
 
       List<Event> events = bundle.getEvents();
       log.info(events.size() + " events generated");
@@ -176,67 +199,119 @@ public class NotifyRobot implements DeferredTask {
         log.info("Type of event generated: " + event.getType());
       }
 
+      if (bundle.getEvents().isEmpty()) {
+        // No need to notify the robot.
+        updateRobotHasBeenNotified(convSlobId, robotId, lastSeen, waveletAndDeltas);
+        return;
+      }
+
       // 2. Notify the robot of the event.
-      List<OperationRequest> requests =
+      List<OperationRequest> operations =
           connector.sendMessageBundle(bundle, robotId, ProtocolVersion.DEFAULT);
 
-      log.info(requests.size() + " requests returned");
-      for (OperationRequest request : requests) {
+      log.info(operations.size() + " operation requests returned");
+      for (OperationRequest request : operations) {
         log.info(request.toString());
       }
 
       // 3. Update the last version the robot has seen.
       // TODO(ljv): Deal with the case where robots are removed from a wave?
+      // TODO: Do this after applying the changes?
+      updateRobotHasBeenNotified(convSlobId, robotId, lastSeen, waveletAndDeltas);
+
+      // 4. Apply the changes the robot wants applied.
+      // The robots we support should be sending us their version in their first
+      // operation
+      ProtocolVersion protocolVersion = OperationUtil.getProtocolVersion(operations);
+
+      ConversationUtil conversationUtil = new ConversationUtil(new IdHack.StubIdGenerator() {
+          @Override
+        public String newBlipId() {
+          return SimplePrefixEscaper.DEFAULT_ESCAPER.join(
+              IdConstants.TOKEN_SEPARATOR, IdConstants.BLIP_PREFIX, random64.next(6));
+        }
+      });
+      OperationContextImpl context =
+          new OperationContextImpl(
+              converterManager.getEventDataConverter(protocolVersion), conversationUtil,
+              new RobotWaveletData(waveletAndDeltas.getSnapshotAfterDeltas(), waveletAndDeltas
+                  .getVersionAfterDeltas()));
+
+      for (OperationRequest operation : operations) {
+        // Get the operation of the author taking into account the proxying for
+        // field.
+        OperationUtil.executeOperation(operation, PASSIVE_API, context, robotId);
+      }
+      for (Entry<WaveletName, RobotWaveletData> waveletEntry :
+          context.getOpenWavelets().entrySet()) {
+        WaveletName waveletName = waveletEntry.getKey();
+        log.info("waveletName=" + waveletName);
+        RobotWaveletData w = waveletEntry.getValue();
+        for (WaveletDelta delta : w.getDeltas()) {
+          List<String> payloads = SERIALIZER.serializeDeltas(delta);
+          ObjectSessionProto session = new ObjectSessionProtoGsonImpl();
+          session.setObjectId(convSlobId.getId());
+          session.setStoreType(convFacilities.getRootEntityKind());
+          // TODO: make sure this is a good format
+          session.setClientId("robot-" + robotId);
+          ServerMutateRequest mutateRequest = new ServerMutateRequestGsonImpl();
+          mutateRequest.setSession(session);
+          mutateRequest.setVersion(waveletAndDeltas.getVersionAfterDeltas().getVersion());
+          mutateRequest.addAllPayload(payloads);
+
+          MutateResult res;
+          try {
+            res =
+                storeSelector.get(session.getStoreType())
+                    .getSlobStore().mutateObject(mutateRequest);
+          } catch (SlobNotFoundException e) {
+            throw new RuntimeException(
+                "Slob not found processing robot response: " + convSlobId, e);
+          } catch (AccessDeniedException e) {
+            // TODO: Make INFO once we confirm that it really only occurs if the
+            // robot was removed
+            log.log(Level.SEVERE, "Robot removed while processing response?! " + convSlobId, e);
+          }
+        }
+      }
+    }
+
+    private void updateRobotHasBeenNotified(
+        SlobId convSlobId, ParticipantId robotId, long lastSeen, WaveletAndDeltas waveletAndDeltas)
+        throws IOException {
       log.info("Robot " + robotId + ": last seen " + lastSeen + ", now at "
           + waveletAndDeltas.getVersionAfterDeltas());
       versionDirectory.putWithoutTx(
           new RobotNotified(convSlobId, robotId, waveletAndDeltas.getVersionAfterDeltas()
               .getVersion()));
-
-      // 4. Apply the changes the robot wants applied.
-      // TODO(ljv): Apply the results.
-
-
     }
 
-    private EventMessageBundle generatEventMessageBundle(
+    private EventMessageBundle generateEventMessageBundle(
         ParticipantId robotId, WaveletAndDeltas waveletAndDeltas) {
       ConversationUtil conversationUtil = new ConversationUtil(new IdHack.StubIdGenerator());
       EventGenerator generator =
           new EventGenerator(RobotName.fromAddress(robotId.getAddress()), conversationUtil);
 
-      // TODO(ljv): Cache this?
-      // RobotCapabilities capabilities;
-      // try {
-      // // TODO(ljv): Todo reenable when JDOM classes are included in build
-      // //capabilities = connector.fetchCapabilities(robotId, "");
-      // } catch (CapabilityFetchException e) {
-      // log.log(Level.WARNING, "Error occured fetching capabilities", e);
-      // return new EventMessageBundle(robotId.getAddress(), "");
-      // }
+      // TODO(ljv): Cache the capabilities?
+      RobotCapabilities capabilities;
+      try {
+        capabilities = connector.fetchCapabilities(robotId, "");
+      } catch (CapabilityFetchException e) {
+        log.log(Level.WARNING, "Error occured fetching capabilities", e);
+        return new EventMessageBundle(robotId.getAddress(), "");
+      }
 
-      // Some default capabilities for now that cover an echo bot :).
-      Map<EventType, Capability> capabilities = Maps.newHashMap();
-      List<Context> context = Lists.newArrayList(Context.SIBLINGS, Context.SELF);
-      capabilities.put(
-          EventType.WAVELET_BLIP_CREATED, new Capability(EventType.WAVELET_BLIP_CREATED, context));
-      capabilities.put(
-          EventType.ANNOTATED_TEXT_CHANGED,
-          new Capability(EventType.ANNOTATED_TEXT_CHANGED, context));
-      capabilities.put(
-          EventType.DOCUMENT_CHANGED, new Capability(EventType.DOCUMENT_CHANGED, context));
-
-      // TODO(ljv): Support different versions
-      EventDataConverter converter =
-          converterManager.getEventDataConverter(ProtocolVersion.DEFAULT);
-      return generator.generateEvents(waveletAndDeltas, capabilities, converter);
+      EventDataConverter converter = converterManager.getEventDataConverter(
+          capabilities.getProtocolVersion());
+      return generator.generateEvents(
+          waveletAndDeltas, capabilities.getCapabilitiesMap(), converter);
     }
   }
 
   @Override
   public void run() {
     try {
-      GuiceSetup.getInjectorForTaskQueueTask().createChildInjector(new RobotApiModule())
+      GuiceSetup.getInjectorForRobot(robotId.getAddress()).createChildInjector(new RobotApiModule())
           .getInstance(Worker.class).run(convSlobId, newVersion, robotId);
     } catch (PermanentFailure e) {
       throw new RuntimeException(e);
@@ -248,5 +323,4 @@ public class NotifyRobot implements DeferredTask {
       throw new RuntimeException(e);
     }
   }
-
 }
