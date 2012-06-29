@@ -149,6 +149,14 @@ dir third_party_src
   cp gdata/java/lib/gdata-{contacts-3.0,core-1.0,client-1.0,base-1.0}.jar $out/gdata
 )
 
+[[ -f $out/jdom/jdom.jar ]] || (
+  dir jdom
+  get http://www.jdom.org/dist/binary/archive/ jdom-1.1.1.zip sha1 e887ce82ccc1f03991b48ba8a190b2d42b2129da
+  unzip -o -q jdom-1.1.1.zip
+  mkdir -p $out/jdom
+  cp jdom/LICENSE.txt $out/jdom
+  cp jdom/build/jdom.jar $out/jdom
+)
 
 [[ -f $out/appengine-mapreduce/appengine-mapper.jar ]] || (
   dir appengine-mapreduce
