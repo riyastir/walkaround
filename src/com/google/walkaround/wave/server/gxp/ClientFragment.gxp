@@ -75,6 +75,33 @@
     <iframe src='/inbox?embedded=true'/>
   </div>
   <div id='right-pane'>
-    <iframe name='wave'/>
+    <iframe id='wave-iframe' name='wave' onload='onWaveLoad(this.contentWindow.location);'/>
   </div>
+
+  <script type='text/javascript'>
+    function setLocationWaveId(id) {
+        parent.location.hash = "wave=" + id;
+    }
+    // Based on http://stackoverflow.com/questions/2090551/parse-query-string-in-javascript
+    function getQueryVariable(search, variable) {
+        var query = search.substring(1);
+        var vars = query.split("&amp;");
+        for (var i = 0; i &lt; vars.length; i++) {
+            var pair = vars[i].split("=");
+            if (pair[0] == variable) {
+                return unescape(pair[1]);
+            }
+        }
+        alert('Query variable ' + variable + ' not found in ' + url);
+    }
+    // End
+    function onWaveLoad(location) {
+        setLocationWaveId(getQueryVariable(location.search, "id"));
+    }
+    if (location.hash.length > 0) {
+        // TODO(ohler): Make links containing hash work correctly on mobile.
+        document.getElementById('wave-iframe').src =
+            "/wave?id=" + getQueryVariable(location.hash, "wave")
+    }
+  </script>
 </gxp:template>

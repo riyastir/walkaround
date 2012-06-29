@@ -18,8 +18,7 @@ package com.google.walkaround.wave.server.gxp;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.gxp.html.HtmlClosure;
-import com.google.gxp.html.HtmlClosures;
+import com.google.walkaround.slob.shared.SlobId;
 
 import javax.annotation.Nullable;
 
@@ -30,72 +29,76 @@ import javax.annotation.Nullable;
  */
 public class InboxDisplayRecord {
 
+  private final SlobId slobId;
   private final String creator;
+  private final String lastModified;
   private final String title;
   private final String snippetHtml;
-  private final String lastModified;
-  private final String link;
   private final int blipCount;
-  private final Integer unreadCount;
+  // Null means wave is read, non-null means unread.  0 means wave unread but
+  // all blips read (participants unread).
+  @Nullable private final Integer unreadCount;
+  private final String link;
 
-  public InboxDisplayRecord(String creator,
+  public InboxDisplayRecord(SlobId slobId,
+      String creator,
+      String lastModified,
       String title,
       String snippetHtml,
-      String lastModified,
-      String link,
       int blipCount,
-      @Nullable Integer unreadCount) {
+      @Nullable Integer unreadCount,
+      String link) {
+    this.slobId = checkNotNull(slobId, "Null slobId");
     this.creator = checkNotNull(creator, "Null creator");
-    this.title = checkNotNull(title, "Null title");
-    this.snippetHtml = checkNotNull(snippetHtml, "Null snippet");
     this.lastModified = checkNotNull(lastModified, "Null lastModified");
-    this.link = checkNotNull(link, "Null link");
+    this.title = checkNotNull(title, "Null title");
+    this.snippetHtml = checkNotNull(snippetHtml, "Null snippetHtml");
     this.blipCount = blipCount;
     this.unreadCount = unreadCount;
+    this.link = checkNotNull(link, "Null link");
+  }
+
+  public SlobId getSlobId() {
+    return slobId;
   }
 
   public String getCreator() {
     return creator;
   }
 
-  public String getTitle() {
-    return title;
-  }
-
-  public boolean hasSnippet() {
-    return !snippetHtml.isEmpty();
-  }
-
-  public HtmlClosure getSnippetHtml() {
-    return HtmlClosures.fromHtml(snippetHtml);
-  }
-
   public String getLastModified() {
     return lastModified;
   }
 
-  public String getLink() {
-    return link;
+  public String getTitle() {
+    return title;
+  }
+
+  public String getSnippetHtml() {
+    return snippetHtml;
   }
 
   public int getBlipCount() {
     return blipCount;
   }
 
-  public boolean isUnread() {
-    return unreadCount != null;
-  }
-
-  public int getUnreadCount() {
+  @Nullable public Integer getUnreadCount() {
     return unreadCount;
   }
 
+  public String getLink() {
+    return link;
+  }
+
   @Override public String toString() {
-    return "InboxDisplayRecord("
+    return getClass().getSimpleName() + "("
+        + slobId + ", "
         + creator + ", "
+        + lastModified + ", "
         + title + ", "
         + snippetHtml + ", "
-        + lastModified + ", "
+        + blipCount + ", "
+        + unreadCount + ", "
         + link
         + ")";
   }

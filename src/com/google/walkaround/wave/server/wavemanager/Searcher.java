@@ -60,17 +60,18 @@ public class Searcher {
       List<UserIndexEntry> waves = userIndex.findWaves(participantId, query, offset, limit);
       for (UserIndexEntry wave : waves) {
         out.add(new InboxDisplayRecord(
+            wave.getObjectId(),
             // TODO(danilatos): Retrieve contact details if possible and use name not address.
             wave.getCreator().getAddress(),
+            "" + new LocalDate(new Instant(wave.getLastModifiedMillis())),
             wave.getTitle().trim(),
             // TODO(danilatos): Detect if the snippet redundantly starts with the title,
             // and strip it out, if we are just displaying a folder (but don't if we
             // are displaying the context of a search query).
             wave.getSnippetHtml().trim(),
-            "" + new LocalDate(new Instant(wave.getLastModifiedMillis())),
-            makeWaveLink(wave.getObjectId()),
             wave.getBlipCount(),
-            wave.getUnreadCount()));
+            wave.getUnreadCount(),
+            makeWaveLink(wave.getObjectId())));
       }
       return out.build();
     }

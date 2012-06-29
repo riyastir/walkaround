@@ -27,6 +27,7 @@
   <gxp:import class='com.google.walkaround.wave.server.gxp.InboxDisplayRecord'/>
   <gxp:import class='java.util.List'/>
   <gxp:import class='com.google.gxp.css.CssClosures'/>
+  <gxp:import class='com.google.gxp.html.HtmlClosures'/>
 
   <gxp:param name='token' type='String'/>
   <gxp:param name='query' type='String'/>
@@ -35,7 +36,7 @@
   <gxp:param name='waveRecords' type='List{InboxDisplayRecord}'/>
   <gxp:param name='announcementHtml' type='HtmlClosure'/>
   <gxp:param name='page' type='int'/>
- 
+
   <style type='text/css'>
     .main {
       z-index: 1000;
@@ -196,10 +197,10 @@
       </gxp:if>
       <div id='paging'>
         <gxp:msg>Results page: </gxp:msg>
-        <button name='page' expr:value='page - 1' 
+        <button name='page' expr:value='page - 1'
             expr:disabled='page == 0'>&lt;</button>
         <gxp:eval expr='page + 1'/>
-        <button name='page' expr:value='page + 1' 
+        <button name='page' expr:value='page + 1'
             expr:disabled='waveRecords.isEmpty()'>&gt;</button>
         <div id='nav-links'>
           <gxp:msg>Go to:</gxp:msg>
@@ -208,7 +209,7 @@
         </div>
       </div>
     </form>
-    
+
     <div id='results' expr:class='embedded ? "embedded" : ""'>
       <gxp:if cond='waveRecords.isEmpty()'>
         <gxp:msg>(no results)</gxp:msg>
@@ -223,23 +224,24 @@
           <table>
             <tbody>
               <gxp:loop var='record' type='InboxDisplayRecord' iterable='waveRecords'>
-                <tr expr:class='record.isUnread() ? "unread" : ""'>
+                <tr expr:class='record.getUnreadCount() != null ? "unread" : ""'>
                   <td valign="top"><gxp:eval expr='record.getCreator()'/></td>
                   <td valign="top">
                     <a expr:href='record.getLink()' expr:target='target'>
-                      <gxp:if
-                         cond='record.getTitle().isEmpty() &amp;&amp; !record.hasSnippet()'>
+                      <gxp:if cond='record.getTitle().isEmpty()
+                          &amp;&amp; record.getSnippetHtml().isEmpty()'>
                         <span class='record-title'><i><gxp:msg>(no title)</gxp:msg></i></span>
                       <gxp:else/>
                         <span class='record-title'><gxp:eval expr='record.getTitle()'/></span>
-                        <span class='snippet'> - <gxp:eval expr='record.getSnippetHtml()'/></span>
+                        <span class='snippet'> - <gxp:eval expr='HtmlClosures.fromHtml(
+                            record.getSnippetHtml())'/></span>
                       </gxp:if>
                     </a>
                   </td>
                   <td valign="top">
                     <div class='modified'><gxp:eval expr='record.getLastModified()'/></div>
 
-                    <gxp:if cond='record.isUnread()'>
+                    <gxp:if cond='record.getUnreadCount() != null'>
                       <div class='unread-count'><gxp:eval expr='"" + record.getUnreadCount()'/></div>
                       <div class='blip-count'>
                         <gxp:msg>of</gxp:msg>
