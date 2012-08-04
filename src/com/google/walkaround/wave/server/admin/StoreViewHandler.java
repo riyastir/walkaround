@@ -106,7 +106,7 @@ public class StoreViewHandler extends AbstractHandler {
         storeType, id, objectVersion == null ? "" : ("" + objectVersion),
         historyStart, historyEnd, items, snapshotVersion, snapshot);
     resp.setContentType("text/html");
-    Admin.write(resp.getWriter(), new GxpContext(req.getLocale()),
+    Admin.write(resp.getWriter(), new GxpContext(getLocale(req)),
         analyticsAccount, content);
   }
 

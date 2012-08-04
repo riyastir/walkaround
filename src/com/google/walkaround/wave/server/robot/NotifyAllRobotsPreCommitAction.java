@@ -16,11 +16,14 @@
 
 package com.google.walkaround.wave.server.robot;
 
+import java.util.List;
+
 import com.google.appengine.api.taskqueue.DeferredTask;
 import com.google.appengine.api.taskqueue.Queue;
 import com.google.appengine.api.taskqueue.QueueFactory;
 import com.google.appengine.api.taskqueue.TaskOptions;
 import com.google.walkaround.slob.server.PreCommitAction;
+import com.google.walkaround.slob.shared.ChangeData;
 import com.google.walkaround.slob.shared.SlobId;
 import com.google.walkaround.slob.shared.SlobModel.ReadableSlob;
 import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
@@ -40,7 +43,8 @@ public class NotifyAllRobotsPreCommitAction implements PreCommitAction {
 
   @Override
   public void run(
-      CheckedTransaction tx, SlobId objectId, long resultingVersion, ReadableSlob resultingState)
+      CheckedTransaction tx, SlobId objectId, List<ChangeData<String>> newDeltas,
+      long resultingVersion, ReadableSlob resultingState)
       throws RetryableFailure, PermanentFailure {
     ReadableWaveletObject wavelet = (ReadableWaveletObject) resultingState;
     if (RobotIdHelper.containsRobotId(wavelet.getParticipants())) {

@@ -58,7 +58,7 @@ public class AdminHandler extends AbstractHandler {
       throw new BadRequestException();
     }
     resp.setContentType("text/html");
-    Admin.write(resp.getWriter(), new GxpContext(req.getLocale()),
+    Admin.write(resp.getWriter(), new GxpContext(getLocale(req)),
         analyticsAccount, EMPTY_CONTENT);
   }
 }

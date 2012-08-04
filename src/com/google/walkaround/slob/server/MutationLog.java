@@ -31,6 +31,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
+import com.google.common.primitives.Ints;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.Assisted;
@@ -45,10 +46,14 @@ import com.google.walkaround.slob.shared.SlobModel.ReadableSlob;
 import com.google.walkaround.slob.shared.StateAndVersion;
 import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
 import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
+import com.google.walkaround.util.server.appengine.CheckedDatastore;
 import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedIterator;
 import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTransaction;
 import com.google.walkaround.util.server.appengine.DatastoreUtil;
+import com.google.walkaround.util.server.appengine.OversizedPropertyMover;
+import com.google.walkaround.util.server.appengine.OversizedPropertyMover.MovableProperty;
 import com.google.walkaround.util.shared.Assert;
+import com.google.walkaround.util.shared.ConcatenatingList;
 
 import org.waveprotocol.wave.model.util.Pair;
 
@@ -145,8 +150,12 @@ public class MutationLog {
   private static final Logger log = Logger.getLogger(MutationLog.class.getName());
 
   @VisibleForTesting static final String DELTA_OP_PROPERTY = "op";
+  @VisibleForTesting static final String DELTA_OVERSIZED_OP_PROPERTY = "op__oversized";
   @VisibleForTesting static final String DELTA_CLIENT_ID_PROPERTY = "sid";
+
   @VisibleForTesting static final String SNAPSHOT_DATA_PROPERTY = "Data";
+  @VisibleForTesting static final String SNAPSHOT_OVERSIZED_DATA_PROPERTY = "Data__oversized";
+
   private static final String METADATA_PROPERTY = "Metadata";
 
   // Datastore does not allow ids to be 0.
@@ -308,7 +317,7 @@ public class MutationLog {
   public class DeltaIterator {
     private final CheckedIterator it;
     private final boolean forward;
-    private long previousResultingVersion;
+    private final long previousResultingVersion;
     @Nullable private DeltaEntry peeked = null;
 
     public DeltaIterator(CheckedIterator it, boolean forward) {
@@ -324,7 +333,9 @@ public class MutationLog {
     DeltaEntry peekEntry() throws PermanentFailure, RetryableFailure {
       if (peeked == null) {
         // Let it.next() throw if there is no next.
-        peeked = parseDelta(it.next());
+        Entity entity = it.next();
+        deltaPropertyMover.postGet(entity);
+        peeked = parseDelta(entity);
         checkVersion(peeked);
       }
       return peeked;
@@ -488,15 +499,12 @@ public class MutationLog {
       return !stagedDeltaEntries.isEmpty();
     }
 
-    /**
-     * Returns the index data of the model at head state (including staged mutations).
-     */
-    // TODO(ohler): Add a generic task queue hook to MutationLog and
-    // SlobStore, and use that to move indexing into an asynchronous task
-    // queue task.  That would make indexing reliable and avoid polluting this
-    // API with SlobManager concerns like indexing.
-    public String getIndexedHtml() {
-      return state.getState().getIndexedHtml();
+    public List<ChangeData<String>> getStagedDeltas() {
+      ImmutableList.Builder<ChangeData<String>> out = ImmutableList.builder();
+      for (DeltaEntry delta : stagedDeltaEntries) {
+        out.add(delta.data);
+      }
+      return out.build();
     }
 
     /**
@@ -532,14 +540,19 @@ public class MutationLog {
 
   private final StateCache stateCache;
 
+  private final OversizedPropertyMover deltaPropertyMover;
+  private final OversizedPropertyMover snapshotPropertyMover;
+
   @AssistedInject
-  public MutationLog(@SlobRootEntityKind String entityGroupKind,
+  public MutationLog(CheckedDatastore datastore,
+      @SlobRootEntityKind String entityGroupKind,
       @SlobDeltaEntityKind String deltaEntityKind,
       @SlobSnapshotEntityKind String snapshotEntityKind,
       DeltaEntityConverter deltaEntityConverter,
       @Assisted CheckedTransaction tx, @Assisted SlobId objectId,
       SlobModel model,
-      StateCache stateCache) {
+      StateCache stateCache,
+      OversizedPropertyMover.BlobWriteListener oversizedPropertyBlobWriteListener) {
     this.entityGroupKind = entityGroupKind;
     this.deltaEntityKind = deltaEntityKind;
     this.snapshotEntityKind = snapshotEntityKind;
@@ -548,6 +561,20 @@ public class MutationLog {
     this.objectId = Preconditions.checkNotNull(objectId, "Null objectId");
     this.model = Preconditions.checkNotNull(model, "Null model");
     this.stateCache = stateCache;
+    snapshotPropertyMover =
+        new OversizedPropertyMover(
+            datastore,
+            ImmutableList.of(
+                new MovableProperty(SNAPSHOT_DATA_PROPERTY, SNAPSHOT_OVERSIZED_DATA_PROPERTY,
+                    MovableProperty.PropertyType.TEXT)),
+            oversizedPropertyBlobWriteListener);
+    deltaPropertyMover =
+        new OversizedPropertyMover(
+            datastore,
+            ImmutableList.of(
+                new MovableProperty(DELTA_OP_PROPERTY, DELTA_OVERSIZED_OP_PROPERTY,
+                    MovableProperty.PropertyType.TEXT)),
+            oversizedPropertyBlobWriteListener);
   }
 
   /** @see #forwardHistory(long, Long, FetchOptions) */
@@ -588,11 +615,12 @@ public class MutationLog {
    * Returns the current version of the object.
    */
   public long getVersion() throws PermanentFailure, RetryableFailure {
-    DeltaIterator it = reverseHistory(0, null, FetchOptions.Builder.withLimit(1));
-    if (!it.hasNext()) {
+    CheckedIterator deltaKeys = getDeltaEntityIterator(0, null,
+        FetchOptions.Builder.withChunkSize(1).limit(1).prefetchSize(1), false, true);
+    if (!deltaKeys.hasNext()) {
       return 0;
     }
-    return it.nextEntry().getResultingVersion();
+    return versionFromDeltaId(deltaKeys.next().getKey().getId());
   }
 
   static interface DeltaIteratorProvider {
@@ -819,16 +847,18 @@ public class MutationLog {
     if (endVersion != null && startVersion == endVersion) {
       return CheckedIterator.EMPTY;
     }
+    Query.Filter filter = FilterOperator.GREATER_THAN_OR_EQUAL.of(Entity.KEY_RESERVED_PROPERTY,
+        makeDeltaKey(objectId, startVersion));
+    if (endVersion != null) {
+      filter = Query.CompositeFilterOperator.and(filter,
+          FilterOperator.LESS_THAN.of(Entity.KEY_RESERVED_PROPERTY,
+              makeDeltaKey(objectId, endVersion)));
+    }
     Query q = new Query(deltaEntityKind)
         .setAncestor(makeRootEntityKey(objectId))
-        .addFilter(Entity.KEY_RESERVED_PROPERTY,
-            FilterOperator.GREATER_THAN_OR_EQUAL, makeDeltaKey(objectId, startVersion))
+        .setFilter(filter)
         .addSort(Entity.KEY_RESERVED_PROPERTY,
             forward ? SortDirection.ASCENDING : SortDirection.DESCENDING);
-    if (endVersion != null) {
-      q.addFilter(Entity.KEY_RESERVED_PROPERTY,
-          FilterOperator.LESS_THAN, makeDeltaKey(objectId, endVersion));
-    }
     if (keysOnly) {
       q.setKeysOnly();
     }
@@ -854,7 +884,14 @@ public class MutationLog {
     long startVersion = state.getVersion();
     Assert.check(atVersion == null || startVersion <= atVersion);
 
-    DeltaIterator it = forwardHistory(startVersion, atVersion);
+    DeltaIterator it = forwardHistory(startVersion, atVersion,
+        FetchOptions.Builder.withPrefetchSize(
+            atVersion == null ?
+                // We have to fetch everything; hopefully it will fit in
+                // a single RPC / in memory.
+                9999
+                // Fetch what we need, all at once.  Again, hope it fits.
+                : Ints.checkedCast(atVersion - startVersion)));
     while (it.hasNext()) {
       ChangeData<String> delta = it.next();
       try {
@@ -879,22 +916,29 @@ public class MutationLog {
       throws PermanentFailure, RetryableFailure {
     Preconditions.checkNotNull(newDeltas, "null newEntries");
     Preconditions.checkNotNull(newSnapshots, "null newSnapshots");
-    List<Entity> entities = Lists.newArrayListWithCapacity(newDeltas.size() + newSnapshots.size());
+    List<Entity> deltaEntities = Lists.newArrayListWithCapacity(newDeltas.size());
     for (DeltaEntry entry : newDeltas) {
       Key key = makeDeltaKey(entry);
       Entity newEntity = new Entity(key);
       populateDeltaEntity(entry, newEntity);
       parseDelta(newEntity); // Verify it parses with no exceptions.
-      entities.add(newEntity);
+      deltaEntities.add(newEntity);
     }
+    List<Entity> snapshotEntities = Lists.newArrayListWithCapacity(newSnapshots.size());
     for (SnapshotEntry entry : newSnapshots) {
       Key key = makeSnapshotKey(entry);
       Entity newEntity = new Entity(key);
       populateSnapshotEntity(entry, newEntity);
       parseSnapshot(newEntity); // Verify it parses with no exceptions.
-      entities.add(newEntity);
+      snapshotEntities.add(newEntity);
     }
-    tx.put(entities);
+    for (Entity entity : deltaEntities) {
+      deltaPropertyMover.prePut(entity);
+    }
+    for (Entity entity : snapshotEntities) {
+      snapshotPropertyMover.prePut(entity);
+    }
+    tx.put(ConcatenatingList.of(snapshotEntities, deltaEntities));
   }
 
   @Nullable private SnapshotEntry getSnapshotEntryAtOrBefore(@Nullable Long atOrBeforeVersion)
@@ -903,12 +947,17 @@ public class MutationLog {
         .setAncestor(makeRootEntityKey(objectId))
         .addSort(Entity.KEY_RESERVED_PROPERTY, SortDirection.DESCENDING);
     if (atOrBeforeVersion != null) {
-      q = q.addFilter(Entity.KEY_RESERVED_PROPERTY, FilterOperator.LESS_THAN_OR_EQUAL,
-          makeSnapshotKey(objectId, atOrBeforeVersion));
+      q.setFilter(FilterOperator.LESS_THAN_OR_EQUAL.of(Entity.KEY_RESERVED_PROPERTY,
+          makeSnapshotKey(objectId, atOrBeforeVersion)));
     }
     Entity e = tx.prepare(q).getFirstResult();
     log.info("query " + q + " returned first result " + e);
-    return e == null ? null : parseSnapshot(e);
+    if (e == null) {
+      return null;
+    } else {
+      snapshotPropertyMover.postGet(e);
+      return parseSnapshot(e);
+    }
   }
 
   private StateAndVersion createObject(long version, @Nullable String snapshot) {

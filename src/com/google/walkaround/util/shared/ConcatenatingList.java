@@ -30,21 +30,27 @@ import java.util.List;
  * @author danilatos@google.com (Daniel Danilatos)
  */
 public class ConcatenatingList<T> extends AbstractList<T> {
-  public static final <T> ConcatenatingList<T> of(List<T> a, List<T> b) {
+  public static final <T> ConcatenatingList<T> of(List<? extends T> a, List<? extends T> b) {
     return new ConcatenatingList<T>(a, b);
   }
 
-  private final List<T> a;
-  private final List<T> b;
+  private final List<? extends T> a;
+  private final List<? extends T> b;
 
-  public ConcatenatingList(List<T> a, List<T> b) {
+  public ConcatenatingList(List<? extends T> a, List<? extends T> b) {
     this.a = Preconditions.checkNotNull(a, "Null a");
     this.b = Preconditions.checkNotNull(b, "Null b");
   }
 
   @Override
   public T get(int index) {
-    return index < a.size() ? a.get(index) : b.get(index - a.size());
+    // The default javac on Mac OS thinks this returns Object rather than T.
+    //return index < a.size() ? a.get(index) : b.get(index - a.size());
+    if (index < a.size()) {
+      return a.get(index);
+    } else {
+      return b.get(index - a.size());
+    }
   }
 
   @Override

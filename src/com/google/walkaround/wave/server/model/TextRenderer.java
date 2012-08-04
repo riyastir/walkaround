@@ -16,13 +16,15 @@
 
 package com.google.walkaround.wave.server.model;
 
-import com.google.walkaround.util.server.HtmlEscaper;
+import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.waveprotocol.wave.model.conversation.BlipIterators;
+import org.waveprotocol.wave.model.conversation.Conversation;
+import org.waveprotocol.wave.model.conversation.ConversationBlip;
 import org.waveprotocol.wave.model.document.operation.AnnotationBoundaryMap;
 import org.waveprotocol.wave.model.document.operation.Attributes;
 import org.waveprotocol.wave.model.document.operation.DocInitialization;
 import org.waveprotocol.wave.model.document.operation.DocInitializationCursor;
-import org.waveprotocol.wave.model.wave.data.ReadableWaveletData;
 
 /**
  * Renders a wave as HTML text, for indexing. The rendering is just the text of
@@ -35,18 +37,13 @@ public final class TextRenderer {
   private TextRenderer() {}
 
   /**
-   * Renders a wavelet into simple HTML.
+   * Renders a wavelet into text.
    */
-  public static String renderToHtml(ReadableWaveletData data) {
-    return HtmlEscaper.HTML_ESCAPER.escape(renderToText(data));
-  }
-
-  /** Renders a wavelet into text. */
-  public static String renderToText(ReadableWaveletData data) {
+  public static String renderToText(Conversation conv) {
+    checkNotNull(conv, "Null conv");
     StringBuilder b = new StringBuilder();
-    for (String id : data.getDocumentIds()) {
-      // TODO(ohler): Find out whether this should be restricted to blip ids.
-      render(data.getDocument(id).getContent().asOperation(), b);
+    for (ConversationBlip blip : BlipIterators.breadthFirst(conv)) {
+      render(blip.getContent().toInitialization(), b);
     }
     return b.toString();
   }
@@ -54,7 +51,9 @@ public final class TextRenderer {
   /**
    * Renders a document as a paragraph of plain text.
    */
-  private static void render(DocInitialization doc, final StringBuilder out) {
+  public static void render(DocInitialization doc, final StringBuilder out) {
+    checkNotNull(doc, "Null doc");
+    checkNotNull(out, "Null out");
     doc.apply(new DocInitializationCursor() {
       @Override
       public void characters(String chars) {

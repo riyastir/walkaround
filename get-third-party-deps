@@ -67,7 +67,7 @@ dir third_party_src
   dir wave
   [[ -d trunk ]] || (
     set -x
-    svn co -r 1213039 -q https://svn.apache.org/repos/asf/incubator/wave/trunk
+    svn co -r 1354765 -q https://svn.apache.org/repos/asf/incubator/wave/trunk
     cd trunk
     # TODO(ohler): submit to Apache Wave
     patch -p0 < ../../../wave.patch
@@ -163,6 +163,7 @@ dir third_party_src
   [[ -d appengine-mapreduce-read-only ]] || (
     set -x
     svn co -q http://appengine-mapreduce.googlecode.com/svn/trunk/ appengine-mapreduce-read-only
+    svn up -q appengine-mapreduce-read-only
   )
   # TODO(ohler): link our SDK in here
   cd appengine-mapreduce-read-only/java
@@ -211,8 +212,8 @@ dir third_party_src
 
 [[ -f $out/appengine-sdk/sdk/bin/appcfg.sh ]] || (
   dir $out/appengine-sdk
-  version=1.6.1
-  checksum=8c2a88b05bddcba7bca51e272f7e10363039f48e
+  version=1.7.0
+  checksum=08d1a2978a71d5fab3e22d7bba142f49224ac6b1
   get http://googleappengine.googlecode.com/files/ appengine-java-sdk-$version.zip sha1 $checksum
   unzip -o -q appengine-java-sdk-$version.zip
   ln -sf appengine-java-sdk-$version sdk

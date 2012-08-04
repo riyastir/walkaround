@@ -20,31 +20,24 @@ import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.tools.mapreduce.AppEngineMapper;
 import com.google.inject.Inject;
-import com.google.walkaround.proto.ObsoleteWaveletMetadata;
-import com.google.walkaround.proto.gson.ObsoleteWaveletMetadataGsonImpl;
-import com.google.walkaround.slob.server.GsonProto;
-import com.google.walkaround.slob.server.MutationLog;
 import com.google.walkaround.slob.server.SlobFacilities;
-import com.google.walkaround.slob.shared.MessageException;
 import com.google.walkaround.slob.shared.SlobId;
-import com.google.walkaround.slob.shared.StateAndVersion;
 import com.google.walkaround.util.server.RetryHelper;
 import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
 import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
-import com.google.walkaround.util.server.appengine.CheckedDatastore;
-import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTransaction;
 import com.google.walkaround.wave.server.GuiceSetup;
 import com.google.walkaround.wave.server.conv.ConvStore;
-import com.google.walkaround.wave.server.model.WaveObjectStoreModel.ReadableWaveletObject;
+import com.google.walkaround.wave.server.index.WaveIndexer;
+import com.google.walkaround.wave.server.index.WaveletLockedException;
 
 import org.apache.hadoop.io.NullWritable;
 
 import java.io.IOException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Mapreduce mapper that re-indexes and re-extracts ACL metadata from all
- * conversations.
+ * Mapreduce mapper that re-indexes all conversations.
  *
  * @author ohler@google.com (Christian Ohler)
  */
@@ -54,32 +47,18 @@ public class ReIndexMapper extends AppEngineMapper<Key, Entity, NullWritable, Nu
   private static final Logger log = Logger.getLogger(ReIndexMapper.class.getName());
 
   private static class Handler {
-    @Inject CheckedDatastore datastore;
     @Inject @ConvStore SlobFacilities facilities;
-    @Inject WaveIndex index;
+    @Inject WaveIndexer indexer;
 
     void process(Context context, final Key key) throws PermanentFailure {
       new RetryHelper().run(new RetryHelper.VoidBody() {
           @Override public void run() throws PermanentFailure, RetryableFailure {
-            CheckedTransaction tx = datastore.beginTransaction();
+            SlobId objectId = facilities.parseRootEntityKey(key);
+            // Update search index
             try {
-              SlobId objectId = facilities.parseRootEntityKey(key);
-              MutationLog mutationLog = facilities.getMutationLogFactory().create(tx, objectId);
-              try {
-                ObsoleteWaveletMetadata metadata = GsonProto.fromGson(
-                    new ObsoleteWaveletMetadataGsonImpl(), mutationLog.getMetadata());
-                if (metadata.getType() != ObsoleteWaveletMetadata.Type.CONV) {
-                  throw new RuntimeException(objectId + ": Not CONV: " + metadata);
-                }
-              } catch (MessageException e) {
-                throw new RuntimeException("Failed to parse metadata for " + objectId, e);
-              }
-              StateAndVersion state = mutationLog.reconstruct(null);
-              log.info("Re-indexing " + objectId + " at version " + state.getVersion());
-              index.update(tx, objectId, (ReadableWaveletObject) state.getState());
-              tx.commit();
-            } finally {
-              tx.close();
+              indexer.indexConversation(objectId);
+            } catch (WaveletLockedException e) {
+              log.log(Level.INFO, "Ignoring locked wavelet: " + objectId, e);
             }
           }
         });

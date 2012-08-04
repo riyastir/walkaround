@@ -30,13 +30,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.walkaround.proto.FetchAttachmentsAndImportWaveletTask;
-import com.google.walkaround.proto.FetchAttachmentsAndImportWaveletTask.ImportedAttachmentInfo;
-import com.google.walkaround.proto.FetchAttachmentsAndImportWaveletTask.RemoteAttachmentInfo;
 import com.google.walkaround.proto.ImportTaskPayload;
 import com.google.walkaround.proto.ImportWaveletTask;
+import com.google.walkaround.proto.FetchAttachmentsAndImportWaveletTask.ImportedAttachmentInfo;
+import com.google.walkaround.proto.FetchAttachmentsAndImportWaveletTask.RemoteAttachmentInfo;
 import com.google.walkaround.proto.ImportWaveletTask.ImportedAttachment;
-import com.google.walkaround.proto.gson.FetchAttachmentsAndImportWaveletTaskGsonImpl.ImportedAttachmentInfoGsonImpl;
 import com.google.walkaround.proto.gson.ImportTaskPayloadGsonImpl;
+import com.google.walkaround.proto.gson.FetchAttachmentsAndImportWaveletTaskGsonImpl.ImportedAttachmentInfoGsonImpl;
 import com.google.walkaround.proto.gson.ImportWaveletTaskGsonImpl.ImportedAttachmentGsonImpl;
 import com.google.walkaround.util.server.RetryHelper;
 import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
@@ -50,6 +50,8 @@ import org.waveprotocol.wave.model.id.WaveId;
 import org.waveprotocol.wave.model.id.WaveletId;
 import org.waveprotocol.wave.model.id.WaveletName;
 
+import javax.annotation.Nullable;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
@@ -58,8 +60,6 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
-
-import javax.annotation.Nullable;
 
 /**
  * Processes {@link FetchAttachmentsAndImportWaveletTask}s.
@@ -226,6 +226,7 @@ public class FetchAttachmentsProcessor {
         WaveId.deserialise(waveletTask.getWaveId()),
         WaveletId.deserialise(waveletTask.getWaveletId()));
     LinkedList<RemoteAttachmentInfo> toImport = Lists.newLinkedList(task.getToImport());
+    log.info("Need attachments for " + waveletName + ": " + toImport);
     int infosFetchedThisTask = 0;
     while (!toImport.isEmpty() && infosFetchedThisTask < MAX_FETCHES_PER_TASK) {
       RemoteAttachmentInfo info = toImport.removeFirst();

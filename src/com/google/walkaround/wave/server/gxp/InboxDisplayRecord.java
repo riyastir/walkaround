@@ -18,6 +18,10 @@ package com.google.walkaround.wave.server.gxp;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.walkaround.slob.shared.SlobId;
+
+import javax.annotation.Nullable;
+
 /**
  * Information {@link InboxFragment} needs about a wave.
  *
@@ -25,38 +29,61 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class InboxDisplayRecord {
 
+  private final SlobId slobId;
   private final String creator;
-  private final String title;
-  private final String snippet;
   private final String lastModified;
+  private final String title;
+  private final String snippetHtml;
+  private final int blipCount;
+  // Null means wave is read, non-null means unread.  0 means wave unread but
+  // all blips read (participants unread).
+  @Nullable private final Integer unreadCount;
   private final String link;
 
-  public InboxDisplayRecord(String creator,
-      String title,
-      String snippet,
+  public InboxDisplayRecord(SlobId slobId,
+      String creator,
       String lastModified,
+      String title,
+      String snippetHtml,
+      int blipCount,
+      @Nullable Integer unreadCount,
       String link) {
+    this.slobId = checkNotNull(slobId, "Null slobId");
     this.creator = checkNotNull(creator, "Null creator");
-    this.title = checkNotNull(title, "Null title");
-    this.snippet = checkNotNull(snippet, "Null snippet");
     this.lastModified = checkNotNull(lastModified, "Null lastModified");
+    this.title = checkNotNull(title, "Null title");
+    this.snippetHtml = checkNotNull(snippetHtml, "Null snippetHtml");
+    this.blipCount = blipCount;
+    this.unreadCount = unreadCount;
     this.link = checkNotNull(link, "Null link");
+  }
+
+  public SlobId getSlobId() {
+    return slobId;
   }
 
   public String getCreator() {
     return creator;
   }
 
+  public String getLastModified() {
+    return lastModified;
+  }
+
   public String getTitle() {
     return title;
   }
 
-  public String getSnippet() {
-    return snippet;
+  public String getSnippetHtml() {
+    return snippetHtml;
   }
 
-  public String getLastModified() {
-    return lastModified;
+  public int getBlipCount() {
+    return blipCount;
+  }
+
+  @Nullable public Integer getUnreadCount() {
+    return unreadCount;
   }
 
   public String getLink() {
@@ -64,11 +91,14 @@ public class InboxDisplayRecord {
   }
 
   @Override public String toString() {
-    return "InboxDisplayRecord("
+    return getClass().getSimpleName() + "("
+        + slobId + ", "
         + creator + ", "
-        + title + ", "
-        + snippet + ", "
         + lastModified + ", "
+        + title + ", "
+        + snippetHtml + ", "
+        + blipCount + ", "
+        + unreadCount + ", "
         + link
         + ")";
   }

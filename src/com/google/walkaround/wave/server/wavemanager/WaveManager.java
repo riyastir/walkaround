@@ -20,7 +20,6 @@ import com.google.inject.Inject;
 import com.google.walkaround.proto.ConvMetadata;
 import com.google.walkaround.slob.server.MutationLog;
 import com.google.walkaround.slob.server.SlobFacilities;
-import com.google.walkaround.slob.server.SlobManager;
 import com.google.walkaround.slob.shared.SlobId;
 import com.google.walkaround.slob.shared.StateAndVersion;
 import com.google.walkaround.util.server.RetryHelper;
@@ -29,7 +28,6 @@ import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
 import com.google.walkaround.util.server.appengine.CheckedDatastore;
 import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTransaction;
 import com.google.walkaround.wave.server.conv.ConvMetadataStore;
-import com.google.walkaround.wave.server.conv.ConvStore;
 import com.google.walkaround.wave.server.conv.PermissionCache;
 import com.google.walkaround.wave.server.conv.PermissionCache.Permissions;
 import com.google.walkaround.wave.server.model.WaveObjectStoreModel.ReadableWaveletObject;
@@ -45,24 +43,23 @@ import java.util.logging.Logger;
  * @author ohler@google.com (Christian Ohler)
  */
 // TODO(ohler): Rename to ConvPermissionSource and move to conv.
-public class WaveManager implements SlobManager, PermissionCache.PermissionSource {
+public class WaveManager implements PermissionCache.PermissionSource {
 
-  @SuppressWarnings("unused")
   private static final Logger log = Logger.getLogger(WaveManager.class.getName());
 
+  private final CheckedDatastore datastore;
   private final ParticipantId participantId;
   private final SlobFacilities convSlobFacilities;
-  private final CheckedDatastore datastore;
   private final ConvMetadataStore convMetadataStore;
 
   @Inject
-  public WaveManager(ParticipantId participantId,
-      @ConvStore SlobFacilities convSlobFacilities,
-      CheckedDatastore datastore,
+  public WaveManager(CheckedDatastore datastore,
+      ParticipantId participantId,
+      SlobFacilities convSlobFacilities,
       ConvMetadataStore convMetadataStore) {
+    this.datastore = datastore;
     this.participantId = participantId;
     this.convSlobFacilities = convSlobFacilities;
-    this.datastore = datastore;
     this.convMetadataStore = convMetadataStore;
   }
 
@@ -106,11 +103,6 @@ public class WaveManager implements SlobManager, PermissionCache.PermissionSourc
     } catch (PermanentFailure e) {
       throw new IOException("Failed to get permissions for " + slobId);
     }
-  }
-
-  @Override
-  public void update(SlobId objectId, SlobIndexUpdate update) throws IOException {
-    // Nothing to do for now since we index in our pre-commit hook.
   }
 
 }

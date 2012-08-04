@@ -136,18 +136,16 @@ public class LocalMutationProcessor {
     final Exception exception;
 
     JSONArray broadcastData = null;
-    String indexData = null;
 
     public UpResult(long resultingRevision, Exception exception) {
       this.resultingRevision = resultingRevision;
       this.exception = exception;
     }
 
-    public UpResult(long resultingRevision, JSONArray broadcastData, String indexData) {
+    public UpResult(long resultingRevision, JSONArray broadcastData) {
       this.resultingRevision = resultingRevision;
       this.exception = null;
       this.broadcastData = broadcastData;
-      this.indexData = indexData;
     }
 
     @Override
@@ -161,10 +159,6 @@ public class LocalMutationProcessor {
 
     public JSONArray getBroadcastData() {
       return broadcastData;
-    }
-
-    public String getIndexData() {
-      return indexData;
     }
   }
 
@@ -309,7 +303,7 @@ public class LocalMutationProcessor {
       deltaCache.appendAll(transformedChanges);
 
       log.info("Ops successfully appended (staged for writing)");
-      return lastResult = new UpResult(appender.getStagedVersion(), null);
+      return lastResult = new UpResult(appender.getStagedVersion(), (JSONArray)null);
     }
 
     private UpResult logRejection(UpResult r) {
@@ -327,8 +321,8 @@ public class LocalMutationProcessor {
         tx.rollback();
         return;
       }
-      appender.finish();
       runPreCommit(tx, objectId, appender);
+      appender.finish();
       schedulePostCommit(tx, objectId, appender);
       log.info("Committing...");
       try {
@@ -354,7 +348,6 @@ public class LocalMutationProcessor {
           }
         }
         lastResult.broadcastData = messages;
-        lastResult.indexData = appender.getIndexedHtml();
       }
     }
 
@@ -366,9 +359,15 @@ public class LocalMutationProcessor {
 
   public void runPreCommit(CheckedTransaction tx, SlobId slobId, MutationLog.Appender appender)
       throws PermanentFailure, RetryableFailure {
+    ImmutableList<ChangeData<String>> stagedDeltas = ImmutableList.copyOf(
+        appender.getStagedDeltas());
+    Preconditions.checkArgument(!stagedDeltas.isEmpty(),
+        // TODO(ohler): make this less error-prone.
+        "No deltas staged; must call runPreCommit() before appender.finish()");
     for (PreCommitAction action : preCommitActions) {
       log.info("Calling pre-commit action " + action);
-      action.run(tx, slobId, appender.getStagedVersion(), appender.getStagedState());
+      action.run(tx, slobId, stagedDeltas,
+          appender.getStagedVersion(), appender.getStagedState());
     }
   }
 
@@ -451,7 +450,6 @@ public class LocalMutationProcessor {
     ServerMutateResponse response = new ServerMutateResponseGsonImpl();
     response.setResultingVersion(result.getResultingRevision());
     response.setBroadcastData(jsonBroadcastData(objectId, result.getBroadcastData()));
-    response.setIndexData(result.getIndexData());
     return response;
   }
 

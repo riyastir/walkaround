@@ -4,3 +4,7 @@ set -e
 
 ./runant war
 third_party/appengine-sdk/sdk/bin/appcfg.sh update build/war
+# Most people won't need the backend.  If the backend doesn't exist,
+# import tasks will be sent to the frontend (even though the "Host:"
+# header points to the backend).  At least that's what I've seen.
+#third_party/appengine-sdk/sdk/bin/appcfg.sh backends update build/war

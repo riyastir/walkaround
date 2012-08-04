@@ -16,6 +16,11 @@
 
 package com.google.walkaround.slob.server;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.google.appengine.api.blobstore.BlobKey;
+import com.google.appengine.api.blobstore.dev.LocalBlobstoreService;
+import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
@@ -23,23 +28,32 @@ import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.taskqueue.Queue;
 import com.google.appengine.api.taskqueue.TaskHandle;
 import com.google.appengine.api.taskqueue.TaskOptions;
+import com.google.appengine.tools.development.ApiProxyLocal;
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig;
+import com.google.appengine.tools.development.testing.LocalFileServiceTestConfig;
 import com.google.appengine.tools.development.testing.LocalServiceTestHelper;
+import com.google.apphosting.api.ApiProxy;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.walkaround.slob.server.MutationLog.DeltaIterator;
 import com.google.walkaround.slob.shared.ChangeData;
 import com.google.walkaround.slob.shared.ChangeRejected;
 import com.google.walkaround.slob.shared.ClientId;
 import com.google.walkaround.slob.shared.InvalidSnapshot;
 import com.google.walkaround.slob.shared.SlobId;
 import com.google.walkaround.slob.shared.SlobModel;
-import com.google.walkaround.slob.shared.SlobModel.Slob;
 import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
 import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
+import com.google.walkaround.util.server.appengine.CheckedDatastore;
 import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedIterator;
 import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedPreparedQuery;
 import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTransaction;
+import com.google.walkaround.util.server.appengine.OversizedPropertyMover;
+import com.google.walkaround.util.server.appengine.OversizedPropertyMover.MovableProperty;
 
 import junit.framework.TestCase;
+
+import org.waveprotocol.wave.model.util.Utf16Util;
 
 import java.util.List;
 import java.util.Map;
@@ -69,15 +83,11 @@ public class MutationLogTest extends TestCase {
   private static class TestModel implements SlobModel {
     public class TestObject implements Slob {
       @Override @Nullable public String snapshot() {
-        return SNAPSHOT_STRING;
+        return snapshotString;
       }
 
-      public void apply(ChangeData<String> payload) throws ChangeRejected {
+      @Override public void apply(ChangeData<String> payload) throws ChangeRejected {
         // accept any payload, do nothing with it
-      }
-
-      public String getIndexedHtml() {
-        throw new AssertionError("Not implemented");
       }
     }
 
@@ -91,15 +101,28 @@ public class MutationLogTest extends TestCase {
         List<ChangeData<String>> serverOps) throws ChangeRejected {
       throw new AssertionError("Not implemented");
     }
+
+    private final String snapshotString;
+
+    TestModel(String snapshotString) {
+      this.snapshotString = checkNotNull(snapshotString, "Null snapshotString");
+    }
   }
 
   private final LocalServiceTestHelper helper =
       new LocalServiceTestHelper(
-          new LocalDatastoreServiceTestConfig());
+          new LocalDatastoreServiceTestConfig()
+              .setDefaultHighRepJobPolicyUnappliedJobPercentage(30),
+          new LocalFileServiceTestConfig());
+  private final CheckedDatastore datastore = new CheckedDatastore(
+      DatastoreServiceFactory.getDatastoreService());
 
   @Override protected void setUp() throws Exception {
     super.setUp();
     helper.setUp();
+    ApiProxyLocal proxy = (ApiProxyLocal) ApiProxy.getDelegate();
+    // HACK(ohler): Work around "illegal blobKey" crash.
+    proxy.setProperty(LocalBlobstoreService.NO_STORAGE_PROPERTY, "true");
   }
 
   @Override protected void tearDown() throws Exception {
@@ -210,9 +233,11 @@ public class MutationLogTest extends TestCase {
     ChangeData<String> delta = new ChangeData<String>(clientId, payload);
 
     MutationLog mutationLog =
-        new MutationLog(ROOT_ENTITY_KIND, DELTA_ENTITY_KIND, SNAPSHOT_ENTITY_KIND,
+        new MutationLog(datastore,
+            ROOT_ENTITY_KIND, DELTA_ENTITY_KIND, SNAPSHOT_ENTITY_KIND,
             new MutationLog.DefaultDeltaEntityConverter(),
-            tx, objectId, new TestModel(), new MutationLog.StateCache(1));
+            tx, objectId, new TestModel(SNAPSHOT_STRING), new MutationLog.StateCache(1),
+            OversizedPropertyMover.NULL_LISTENER);
     MutationLog.Appender appender = mutationLog.prepareAppender().getAppender();
 
     assertEquals(0, appender.estimatedBytesStaged());
@@ -246,6 +271,86 @@ public class MutationLogTest extends TestCase {
     assertEquals(14 * deltaSize + 2 * snapshotSize, appender.estimatedBytesStaged());
     appender.append(delta);
     assertEquals(15 * deltaSize + 2 * snapshotSize, appender.estimatedBytesStaged());
+  }
+
+  String makeMassiveString() {
+    int numCodePoints = 1 << 19;
+    StringBuilder b = new StringBuilder(
+        // Overestimate.
+        numCodePoints * 2);
+    int nextCp = 0;
+    for (int i = 0; i < numCodePoints; i++) {
+      b.appendCodePoint(nextCp);
+      if (i + 1 < numCodePoints && i % 80 == 79) {
+        b.append("\n");
+        i++;
+      }
+      nextCp = (nextCp + 1) & 0x10ffff;
+      while (Utf16Util.isSurrogate(nextCp) || !Utf16Util.isCodePointValid(nextCp)) {
+        //log.info("Skipping cp " + nextCp);
+        nextCp = (nextCp + 1) & 0x10ffff;
+      }
+    }
+    return "" + b;
+  }
+
+  public void testOversizedProperties() throws Exception {
+    String massiveString = makeMassiveString();
+    final List<String> movedProperties = Lists.newArrayList();
+    SlobId objectId = new SlobId(OBJECT_ID);
+    CheckedTransaction tx = datastore.beginTransaction();
+    MutationLog mutationLog =
+        new MutationLog(datastore,
+            ROOT_ENTITY_KIND, DELTA_ENTITY_KIND, SNAPSHOT_ENTITY_KIND,
+            new MutationLog.DefaultDeltaEntityConverter(),
+            tx, objectId, new TestModel(massiveString), new MutationLog.StateCache(1),
+            new OversizedPropertyMover.BlobWriteListener() {
+              @Override public void blobCreated(
+                  Key entityKey, MovableProperty property, BlobKey blobKey) {
+                movedProperties.add(property.getPropertyName());
+              }
+              @Override public void blobDeleted(
+                  Key entityKey, MovableProperty property, BlobKey blobKey) {
+                throw new AssertionError();
+              }
+            });
+    MutationLog.Appender appender = mutationLog.prepareAppender().getAppender();
+    ClientId clientId = new ClientId("fake-clientid");
+    // This will generate one snapshot.
+    appender.appendAll(
+        ImmutableList.of(
+            new ChangeData<String>(clientId, "delta 0 " + massiveString),
+            new ChangeData<String>(clientId, "delta 1 " + massiveString),
+            new ChangeData<String>(clientId, "delta 2 " + massiveString)));
+    // This will generate another snapshot.
+    appender.append(new ChangeData<String>(clientId, "delta 3 " + massiveString));
+    appender.finish();
+    tx.commit();
+    assertEquals(ImmutableList.of("op", "op", "op", "op", "Data", "Data"), movedProperties);
+
+    CheckedTransaction tx2 = datastore.beginTransaction();
+    MutationLog mutationLog2 =
+        // TODO: eliminate code duplication
+        new MutationLog(datastore,
+            ROOT_ENTITY_KIND, DELTA_ENTITY_KIND, SNAPSHOT_ENTITY_KIND,
+            new MutationLog.DefaultDeltaEntityConverter(),
+            tx2, objectId, new TestModel(massiveString), new MutationLog.StateCache(1),
+            new OversizedPropertyMover.BlobWriteListener() {
+              @Override public void blobCreated(
+                  Key entityKey, MovableProperty property, BlobKey blobKey) {
+                throw new AssertionError();
+              }
+              @Override public void blobDeleted(
+                  Key entityKey, MovableProperty property, BlobKey blobKey) {
+                throw new AssertionError();
+              }
+            });
+    DeltaIterator deltas = mutationLog2.forwardHistory(0, null);
+    assertEquals("delta 0 " + massiveString, deltas.next().getPayload());
+    assertEquals("delta 1 " + massiveString, deltas.next().getPayload());
+    assertEquals("delta 2 " + massiveString, deltas.next().getPayload());
+    assertEquals("delta 3 " + massiveString, deltas.next().getPayload());
+    assertFalse(deltas.hasNext());
   }
 
 }

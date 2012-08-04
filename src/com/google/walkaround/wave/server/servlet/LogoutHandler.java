@@ -24,11 +24,11 @@ import com.google.walkaround.wave.server.Flag;
 import com.google.walkaround.wave.server.FlagName;
 import com.google.walkaround.wave.server.gxp.AuthPopup;
 
-import java.io.IOException;
-import java.util.logging.Logger;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
+import java.util.logging.Logger;
 
 /**
  * Logs out the current user.  This is useful for switching between admin and
@@ -44,7 +44,7 @@ public class LogoutHandler extends AbstractHandler {
     @Override
     public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
       resp.setContentType("text/html");
-      AuthPopup.write(resp.getWriter(), new GxpContext(req.getLocale()),
+      AuthPopup.write(resp.getWriter(), new GxpContext(getLocale(req)),
           analyticsAccount, null);
     }
   }

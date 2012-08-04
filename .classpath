@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="proto_src"/>
 	<classpathentry kind="src" output="test-classes" path="test"/>
 	<classpathentry kind="src" path="build/gen/messages"/>
 	<classpathentry kind="src" path="build/gen/gxp"/>
 	<classpathentry kind="src" path="more-guava"/>
-	<classpathentry kind="lib" path="build/proto"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="third_party/gson/gson-1.7.1.jar"/>
 	<classpathentry kind="lib" path="third_party/joda-time/joda-time-2.0.jar"/>
@@ -47,8 +47,9 @@
 	<classpathentry kind="lib" path="third_party/gwt/gwt-user.jar"/>
 	<classpathentry kind="lib" path="third_party/gwt/validation-api-1.0.0.GA.jar"/>
 	<classpathentry kind="lib" path="third_party/gwt/validation-api-1.0.0.GA-sources.jar"/>
-	<classpathentry kind="lib" path="third_party/appengine-sdk/sdk/lib/user/appengine-api-1.0-sdk-1.6.1.jar"/>
+	<classpathentry kind="lib" path="third_party/appengine-sdk/sdk/lib/impl/appengine-api.jar"/>
 	<classpathentry kind="lib" path="third_party/appengine-sdk/sdk/lib/impl/appengine-api-labs.jar"/>
+	<classpathentry kind="lib" path="third_party/appengine-sdk/sdk/lib/impl/appengine-api-stubs.jar"/>
 	<classpathentry kind="lib" path="third_party/appengine-sdk/sdk/lib/testing/appengine-testing.jar"/>
 	<classpathentry kind="lib" path="third_party/appengine-mapreduce/appengine-mapper.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/wave-protocol"/>

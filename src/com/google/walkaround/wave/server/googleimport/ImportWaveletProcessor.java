@@ -408,6 +408,10 @@ public class ImportWaveletProcessor {
             new FetchAttachmentsAndImportWaveletTaskGsonImpl();
         newTask.setOriginalImportTask(task);
         populateAttachmentInfo(newTask, documents, attachmentDocs);
+        if (newTask.getToImportSize() == 0) {
+          log.info("There are attachments but none can be imported");
+          return ImmutableMap.of();
+        }
         ImportTaskPayload payload = new ImportTaskPayloadGsonImpl();
         payload.setFetchAttachmentsTask(newTask);
         throw TaskCompleted.withFollowup(payload);
@@ -509,8 +513,8 @@ public class ImportWaveletProcessor {
                 }
                 // TODO(ohler): Share more code with LocalMutationProcessor; having to call this
                 // stuff here rather than just commit() is error-prone.
-                appender.finish();
                 convSlobFacilities.getLocalMutationProcessor().runPreCommit(tx, convId, appender);
+                appender.finish();
                 convSlobFacilities.getLocalMutationProcessor().schedulePostCommit(
                     tx, convId, appender);
                 tx.commit();
@@ -690,15 +694,26 @@ public class ImportWaveletProcessor {
       convMetadata.setImportMetadata(importMetadata);
       final SlobId newId;
       if (!preserveHistory) {
-        List<WaveletOperation> initialHistory = Lists.newArrayList();
+        List<WaveletOperation> history = Lists.newArrayList();
         WaveletHistoryConverter converter = new WaveletHistoryConverter(
             getConvNindoConverter(attachmentMapping));
         for (WaveletOperation op :
             new HistorySynthesizer().synthesizeHistory(wavelet, snapshot.getSecond())) {
-          initialHistory.add(converter.convertAndApply(convertGooglewaveToGmail(op)));
+          history.add(converter.convertAndApply(convertGooglewaveToGmail(op)));
         }
-        initialHistory.addAll(participantFixup);
-        newId = waveletCreator.newConvWithGeneratedId(initialHistory, convMetadata, true);
+        history.addAll(participantFixup);
+        newId = waveletCreator.newConvWithGeneratedId(
+            ImmutableList.<WaveletOperation>of(), convMetadata, true);
+        ConvHistoryWriter historyWriter = new ConvHistoryWriter(newId);
+        try {
+          for (WaveletOperation op : history) {
+            historyWriter.append(op);
+          }
+          historyWriter.finish();
+        } catch (ChangeRejected e) {
+          log.warning("Synthesized history rejected: " + history);
+          throw new RuntimeException("Synthesized history rejected", e);
+        }
       } else {
         long version = 0;
         newId = waveletCreator.newConvWithGeneratedId(
@@ -710,14 +725,24 @@ public class ImportWaveletProcessor {
           // NOTE(ohler): We have to stop at snapshot.getFirst().getVersion() even if
           // getRawDeltas gives us more, since otherwise, participantFixup may be out-of-date.
           while (version < snapshot.getFirst().getVersion()) {
+            log.info("converter state: " + converter);
             List<ProtocolAppliedWaveletDelta> rawDeltas =
                 robotApi.getRawDeltas(waveletName, version);
             for (ProtocolAppliedWaveletDelta rawDelta : rawDeltas) {
-              WaveletDelta delta = CoreWaveletOperationSerializer.deserialize(ProtocolWaveletDelta
-                  .parseFrom(rawDelta.getSignedOriginalDelta().getDelta()));
-              for (WaveletOperation op : delta) {
+              WaveletDelta delta = CoreWaveletOperationSerializer.deserialize(
+                  ProtocolWaveletDelta.parseFrom(rawDelta.getSignedOriginalDelta().getDelta()));
+              for (WaveletOperation badOp : delta) {
+                Preconditions.checkState(badOp.getContext().getTimestamp() == -1,
+                    "Unexpected timestamp: %s in delta %s", badOp, delta);
+                // TODO(ohler): Rename
+                // CoreWaveletOperationSerializer.deserialize() to
+                // deserializeWithNoTimestamp() or something.
+                WaveletOperation withTimestamp = WaveletOperation.cloneOp(badOp,
+                    new WaveletOperationContext(badOp.getContext().getCreator(),
+                        rawDelta.getApplicationTimestamp(),
+                        badOp.getContext().getVersionIncrement()));
                 WaveletOperation converted =
-                    converter.convertAndApply(convertGooglewaveToGmail(op));
+                    converter.convertAndApply(convertGooglewaveToGmail(withTimestamp));
                 //log.info(version + ": " + op + " -> " + converted);
                 historyWriter.append(converted);
                 version++;

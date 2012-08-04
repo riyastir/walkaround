@@ -27,7 +27,7 @@
   <gxp:param name='analyticsAccount' type='String'/>
   <gxp:param name='formAction' type='String'/>
 
-  <html>
+  <html gxp:doctype='transitional'>
     <head>
       <title><gxp:msg>Upload Token</gxp:msg></title>
       <script type='text/javascript'>

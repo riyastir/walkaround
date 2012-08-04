@@ -63,7 +63,7 @@ public class FlagsHandler extends AbstractHandler {
         });
 
     resp.setContentType("text/html");
-    Admin.write(resp.getWriter(), new GxpContext(req.getLocale()),
+    Admin.write(resp.getWriter(), new GxpContext(getLocale(req)),
         analyticsAccount, FlagsFragment.getGxpClosure(records, rawFlags));
   }
 

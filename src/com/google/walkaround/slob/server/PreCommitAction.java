@@ -16,11 +16,14 @@
 
 package com.google.walkaround.slob.server;
 
+import com.google.walkaround.slob.shared.ChangeData;
 import com.google.walkaround.slob.shared.SlobId;
 import com.google.walkaround.slob.shared.SlobModel.ReadableSlob;
 import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
 import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
 import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTransaction;
+
+import java.util.List;
 
 /**
  * Called in {@link SlobStore#mutateObject} before committing a sequence of
@@ -31,6 +34,7 @@ import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTrans
 public interface PreCommitAction {
 
   void run(CheckedTransaction tx, SlobId objectId,
+      List<ChangeData<String>> newDeltas,
       long resultingVersion, ReadableSlob resultingState)
       throws RetryableFailure, PermanentFailure;
 

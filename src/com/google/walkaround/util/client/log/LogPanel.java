@@ -36,6 +36,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
 import com.google.walkaround.util.client.log.Logs.Level;
 
+import org.waveprotocol.wave.client.common.util.UserAgent;
 import org.waveprotocol.wave.client.widget.common.ImplPanel;
 import org.waveprotocol.wave.model.util.CollectionUtils;
 import org.waveprotocol.wave.model.util.ReadableStringMap.ProcV;
@@ -283,9 +284,13 @@ public final class LogPanel extends Composite implements Logs.Handler {
       rules.append(levelFilter.getCssRule());
     }
 
-    // Inject style.
-    style.setInnerText(rules.toString());
-    Document.get().getBody().appendChild(style);
+    // TODO(ohler): Make styles work in IE; the log panel consumes the entire
+    // screen without them.  In IE8, I've seen this crash in setInnerText().
+    if (!UserAgent.isIE()) {
+      // Inject style.
+      style.setInnerText(rules.toString());
+      Document.get().getBody().appendChild(style);
+    }
 
     setActive(true);
   }
@@ -356,8 +361,11 @@ public final class LogPanel extends Composite implements Logs.Handler {
       }, entries, containerClass, itemClass, stream, css.stream());
       self.add(filter, streamsContainer);
       streamFilters.put(stream, filter);
-      // Replace stylesheet to make the new filter work.
-      style.setInnerText(style.getInnerText() + filter.getCssRule());
+      // TODO(ohler): Make styles work in IE.
+      if (!UserAgent.isIE()) {
+        // Replace stylesheet to make the new filter work.
+        style.setInnerText(style.getInnerText() + filter.getCssRule());
+      }
     }
     return filter;
   }

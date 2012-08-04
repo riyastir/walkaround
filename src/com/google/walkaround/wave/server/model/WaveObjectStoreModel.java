@@ -37,10 +37,10 @@ import org.waveprotocol.wave.model.operation.wave.WaveletOperation;
 import org.waveprotocol.wave.model.wave.ParticipantId;
 import org.waveprotocol.wave.model.wave.data.impl.WaveletDataImpl;
 
+import javax.annotation.Nullable;
+
 import java.util.Collections;
 import java.util.List;
-
-import javax.annotation.Nullable;
 
 /**
  * @author danilatos@google.com (Daniel Danilatos)
@@ -50,10 +50,6 @@ public class WaveObjectStoreModel implements SlobModel {
   // TODO(ohler): Replace these methods with getIndexEntry().
   public interface ReadableWaveletObject extends SlobModel.ReadableSlob {
     ParticipantId getCreator();
-    // TODO(ohler): Define separate models for conv wavelets and UDWs; this
-    // stuff makes no sense on UDWs.
-    String getTitle();
-    String getSnippet();
     long getLastModifiedMillis();
     List<ParticipantId> getParticipants();
   }
@@ -111,27 +107,10 @@ public class WaveObjectStoreModel implements SlobModel {
       }
     }
 
-    @Override public String getIndexedHtml() {
-      return wavelet == null ? "" : TextRenderer.renderToHtml(wavelet);
-    }
-
     // TODO(ohler): Guarantee that the only method that will ever be called at
     // version 0 is apply().
     @Override public ParticipantId getCreator() {
       return wavelet.getCreator();
-    }
-
-    @Override public String getTitle() {
-      // TODO(ohler): extract title
-      return "";
-    }
-
-    // Getting a snippet as a function of just the current state of the wave is
-    // not what we really want; we should be extracting a snippet from the wave
-    // based on the search query, or based on which blips the user hasn't read
-    // yet.  TODO(ohler): redo this when we integrate with full text search.
-    @Override public String getSnippet() {
-      return TextRenderer.renderToText(wavelet);
     }
 
     @Override public long getLastModifiedMillis() {

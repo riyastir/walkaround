@@ -25,12 +25,18 @@ import com.google.appengine.api.channel.ChannelService;
 import com.google.appengine.api.channel.ChannelServiceFactory;
 import com.google.appengine.api.datastore.Blob;
 import com.google.appengine.api.datastore.DatastoreService;
+import com.google.appengine.api.datastore.DatastoreServiceConfig;
+import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.ImplicitTransactionManagementPolicy;
 import com.google.appengine.api.datastore.KeyFactory;
+import com.google.appengine.api.datastore.ReadPolicy;
 import com.google.appengine.api.images.ImagesService;
 import com.google.appengine.api.images.ImagesServiceFactory;
 import com.google.appengine.api.memcache.MemcacheService;
 import com.google.appengine.api.memcache.MemcacheServiceFactory;
+import com.google.appengine.api.search.SearchService;
+import com.google.appengine.api.search.SearchServiceFactory;
 import com.google.appengine.api.taskqueue.Queue;
 import com.google.appengine.api.taskqueue.QueueFactory;
 import com.google.appengine.api.urlfetch.URLFetchService;
@@ -51,7 +57,6 @@ import com.google.walkaround.slob.server.MutationLog;
 import com.google.walkaround.slob.server.PostCommitActionIntervalMillis;
 import com.google.walkaround.slob.server.PostCommitTaskUrl;
 import com.google.walkaround.slob.server.SlobLocalCacheExpirationMillis;
-import com.google.walkaround.slob.server.SlobManager;
 import com.google.walkaround.slob.server.SlobMessageRouter.SlobChannelExpirationSeconds;
 import com.google.walkaround.util.server.RetryHelper;
 import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
@@ -62,6 +67,7 @@ import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTrans
 import com.google.walkaround.util.server.appengine.DatastoreUtil;
 import com.google.walkaround.util.server.appengine.MemcacheDeletionQueue;
 import com.google.walkaround.util.server.appengine.MemcacheTable;
+import com.google.walkaround.util.server.appengine.OversizedPropertyMover;
 import com.google.walkaround.util.server.auth.DigestUtils2.Secret;
 import com.google.walkaround.util.server.flags.FlagDeclaration;
 import com.google.walkaround.util.server.flags.FlagFormatException;
@@ -75,7 +81,6 @@ import com.google.walkaround.wave.server.conv.PermissionCache.PermissionCacheExp
 import com.google.walkaround.wave.server.googleimport.ImportTaskQueue;
 import com.google.walkaround.wave.server.model.LegacyDeltaEntityConverter;
 import com.google.walkaround.wave.server.model.ServerMessageSerializer;
-import com.google.walkaround.wave.server.wavemanager.WaveManager;
 import com.google.walkaround.wave.shared.MessageSerializer;
 
 import java.io.File;
@@ -136,8 +141,10 @@ public class WalkaroundServerModule extends AbstractModule {
         WalkaroundServletModule.POST_COMMIT_TASK_PATH);
 
     bind(MessageSerializer.class).to(ServerMessageSerializer.class);
-    bind(SlobManager.class).to(WaveManager.class);
     bind(MutationLog.DeltaEntityConverter.class).to(LegacyDeltaEntityConverter.class);
+
+    bind(OversizedPropertyMover.BlobWriteListener.class).toInstance(
+        OversizedPropertyMover.NULL_LISTENER);
 
     JsonFlags.bind(binder(), Arrays.asList(FlagName.values()),
         binder().getProvider(
@@ -213,8 +220,11 @@ public class WalkaroundServerModule extends AbstractModule {
   }
 
   @Provides
-  DatastoreService provideDatastore() {
-    return DatastoreProvider.strongReads();
+  DatastoreService provideDatastore(@DatastoreTimeoutMillis long datastoreTimeoutMillis) {
+    return DatastoreServiceFactory.getDatastoreService(DatastoreServiceConfig.Builder
+        .withDeadline(datastoreTimeoutMillis * 1000.0)
+        .implicitTransactionManagementPolicy(ImplicitTransactionManagementPolicy.NONE)
+        .readPolicy(new ReadPolicy(ReadPolicy.Consistency.STRONG)));
   }
 
   @Provides
@@ -255,6 +265,11 @@ public class WalkaroundServerModule extends AbstractModule {
   @Provides
   BackendService provideBackendService() {
     return BackendServiceFactory.getBackendService();
+  }
+
+  @Provides
+  SearchService provideIndexManager() {
+    return SearchServiceFactory.getSearchService();
   }
 
   @Provides

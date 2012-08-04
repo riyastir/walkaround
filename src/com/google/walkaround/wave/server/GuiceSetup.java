@@ -18,7 +18,6 @@ package com.google.walkaround.wave.server;
 
 import com.google.appengine.api.users.User;
 import com.google.common.collect.ImmutableMap;
-
 import com.google.common.collect.Sets;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -42,7 +41,6 @@ import org.waveprotocol.wave.model.wave.ParticipantId;
 
 import java.lang.annotation.Annotation;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
 
@@ -52,6 +50,9 @@ import javax.servlet.Filter;
  * @author ohler@google.com (Christian Ohler)
  */
 public class GuiceSetup {
+
+  private static final long INTERACTIVE_DATASTORE_TIMEOUT_MILLIS = 10000L;
+  private static final long NONINTERACTIVE_DATASTORE_TIMEOUT_MILLIS = 60000L;
 
   @SuppressWarnings("unused")
   private static final Logger log = Logger.getLogger(GuiceSetup.class.getName());
@@ -108,7 +109,13 @@ public class GuiceSetup {
   public static Module getServletModule() {
     return Modules.combine(
         Modules.combine(extraServletModules),
-        new WalkaroundServletModule(extraFilters));
+        new WalkaroundServletModule(extraFilters),
+        new AbstractModule() {
+          @Override public void configure() {
+            bind(Long.class).annotatedWith(DatastoreTimeoutMillis.class)
+                .toInstance(INTERACTIVE_DATASTORE_TIMEOUT_MILLIS);
+          }
+        });
   }
 
   private static <T> Provider<T> getThrowingProvider(final Class<T> clazz) {
@@ -128,6 +135,8 @@ public class GuiceSetup {
             bind(User.class).toProvider(getThrowingProvider(User.class));
             bind(StableUserId.class).toProvider(getThrowingProvider(StableUserId.class));
             bind(ParticipantId.class).toProvider(getThrowingProvider(ParticipantId.class));
+            bind(Long.class).annotatedWith(DatastoreTimeoutMillis.class)
+                .toInstance(NONINTERACTIVE_DATASTORE_TIMEOUT_MILLIS);
           }
         };
   }

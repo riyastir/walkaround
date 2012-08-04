@@ -137,7 +137,7 @@ public class OAuthCallbackHandler extends AbstractHandler {
 
     resp.setContentType("text/html");
     resp.setCharacterEncoding("UTF-8");
-    AuthPopup.write(resp.getWriter(), new GxpContext(req.getLocale()),
+    AuthPopup.write(resp.getWriter(), new GxpContext(getLocale(req)),
         analyticsAccount, null);
   }
 
@@ -145,7 +145,7 @@ public class OAuthCallbackHandler extends AbstractHandler {
       String errorMessage) throws IOException {
     resp.setContentType("text/html");
     resp.setCharacterEncoding("UTF-8");
-    AuthPopup.write(resp.getWriter(), new GxpContext(req.getLocale()),
+    AuthPopup.write(resp.getWriter(), new GxpContext(getLocale(req)),
         analyticsAccount, errorMessage);
   }
 

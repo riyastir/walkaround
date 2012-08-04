@@ -17,14 +17,6 @@
 <queue-entries>
   <total-storage-limit>100M</total-storage-limit>
   <queue>
-    <name>import</name>
-    <rate>${queue-rate}/s</rate>
-    <max-concurrent-requests>${queue-rate}</max-concurrent-requests>
-    <retry-parameters>
-      <task-age-limit>7d</task-age-limit>
-    </retry-parameters>
-  </queue>
-  <queue>
     <name>memcache-deletion</name>
     <rate>${queue-rate}/s</rate>
     <max-concurrent-requests>${queue-rate}</max-concurrent-requests>

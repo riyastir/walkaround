@@ -30,7 +30,7 @@
   <gxp:param name='userEmail' type='String'/>
   <gxp:param name='content' type='HtmlClosure'/>
 
-  <html>
+  <html gxp:doctype='transitional'>
     <head>
       <link href='https://fonts.googleapis.com/css?family=Open+Sans'
             rel='stylesheet' type='text/css'/>
@@ -65,20 +65,32 @@
           font-size: 1.5em;
         }
 
-        #userEmail {
+        #user-email {
+          font-size: 1.1em;
+        }
+        
+        #top-links {
           float: right;
+          font-size: 0.8em;
+        }
+        
+        #top-links a {
+          margin-left: 10px;
+          text-decoration: none;
         }
 
         #footer {
-          font-size: 0.8 em;
+          font-size: 0.9 em;
         }
 
         .main {
-          padding: 10px;
-          padding-left: 15px;
-          padding-right: 15px;
+          padding: 10px 20px;
           background: white;
-          position: relative;
+          position: absolute;
+          left: 0;
+          right: 0;
+          top: 0;
+          bottom: 0;
         }
 
         #bottom-back1 {
@@ -101,15 +113,20 @@
       <call:AnalyticsFragment expr:account='analyticsAccount'/>
     </head>
     <body>
+      <!--div id='bottom-back1'> </div>
+      <div id='bottom-back2'> </div-->
       <div class='main'>
         <div id='header'>
           <span id='title'><gxp:nomsg>walkaround</gxp:nomsg></span>
-          <span id='userEmail'><gxp:eval expr='userEmail'/></span>
+          <span id='top-links'>
+            <span id='user-email'>
+              <gxp:eval expr='userEmail'/>
+            </span>
+            <a href='/logout'>logout</a>
+          </span>
         </div>
         <gxp:eval expr='content'/>
       </div>
-      <div id='bottom-back1'> </div>
-      <div id='bottom-back2'> </div>
     </body>
   </html>
 </gxp:template>

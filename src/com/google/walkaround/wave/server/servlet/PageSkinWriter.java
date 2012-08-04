@@ -22,6 +22,7 @@ import com.google.inject.Inject;
 import com.google.walkaround.wave.server.Flag;
 import com.google.walkaround.wave.server.FlagName;
 import com.google.walkaround.wave.server.gxp.PageSkin;
+import com.google.walkaround.util.server.servlet.AbstractHandler;
 
 import java.io.IOException;
 
@@ -49,7 +50,7 @@ public class PageSkinWriter {
   }
 
   public void write(String title, String userEmail, HtmlClosure content) throws IOException {
-    PageSkin.write(resp.getWriter(), new GxpContext(req.getLocale()),
+    PageSkin.write(resp.getWriter(), new GxpContext(AbstractHandler.getLocale(req)),
         analyticsAccount, title, userEmail, content);
   }
 
