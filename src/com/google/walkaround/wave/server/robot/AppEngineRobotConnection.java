@@ -29,83 +29,67 @@ import com.google.wave.api.robot.RobotConnection;
 import com.google.wave.api.robot.RobotConnectionException;
 import com.google.wave.api.robot.RobotConnectionUtil;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 /**
  * Class that can connect to robots using AppEngine's URL Fetch.
  *
  * @author ljv@google.com (Lennard de Rijk)
  */
-public class AppEngineRobotConnection implements RobotConnection {
+class AppEngineRobotConnection implements RobotConnection {
 
-  private final URLFetchService service = URLFetchServiceFactory.getURLFetchService();
+  private static final URLFetchService SERVICE = URLFetchServiceFactory.getURLFetchService();
+
+  private URL makeUrl(String urlString) throws RobotConnectionException {
+    try {
+      return new URL(urlString);
+    } catch (MalformedURLException e) {
+      throw new RobotConnectionException("Malformed URL: " + urlString, e);
+    }
+  }
+
+  private HTTPResponse fetch(HTTPRequest req) throws RobotConnectionException {
+    try {
+      return SERVICE.fetch(req);
+    } catch (IOException e) {
+      throw new RobotConnectionException("IOException communicating with robot; req=" + req, e);
+    }
+  }
 
   @Override
   public String get(String url) throws RobotConnectionException {
-    try {
-      return asyncGet(url).get();
-    } catch (InterruptedException e) {
-      throw new RobotConnectionException("Unable to connect to robot", e);
-    } catch (ExecutionException e) {
-      throw new RobotConnectionException(
-          "Exception occured when trying to connect to the robot", e);
-    }
+    HTTPRequest request = new HTTPRequest(makeUrl(url), HTTPMethod.GET);
+    HTTPResponse response = fetch(request);
+    return RobotConnectionUtil.validateAndReadResponse(
+        url, response.getResponseCode(), response.getContent());
   }
 
   @Override
   public ListenableFuture<String> asyncGet(String url) throws RobotConnectionException {
-    try {
-      Future<HTTPResponse> responseFuture = service.fetchAsync(new URL(url));
-      HTTPResponse response = responseFuture.get();
-      // TODO(ljv): Figure out how to make Async.
-      return Futures.immediateFuture(RobotConnectionUtil.validateAndReadResponse(
-          url, response.getResponseCode(), response.getContent()));
-    } catch (MalformedURLException e) {
-      throw new RobotConnectionException("URL not valid", e);
-    } catch (InterruptedException e) {
-      throw new RobotConnectionException("Unable to fetch data from the robot", e);
-    } catch (ExecutionException e) {
-      throw new RobotConnectionException("Unable to fetch data from the robot", e);
-    }
+    // This is synchronous rather than asynchronous, but that should be OK
+    // because we use a separate task queue task for each notification, so
+    // blocking here doesn't block any other work.
+    return Futures.immediateFuture(get(url));
   }
 
   @Override
   public String postJson(String url, String jsonBody) throws RobotConnectionException {
-    try {
-      return asyncPostJson(url, jsonBody).get();
-    } catch (InterruptedException e) {
-      throw new RobotConnectionException("Unable to connect to robot", e);
-    } catch (ExecutionException e) {
-      throw new RobotConnectionException(
-          "Exception occured when trying to connect to the robot", e);
-    }
+    HTTPRequest request = new HTTPRequest(makeUrl(url), HTTPMethod.POST);
+    request.addHeader(new HTTPHeader("Content-Type", JSON_CONTENT_TYPE));
+    request.setPayload(jsonBody.getBytes(Charsets.UTF_8));
+    HTTPResponse response = fetch(request);
+    return RobotConnectionUtil.validateAndReadResponse(
+        url, response.getResponseCode(), response.getContent());
   }
 
   @Override
   public ListenableFuture<String> asyncPostJson(String url, String jsonBody)
       throws RobotConnectionException {
-    try {
-
-      HTTPRequest request = new HTTPRequest(new URL(url), HTTPMethod.POST);
-      request.addHeader(new HTTPHeader("Content-Type", "text/json; charset=utf-8"));
-      request.setPayload(jsonBody.getBytes(Charsets.UTF_8));
-
-      Future<HTTPResponse> responseFuture = service.fetchAsync(request);
-
-      // TODO(ljv): Figure out how to make Async.
-      HTTPResponse response = responseFuture.get();
-      return Futures.immediateFuture(RobotConnectionUtil.validateAndReadResponse(
-          url, response.getResponseCode(), response.getContent()));
-
-    } catch (MalformedURLException e) {
-      throw new RobotConnectionException("URL not valid", e);
-    } catch (InterruptedException e) {
-      throw new RobotConnectionException("Unable to fetch data from the robot", e);
-    } catch (ExecutionException e) {
-      throw new RobotConnectionException("Unable to fetch data from the robot", e);
-    }
+    // This is synchronous rather than asynchronous, but that should be OK
+    // because we use a separate task queue task for each notification, so
+    // blocking here doesn't block any other work.
+    return Futures.immediateFuture(postJson(url, jsonBody));
   }
 }

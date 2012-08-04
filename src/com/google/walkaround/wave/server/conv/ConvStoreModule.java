@@ -59,8 +59,6 @@ public class ConvStoreModule extends PrivateModule {
     Multibinder<PreCommitAction> preCommitActions =
         Multibinder.newSetBinder(binder(), PreCommitAction.class);
     preCommitActions.addBinding().to(IndexTask.ConvPreCommit.class);
-
-    // Add the pre-commit hook for robots.
     preCommitActions.addBinding().toInstance(new NotifyAllRobotsPreCommitAction());
 
     Multibinder<PostCommitAction> postCommitActions =

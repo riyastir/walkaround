@@ -32,8 +32,8 @@ import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTrans
 import com.google.walkaround.wave.server.model.WaveObjectStoreModel.ReadableWaveletObject;
 
 /**
- * Pre-commit action that enqueues an AppEngine task if the wavelet that is
- * being updated contains a participant.
+ * Enqueues a task queue task if the wavelet that is being updated contains a
+ * robot as a participant.
  *
  * @author ljv@google.com (Lennard de Rijk)
  */
@@ -48,9 +48,8 @@ public class NotifyAllRobotsPreCommitAction implements PreCommitAction {
       throws RetryableFailure, PermanentFailure {
     ReadableWaveletObject wavelet = (ReadableWaveletObject) resultingState;
     if (RobotIdHelper.containsRobotId(wavelet.getParticipants())) {
-      DeferredTask notifyAllRobots =
-          new NotifyAllRobots(objectId, resultingVersion);
-      tx.enqueueTask(QUEUE, TaskOptions.Builder.withPayload(notifyAllRobots));
+      DeferredTask task = new NotifyAllRobots(objectId, resultingVersion);
+      tx.enqueueTask(QUEUE, TaskOptions.Builder.withPayload(task));
     }
   }
 }

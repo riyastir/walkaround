@@ -18,6 +18,7 @@ package com.google.walkaround.wave.server.auth;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.appengine.api.users.User;
 import com.google.common.base.Objects;
 
 import java.io.Serializable;
@@ -31,6 +32,17 @@ import java.io.Serializable;
  */
 public class StableUserId implements Serializable {
   private static final long serialVersionUID = 496823047858055085L;
+  
+  public static StableUserId forUser(User user) {
+    // StableUserIds derived from App Engine User objects don't have
+    // a name space prefix but don't contain spaces.
+    return new StableUserId(user.getUserId());
+  }
+  
+  public static StableUserId forRobot(String robotId) {
+    // StableUserIds derived from robot IDs are prefixed with "robot ".
+    return new StableUserId("robot " + robotId);
+  }
 
   private final String id;
 

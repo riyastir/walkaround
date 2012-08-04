@@ -61,12 +61,12 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * Class which provides context for robot operations and gives access to the
- * results. Based on code from Wave in a Box.
+ * Provides context for robot operations and gives access to the results.
  *
  * @author ljv@google.com (Lennard de Rijk)
  */
-public class OperationContextImpl implements OperationContext, OperationResults {
+// Based on code from Wave in a Box.
+class OperationContextImpl implements OperationContext, OperationResults {
 
   private static final Log LOG = Log.get(OperationContextImpl.class);
 
@@ -177,7 +177,7 @@ public class OperationContextImpl implements OperationContext, OperationResults 
     try {
       constructResponse(operation, EventSerializer.extractPropertiesToParamsPropertyMap(event));
     } catch (EventSerializationException e) {
-      LOG.severe("Internal Error occurred, when serializing events", e);
+      LOG.severe("Internal error serializing events", e);
       throw new InvalidRequestException("Unable to serialize events", operation);
     }
   }
@@ -185,9 +185,8 @@ public class OperationContextImpl implements OperationContext, OperationResults 
   @Override
   public void putWavelet(WaveId waveId, WaveletId waveletId, RobotWaveletData newWavelet) {
     WaveletName waveletName = newWavelet.getWaveletName();
-    Preconditions.checkArgument(
-        !openedWavelets.containsKey(waveletName),
-        "Not allowed to put an already open wavelet in as a new wavelet");
+    Preconditions.checkArgument(!openedWavelets.containsKey(waveletName),
+        "Attempt to put an already open wavelet in as a new wavelet: %s", waveletName);
 
     // New wavelets are indicated by the temporary marker in their waveId.
     if (waveId.getId().startsWith(TEMP_ID_MARKER)) {
@@ -294,8 +293,6 @@ public class OperationContextImpl implements OperationContext, OperationResults 
     return Iterables.getFirst(openConversation(operation, participant).getConversations(), null);
   }
 
-  // OperationResults implementation begins here
-
   @Override
   public void putBlip(String blipId, ConversationBlip newBlip) {
     if (blipId.startsWith(TEMP_ID_MARKER)) {
@@ -314,11 +311,8 @@ public class OperationContextImpl implements OperationContext, OperationResults 
       throw new InvalidRequestException("Blip with id " + blipId
           + " does not exist or has been deleted");
     }
-
     return blip;
   }
-
-  // OperationResults implementation begins here
 
   @Override
   public ConversationUtil getConversationUtil() {

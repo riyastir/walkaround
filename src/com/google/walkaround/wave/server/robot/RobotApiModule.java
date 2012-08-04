@@ -17,40 +17,23 @@
 package com.google.walkaround.wave.server.robot;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Inject;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
-import com.google.wave.api.RobotSerializer;
 import com.google.wave.api.data.converter.EventDataConverterModule;
 import com.google.wave.api.robot.RobotConnection;
 
 import org.waveprotocol.box.server.robots.RobotSerializerModule;
-import org.waveprotocol.box.server.robots.passive.RobotConnector;
 
 /**
- * Guice module for the RobotAPI.
+ * Guice module for the Robot API.
  *
  * @author ljv@google.com (Lennard de Rijk)
  */
-public class RobotApiModule extends AbstractModule {
+class RobotApiModule extends AbstractModule {
 
   @Override
   protected void configure() {
     install(new EventDataConverterModule());
     install(new RobotSerializerModule());
+    bind(RobotConnection.class).to(AppEngineRobotConnection.class);
   }
 
-  @Provides
-  @Inject
-  @Singleton
-  protected RobotConnector provideRobotConnector(
-      RobotConnection connection, RobotSerializer serializer) {
-    return new RobotConnector(connection, serializer);
-  }
-
-  @Provides
-  @Singleton
-  protected RobotConnection provideRobotConnection() {
-    return new AppEngineRobotConnection();
-  }
 }

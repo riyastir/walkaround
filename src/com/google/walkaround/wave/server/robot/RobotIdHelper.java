@@ -28,7 +28,7 @@ import java.util.List;
  *
  * @author ljv@google.com (Lennard de Rijk)
  */
-public class RobotIdHelper {
+class RobotIdHelper {
 
   private static final String APPENGINE_URL_FMT = "http://%s.appspot.com";
 
@@ -73,7 +73,7 @@ public class RobotIdHelper {
    * Returns the base URL of where the robot can be reached.
    */
   public static String getRobotURL(ParticipantId participant) {
-    Assert.check(isRobotId(participant));
+    Assert.check(isRobotId(participant), "Not a robot id: %s", participant);
     String address = participant.getAddress();
     return String.format(APPENGINE_URL_FMT, address.substring(0, address.indexOf('@')));
   }

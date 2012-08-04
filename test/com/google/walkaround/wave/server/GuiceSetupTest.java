@@ -73,4 +73,14 @@ public class GuiceSetupTest extends TestCase {
             new DefaultModule()));
   }
 
+  public void testBindingsForRobotTask() {
+    SystemProperty.environment.set(SystemProperty.Environment.Value.Development);
+    // The test is that none of this throws any exceptions.
+    Injector injector = Guice.createInjector(Stage.PRODUCTION,
+        Modules.combine(
+            GuiceSetup.getRootModule(WEB_INF_DIR),
+            GuiceSetup.getRobotTaskModule("robot@example.com"),
+            new DefaultModule()));
+  }
+
 }

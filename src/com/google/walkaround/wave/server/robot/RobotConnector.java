@@ -35,15 +35,14 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * This class sends {@link EventMessageBundle} to a robot and receives their
- * response. It will gracefully handle failure by acting like the robot sent no
- * operations. It is also capable of reading a Robot's capabilities.
- *
- * Strongly resembles Apache Wave's RobotConnector.
+ * Sends an {@link EventMessageBundle} to a robot and receives the response.
+ * Ignores failure by acting like the robot sent no operations.  Can also read
+ * the robot's capabilities.
  *
  * @author ljv@google.com (Lennard de Rijk)
  */
-public class RobotConnector {
+// Strongly resembles Apache Wave's RobotConnector.
+class RobotConnector {
 
   private static final Log LOG = Log.get(RobotConnector.class);
 

@@ -26,7 +26,6 @@ import com.google.walkaround.proto.ServerMutateRequest;
 import com.google.walkaround.proto.gson.ObjectSessionProtoGsonImpl;
 import com.google.walkaround.proto.gson.ServerMutateRequestGsonImpl;
 import com.google.walkaround.slob.server.AccessDeniedException;
-import com.google.walkaround.slob.server.MutateResult;
 import com.google.walkaround.slob.server.MutationLog;
 import com.google.walkaround.slob.server.MutationLog.DeltaIterator;
 import com.google.walkaround.slob.server.SlobFacilities;
@@ -42,6 +41,7 @@ import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTrans
 import com.google.walkaround.util.shared.RandomBase64Generator;
 import com.google.walkaround.wave.server.GuiceSetup;
 import com.google.walkaround.wave.server.conv.ConvStore;
+import com.google.walkaround.wave.server.model.ClientIdGenerator;
 import com.google.walkaround.wave.server.model.ServerMessageSerializer;
 import com.google.walkaround.wave.server.robot.VersionDirectory.RobotNotified;
 import com.google.walkaround.wave.shared.IdHack;
@@ -83,12 +83,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Task that notifies a single robot of events on a single wavelet.
+ * Notifies a single robot of events on a single wavelet.
  *
  * @author ljv@google.com (Lennard de Rijk)
  */
-public class NotifyRobot implements DeferredTask {
-  private static final long serialVersionUID = 5;
+class NotifyRobot implements DeferredTask {
+  private static final long serialVersionUID = 635120842468246509L;
 
   private static final Logger log = Logger.getLogger(NotifyRobot.class.getName());
 
@@ -109,26 +109,26 @@ public class NotifyRobot implements DeferredTask {
     this.robotId = robotId;
   }
 
+  @Override public String toString() {
+    return getClass().getSimpleName() + "("
+        + convSlobId + ", "
+        + newVersion + ", "
+        + robotId + ")";
+  }
+
   /**
    * Private class doing the actual work. This allows us to use Guice for
    * injection.
    */
   private static class Worker {
-    @Inject
-    CheckedDatastore datastore;
-    @Inject
-    @ConvStore
-    SlobFacilities convFacilities;
-    @Inject
-    VersionDirectory versionDirectory;
-    @Inject
-    EventDataConverterManager converterManager;
-    @Inject
-    RobotConnector connector;
-    @Inject
-    SlobStoreSelector storeSelector;
-    @Inject
-    RandomBase64Generator random64;
+    @Inject CheckedDatastore datastore;
+    @Inject @ConvStore SlobFacilities convFacilities;
+    @Inject VersionDirectory versionDirectory;
+    @Inject EventDataConverterManager converterManager;
+    @Inject RobotConnector connector;
+    @Inject SlobStoreSelector storeSelector;
+    @Inject RandomBase64Generator random64;
+    @Inject ClientIdGenerator clientIdGenerator;
 
     private WaveletAndDeltas getWaveletAndDeltas(SlobId id, long fromVersion)
         throws PermanentFailure, RetryableFailure {
@@ -155,9 +155,11 @@ public class NotifyRobot implements DeferredTask {
                   IdHack.convWaveletNameFromConvObjectId(id), raw.getState().snapshot()),
               DeltaSequence.of(accu));
         } catch (MessageException e) {
-          throw new RuntimeException(e);
+          throw new RuntimeException("MessageException creating WaveletAndDeltas for " + id
+              + "; fromVersion=" + fromVersion + ", version=" + version, e);
         } catch (OperationException e) {
-          throw new RuntimeException(e);
+          throw new RuntimeException("OperationException creating WaveletAndDeltas for " + id
+              + "; fromVersion=" + fromVersion + ", version=" + version, e);
         }
       } finally {
         tx.rollback();
@@ -166,8 +168,6 @@ public class NotifyRobot implements DeferredTask {
 
     private TransformedWaveletDelta convertDelta(long version, WaveletOperation op) {
       WaveletOperationContext context = op.getContext();
-      ParticipantId creator = context.getCreator();
-      HashedVersion hashedVersion = context.getHashedVersion();
       return TransformedWaveletDelta.cloneOperations(
           context.getCreator(), HashedVersion.unsigned(version + context.getVersionIncrement()),
           context.getTimestamp(), ImmutableList.of(op));
@@ -192,7 +192,6 @@ public class NotifyRobot implements DeferredTask {
 
       // 1. Generate the events.
       EventMessageBundle bundle = generateEventMessageBundle(robotId, waveletAndDeltas);
-
       List<Event> events = bundle.getEvents();
       log.info(events.size() + " events generated");
       for (Event event : events) {
@@ -208,7 +207,6 @@ public class NotifyRobot implements DeferredTask {
       // 2. Notify the robot of the event.
       List<OperationRequest> operations =
           connector.sendMessageBundle(bundle, robotId, ProtocolVersion.DEFAULT);
-
       log.info(operations.size() + " operation requests returned");
       for (OperationRequest request : operations) {
         log.info(request.toString());
@@ -224,21 +222,21 @@ public class NotifyRobot implements DeferredTask {
       // operation
       ProtocolVersion protocolVersion = OperationUtil.getProtocolVersion(operations);
 
-      ConversationUtil conversationUtil = new ConversationUtil(new IdHack.StubIdGenerator() {
-          @Override
-        public String newBlipId() {
-          return SimplePrefixEscaper.DEFAULT_ESCAPER.join(
-              IdConstants.TOKEN_SEPARATOR, IdConstants.BLIP_PREFIX, random64.next(6));
-        }
-      });
+      ConversationUtil conversationUtil = new ConversationUtil(
+          new IdHack.StubIdGenerator() {
+            @Override public String newBlipId() {
+              return SimplePrefixEscaper.DEFAULT_ESCAPER.join(
+                  IdConstants.TOKEN_SEPARATOR, IdConstants.BLIP_PREFIX, random64.next(6));
+            }
+          });
       OperationContextImpl context =
           new OperationContextImpl(
               converterManager.getEventDataConverter(protocolVersion), conversationUtil,
-              new RobotWaveletData(waveletAndDeltas.getSnapshotAfterDeltas(), waveletAndDeltas
-                  .getVersionAfterDeltas()));
+              new RobotWaveletData(waveletAndDeltas.getSnapshotAfterDeltas(),
+                  waveletAndDeltas.getVersionAfterDeltas()));
 
       for (OperationRequest operation : operations) {
-        // Get the operation of the author taking into account the proxying for
+        // Get the operation of the author taking into account the "proxying for"
         // field.
         OperationUtil.executeOperation(operation, PASSIVE_API, context, robotId);
       }
@@ -252,18 +250,15 @@ public class NotifyRobot implements DeferredTask {
           ObjectSessionProto session = new ObjectSessionProtoGsonImpl();
           session.setObjectId(convSlobId.getId());
           session.setStoreType(convFacilities.getRootEntityKind());
-          // TODO: make sure this is a good format
-          session.setClientId("robot-" + robotId);
+          session.setClientId(clientIdGenerator.getIdForRobot(robotId).getId());
           ServerMutateRequest mutateRequest = new ServerMutateRequestGsonImpl();
           mutateRequest.setSession(session);
           mutateRequest.setVersion(waveletAndDeltas.getVersionAfterDeltas().getVersion());
           mutateRequest.addAllPayload(payloads);
 
-          MutateResult res;
           try {
-            res =
-                storeSelector.get(session.getStoreType())
-                    .getSlobStore().mutateObject(mutateRequest);
+            storeSelector.get(session.getStoreType()).getSlobStore()
+                .mutateObject(mutateRequest);
           } catch (SlobNotFoundException e) {
             throw new RuntimeException(
                 "Slob not found processing robot response: " + convSlobId, e);
@@ -311,16 +306,17 @@ public class NotifyRobot implements DeferredTask {
   @Override
   public void run() {
     try {
-      GuiceSetup.getInjectorForRobot(robotId.getAddress()).createChildInjector(new RobotApiModule())
+      GuiceSetup.getInjectorForRobotTask(robotId.getAddress())
+          .createChildInjector(new RobotApiModule())
           .getInstance(Worker.class).run(convSlobId, newVersion, robotId);
     } catch (PermanentFailure e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException(this + ": Worker failed", e);
     } catch (RetryableFailure e) {
       // TODO: retry
-      throw new RuntimeException(e);
+      throw new RuntimeException(this + ": Worker failed", e);
     } catch (IOException e) {
       // TODO: retry
-      throw new RuntimeException(e);
+      throw new RuntimeException(this + ": Worker failed", e);
     }
   }
 }

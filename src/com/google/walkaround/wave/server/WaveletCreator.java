@@ -27,7 +27,6 @@ import com.google.walkaround.slob.server.GsonProto;
 import com.google.walkaround.slob.server.SlobAlreadyExistsException;
 import com.google.walkaround.slob.server.SlobStore;
 import com.google.walkaround.slob.shared.ChangeData;
-import com.google.walkaround.slob.shared.ClientId;
 import com.google.walkaround.slob.shared.SlobId;
 import com.google.walkaround.util.server.RetryHelper;
 import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
@@ -39,6 +38,7 @@ import com.google.walkaround.wave.server.WaveletDirectory.ObjectIdAlreadyKnown;
 import com.google.walkaround.wave.server.auth.StableUserId;
 import com.google.walkaround.wave.server.conv.ConvMetadataStore;
 import com.google.walkaround.wave.server.conv.ConvStore;
+import com.google.walkaround.wave.server.model.ClientIdGenerator;
 import com.google.walkaround.wave.server.model.InitialOps;
 import com.google.walkaround.wave.server.model.ServerMessageSerializer;
 import com.google.walkaround.wave.server.udw.UdwStore;
@@ -78,6 +78,7 @@ public class WaveletCreator {
   private final RandomBase64Generator random64;
   private final CheckedDatastore datastore;
   private final ConvMetadataStore convMetadataStore;
+  private final ClientIdGenerator clientIdGenerator;
 
   @Inject
   public WaveletCreator(
@@ -89,7 +90,8 @@ public class WaveletCreator {
       @UdwStore SlobStore udwStore,
       RandomBase64Generator random64,
       CheckedDatastore datastore,
-      ConvMetadataStore convMetadataStore) {
+      ConvMetadataStore convMetadataStore,
+      ClientIdGenerator clientIdGenerator) {
     this.waveletDirectory = waveletDirectory;
     this.udwDirectory = udwDirectory;
     this.participantId = participantId;
@@ -99,6 +101,7 @@ public class WaveletCreator {
     this.random64 = random64;
     this.datastore = datastore;
     this.convMetadataStore = convMetadataStore;
+    this.clientIdGenerator = clientIdGenerator;
   }
 
   private WaveletMapping registerWavelet(SlobId objectId) throws IOException {
@@ -132,7 +135,7 @@ public class WaveletCreator {
   private List<ChangeData<String>> serializeChanges(List<WaveletOperation> ops) {
     ImmutableList.Builder<ChangeData<String>> out = ImmutableList.builder();
     for (String delta : SERIALIZER.serializeDeltas(ops)) {
-      out.add(new ChangeData<String>(getFakeClientId(), delta));
+      out.add(new ChangeData<String>(clientIdGenerator.getIdForCreation(), delta));
     }
     return out.build();
   }
@@ -161,10 +164,6 @@ public class WaveletCreator {
         return existingUdwId;
       }
     }
-  }
-
-  private ClientId getFakeClientId() {
-    return new ClientId("");
   }
 
   public SlobId newConvWithGeneratedId(

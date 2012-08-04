@@ -19,9 +19,7 @@ package com.google.walkaround.util.server.appengine;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
-import com.google.appengine.api.datastore.Query;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.walkaround.util.server.RetryHelper;
 import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
 import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
@@ -30,7 +28,6 @@ import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTrans
 import javax.annotation.Nullable;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 

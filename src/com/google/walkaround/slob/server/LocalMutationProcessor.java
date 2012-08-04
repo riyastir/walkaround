@@ -274,6 +274,10 @@ public class LocalMutationProcessor {
       log.info("Getting suffix..."); // Log on either side to time possible RPC.
       List<ChangeData<String>> concurrent = deltaCache.suffix(update.version);
       log.info("Got suffix of size " + concurrent.size());
+      // TODO(ohler): Check if update.clientId occurs anywhere in "concurrent"
+      // to detect duplicate submits, and extend client-server protocol with a
+      // way for the server to tell the client to transform and resubmit.  See
+      // http://code.google.com/p/walkaround/issues/detail?id=27 .
 
       // TODO(danilatos): Add op-serializing/deserializing methods to the model
       // code, to avoid unnecessary deserialization when we have nothing to

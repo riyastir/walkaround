@@ -48,6 +48,7 @@ import com.google.walkaround.wave.server.WaveLoader.LoadedWave;
 import com.google.walkaround.wave.server.auth.UserContext;
 import com.google.walkaround.wave.server.conv.ConvStore;
 import com.google.walkaround.wave.server.gxp.Wave;
+import com.google.walkaround.wave.server.model.ClientIdGenerator;
 import com.google.walkaround.wave.server.udw.UdwStore;
 
 import org.json.JSONException;
@@ -87,6 +88,7 @@ public class UndercurrentHandler extends AbstractHandler {
   @Inject UserContext userContext;
   @Inject @UdwStore SlobFacilities udwStore;
   @Inject @ConvStore SlobFacilities convStore;
+  @Inject ClientIdGenerator clientIdGenerator;
 
   private void setResponseHeaders(HttpServletResponse resp) {
     // TODO(ohler): Figure out how to make static versions cacheable.  The
@@ -195,10 +197,7 @@ public class UndercurrentHandler extends AbstractHandler {
     SlobId convObjectId = new SlobId(requireParameter(req, "id"));
     String versionString = optionalParameter(req, "version", null);
     @Nullable Long version = versionString == null ? null : Long.parseLong(versionString);
-    @Nullable ClientId clientId = version != null ? null
-        : new ClientId(random64.next(
-                // TODO(ohler): justify this number
-                8));
+    @Nullable ClientId clientId = version != null ? null : clientIdGenerator.getIdForNewWebClient();
     LoadedWave wave;
     try {
       if (version == null) {

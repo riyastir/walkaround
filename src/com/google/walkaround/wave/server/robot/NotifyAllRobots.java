@@ -40,24 +40,21 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
- * Task that fans out to notify Robots of an update to a conversational wavelet
- * of which they are a participant.
+ * Notifies all robots on a conversational wavelet. Fans out to one task per
+ * robot.
  *
  * @author ljv@google.com (Lennard de Rijk)
  */
-public class NotifyAllRobots implements DeferredTask {
-  private static final long serialVersionUID = 1L;
+class NotifyAllRobots implements DeferredTask {
+  private static final long serialVersionUID = 557788136019705308L;
   private static final Logger log = Logger.getLogger(NotifyAllRobots.class.getName());
 
-  public static final String ROBOT_QUEUE_NAME = "robot-notifications";
+  static final String ROBOT_QUEUE_NAME = "robot-notifications";
+  private static final Queue QUEUE = QueueFactory.getQueue(ROBOT_QUEUE_NAME);
 
   private static class Worker {
-    @Inject
-    CheckedDatastore datastore;
-    @Inject
-    @ConvStore
-    SlobFacilities slobFacilities;
-
+    @Inject CheckedDatastore datastore;
+    @Inject @ConvStore SlobFacilities slobFacilities;
 
     private ReadableWaveletObject getWavelet(SlobId id, long expectedMinVersion)
         throws PermanentFailure, RetryableFailure {
@@ -82,11 +79,10 @@ public class NotifyAllRobots implements DeferredTask {
       // TODO(ljv): Shortcut for a wave with a single robot.
       for (ParticipantId robotId : robots) {
         DeferredTask notifyRobot = new NotifyRobot(convSlobId, newVersion, robotId);
-        Queue queue = QueueFactory.getQueue(ROBOT_QUEUE_NAME);
-        queue.add(TaskOptions.Builder.withPayload(notifyRobot));
+        QUEUE.add(TaskOptions.Builder.withPayload(notifyRobot));
       }
 
-      log.info("The task that should notify robots has run!");
+      log.info("Scheduled robot notifications: " + robots);
     }
   }
 
