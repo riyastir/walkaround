@@ -68,6 +68,7 @@ import com.google.walkaround.wave.server.conv.ConvMetadataStore;
 import com.google.walkaround.wave.server.conv.ConvStore;
 import com.google.walkaround.wave.server.model.ServerMessageSerializer;
 import com.google.walkaround.wave.server.model.TextRenderer;
+import com.google.walkaround.wave.server.robot.RobotIdHelper;
 import com.google.walkaround.wave.server.udw.UdwStore;
 import com.google.walkaround.wave.server.udw.UserDataWaveletDirectory;
 import com.google.walkaround.wave.server.udw.UserDataWaveletDirectory.ConvUdwMapping;
@@ -275,14 +276,10 @@ public class WaveIndexer {
   }
 
   /**
-   * Indexes the wave for all users
+   * Indexes the wave for all users.
    */
   public void indexConversation(SlobId convId) throws RetryableFailure, PermanentFailure,
       WaveletLockedException {
-    // TODO(danilatos): Handle waves for participants that have been removed.
-    // Currently they will remain in the inbox but they won't have access until
-    // we implement snapshotting of the waves at the point the participants
-    // were removed (or similar).
     log.info("Indexing conversation for all participants");
     ConvFields fields = getConvFields(convId);
 
@@ -298,34 +295,46 @@ public class WaveIndexer {
 
     for (ParticipantId participant : fields.participants) {
       SlobId udwId = participantsToUdws.get(participant);
-      log.info("Indexing " + convId.getId() + " for " + participant.getAddress() +
-          (udwId != null ? " with udw " + udwId : " with no udw"));
-
-      Supplement supplement = udwId == null ? null : getSupplement(loadUdw(convId, udwId));
-      index(fields, participant, supplement);
+      if (RobotIdHelper.isRobotId(participant)) {
+        log.info("Not indexing " + convId + " for robot " + participant);
+        if (udwId != null) {
+          log.severe("UDW found for robot " + participant + " on " + convId + ": " + udwId);
+        }
+      } else {
+        log.info("Indexing " + convId + " for " + participant
+            + (udwId != null ? " with udw " + udwId : " with no udw"));
+        Supplement supplement = udwId == null ? null : getSupplement(loadUdw(convId, udwId));
+        index(fields, participant, supplement);
+      }
     }
   }
 
-  // "possibly" removed because they could have been re-added and we need
+  // "Possibly" removed because they could have been re-added and we need
   // to deal with that possible race condition.
   public void unindexConversationForPossiblyRemovedParticipants(SlobId convId,
       Set<ParticipantId> possiblyRemovedParticipants)
-          throws RetryableFailure, PermanentFailure, WaveletLockedException {
+      throws RetryableFailure, PermanentFailure, WaveletLockedException {
+    boolean unindexedForSomeone = false;
     for (ParticipantId removed : possiblyRemovedParticipants) {
-      if (!isParticipantValidForIndexing(removed)) {
+      if (RobotIdHelper.isRobotId(removed)) {
+        log.info(convId + ": Removed participant is a robot: " + removed);
+      } else if (!isParticipantValidForIndexing(removed)) {
         log.info(convId + ": Removed participant not valid for indexing: " + removed);
       } else {
         log.info(convId + ": Unindexing for " + removed);
         getIndex(removed).remove(convId.getId());
+        unindexedForSomeone = true;
       }
     }
     // As an easy way to avoid the race condition, we re-index the whole conv slob
     // strictly after removing.
-    indexConversation(convId);
+    if (unindexedForSomeone) {
+      indexConversation(convId);
+    }
   }
 
   /**
-   * Indexes the wave only for the user of the given user data wavelet
+   * Indexes the wave only for the user of the given user data wavelet.
    */
   public void indexSupplement(SlobId udwId)
       throws PermanentFailure, RetryableFailure, WaveletLockedException {
@@ -608,8 +617,11 @@ public class WaveIndexer {
     }
   }
 
-  public List<UserIndexEntry> findWaves(ParticipantId user, String queryString, int offset, int limit)
+  public List<UserIndexEntry> findWaves(ParticipantId user, String queryString, int offset,
+      int limit)
       throws IOException {
+    Preconditions.checkArgument(isParticipantValidForIndexing(user),
+        "Not valid for indexing: %s", user);
     // Trailing whitespace causes parse exceptions...
     queryString = queryString.trim();
     log.info("Searching for " + queryString);

@@ -28,7 +28,7 @@ import java.util.List;
  *
  * @author ljv@google.com (Lennard de Rijk)
  */
-class RobotIdHelper {
+public class RobotIdHelper {
 
   private static final String APPENGINE_URL_FMT = "http://%s.appspot.com";
 
