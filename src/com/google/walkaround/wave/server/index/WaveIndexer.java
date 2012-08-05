@@ -616,30 +616,8 @@ public class WaveIndexer {
 
     SortExpression.Builder sortExpression = SortExpression.newBuilder()
         .setExpression(MODIFIED_MINUTES_FIELD)
-        .setDefaultValueNumeric(0);
-
-    // HACK(ohler): SortExpression.SortDirection is package-private but we need
-    // it.  The following block implements the statement:
-    // sortExpression.setDirection(SortExpression.SortDirection.DESCENDING)
-    {
-      Class<?> clazz;
-      try {
-        clazz = Class.forName("com.google.appengine.api.search.SortExpression$SortDirection");
-      } catch (ClassNotFoundException e) {
-        throw new RuntimeException(e);
-      }
-      try {
-        SortExpression.Builder.class.getDeclaredMethod("setDirection", clazz)
-            .invoke(sortExpression, clazz.getEnumConstants()[1]);
-      } catch (IllegalAccessException e) {
-        throw new RuntimeException(e);
-      } catch (InvocationTargetException e) {
-        throw new RuntimeException(e);
-      } catch (NoSuchMethodException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
+        .setDefaultValueNumeric(0)
+        .setDirection(SortExpression.SortDirection.DESCENDING);
     Query query;
     try {
       query = Query.newBuilder()
