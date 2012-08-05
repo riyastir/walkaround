@@ -261,7 +261,8 @@ public class AjaxRpc implements Rpc {
     RpcRequestCallback innerCallback = new RpcRequestCallback();
 
     try {
-      Request gwtReq = r.sendRequest(requestData, innerCallback);
+      // TODO: store the Request object somewhere so we can e.g. cancel it
+      r.sendRequest(requestData, innerCallback);
       Handle handle = new Handle(requestId);
       handles.put(handle.getId(), handle);
       return handle;

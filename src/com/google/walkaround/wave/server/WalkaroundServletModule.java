@@ -74,6 +74,7 @@ import com.google.walkaround.wave.server.auth.XsrfHelper.XsrfTokenExpiredExcepti
 import com.google.walkaround.wave.server.googleimport.ImportOverviewHandler;
 import com.google.walkaround.wave.server.googleimport.ImportTaskHandler;
 import com.google.walkaround.wave.server.googleimport.RobotApi;
+import com.google.walkaround.wave.server.inbox.InboxHandler;
 import com.google.walkaround.wave.server.rpc.ChannelHandler;
 import com.google.walkaround.wave.server.rpc.ClientExceptionHandler;
 import com.google.walkaround.wave.server.rpc.ClientVersionHandler;
@@ -83,14 +84,13 @@ import com.google.walkaround.wave.server.rpc.GadgetsHandler;
 import com.google.walkaround.wave.server.rpc.HistoryHandler;
 import com.google.walkaround.wave.server.rpc.PhotosHandler;
 import com.google.walkaround.wave.server.rpc.SubmitDeltaHandler;
-import com.google.walkaround.wave.server.servlet.ClientHandler;
-import com.google.walkaround.wave.server.servlet.IndexHandler;
+import com.google.walkaround.wave.server.servlet.TwoPaneClientHandler;
+import com.google.walkaround.wave.server.servlet.RootPageHandler;
 import com.google.walkaround.wave.server.servlet.LogoutHandler;
 import com.google.walkaround.wave.server.servlet.ServerExceptionFilter;
 import com.google.walkaround.wave.server.servlet.StoreMutateHandler;
 import com.google.walkaround.wave.server.servlet.UndercurrentHandler;
 import com.google.walkaround.wave.server.servlet.LogoutHandler.SelfClosingPageHandler;
-import com.google.walkaround.wave.server.wavemanager.InboxHandler;
 import com.google.walkaround.wave.shared.SharedConstants.Services;
 
 import org.waveprotocol.wave.model.wave.ParticipantId;
@@ -127,8 +127,8 @@ public class WalkaroundServletModule extends ServletModule {
   private static final ImmutableMap<String, Class<? extends AbstractHandler>> EXACT_PATH_HANDLERS =
       new ImmutableMap.Builder<String, Class<? extends AbstractHandler>>()
           // Pages that browsers will navigate to.
-          .put("/", IndexHandler.class)
-          .put("/client", ClientHandler.class)
+          .put("/", RootPageHandler.class)
+          .put("/client", TwoPaneClientHandler.class)
           .put("/inbox", InboxHandler.class)
           .put("/wave", UndercurrentHandler.class)
           .put("/logout", LogoutHandler.class)
@@ -209,13 +209,11 @@ public class WalkaroundServletModule extends ServletModule {
   }
 
   @Override protected void configureServlets() {
-    // Appstats disabled since it only returns memory once the request
-    // completes, leading to OOMs for very long requests.
-    if (false) {
-      if (SystemProperty.environment.value() != SystemProperty.Environment.Value.Development) {
-        // Doesn't work in local dev server mode.
-        filter("*").through(AppstatsFilter.class, ImmutableMap.of("basePath", "/admin/appstats/"));
-      }
+    // NOTE: Appstats only returns memory once the request completes and can lead to OOMs
+    // for very long-running requests.
+    if (SystemProperty.environment.value() != SystemProperty.Environment.Value.Development) {
+      // Doesn't work in local dev server mode.
+      filter("*").through(AppstatsFilter.class, ImmutableMap.of("basePath", "/admin/appstats/"));
     }
     filter("*").through(ServerExceptionFilter.class);
     // We want appstats and ServerExceptionFilter as the outermost layers.  We

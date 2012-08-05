@@ -69,9 +69,11 @@ import com.google.walkaround.wave.server.conv.ConvStore;
 import com.google.walkaround.wave.server.model.ServerMessageSerializer;
 import com.google.walkaround.wave.server.model.TextRenderer;
 import com.google.walkaround.wave.server.robot.RobotIdHelper;
+
+import com.google.walkaround.wave.server.udw.UdwDirectory;
+import com.google.walkaround.wave.server.udw.UdwDirectory.ConvUdwMapping;
+
 import com.google.walkaround.wave.server.udw.UdwStore;
-import com.google.walkaround.wave.server.udw.UserDataWaveletDirectory;
-import com.google.walkaround.wave.server.udw.UserDataWaveletDirectory.ConvUdwMapping;
 import com.google.walkaround.wave.shared.IdHack;
 import com.google.walkaround.wave.shared.Versions;
 import com.google.walkaround.wave.shared.WaveSerializer;
@@ -99,8 +101,9 @@ import org.waveprotocol.wave.model.wave.opbased.WaveViewImpl;
 import org.waveprotocol.wave.model.wave.opbased.WaveViewImpl.WaveletConfigurator;
 import org.waveprotocol.wave.model.wave.opbased.WaveViewImpl.WaveletFactory;
 
+import javax.annotation.Nullable;
+
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -109,8 +112,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import javax.annotation.Nullable;
 
 /**
  * @author danilatos@google.com (Daniel Danilatos)
@@ -242,7 +243,7 @@ public class WaveIndexer {
   private final CheckedDatastore datastore;
   private final MutationLogFactory convStore;
   private final MutationLogFactory udwStore;
-  private final UserDataWaveletDirectory udwDirectory;
+  private final UdwDirectory udwDirectory;
   private final AccountStore accountStore;
   private final RandomBase64Generator random;
   private final ConvMetadataStore convMetadataStore;
@@ -251,7 +252,7 @@ public class WaveIndexer {
   public WaveIndexer(CheckedDatastore datastore,
       @ConvStore MutationLogFactory convStore,
       @UdwStore MutationLogFactory udwStore,
-      UserDataWaveletDirectory udwDirectory,
+      UdwDirectory udwDirectory,
       SearchService searchService,
       AccountStore users,
       RandomBase64Generator random,
@@ -628,30 +629,8 @@ public class WaveIndexer {
 
     SortExpression.Builder sortExpression = SortExpression.newBuilder()
         .setExpression(MODIFIED_MINUTES_FIELD)
-        .setDefaultValueNumeric(0);
-
-    // HACK(ohler): SortExpression.SortDirection is package-private but we need
-    // it.  The following block implements the statement:
-    // sortExpression.setDirection(SortExpression.SortDirection.DESCENDING)
-    {
-      Class<?> clazz;
-      try {
-        clazz = Class.forName("com.google.appengine.api.search.SortExpression$SortDirection");
-      } catch (ClassNotFoundException e) {
-        throw new RuntimeException(e);
-      }
-      try {
-        SortExpression.Builder.class.getDeclaredMethod("setDirection", clazz)
-            .invoke(sortExpression, clazz.getEnumConstants()[1]);
-      } catch (IllegalAccessException e) {
-        throw new RuntimeException(e);
-      } catch (InvocationTargetException e) {
-        throw new RuntimeException(e);
-      } catch (NoSuchMethodException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
+        .setDefaultValueNumeric(0)
+        .setDirection(SortExpression.SortDirection.DESCENDING);
     Query query;
     try {
       query = Query.newBuilder()

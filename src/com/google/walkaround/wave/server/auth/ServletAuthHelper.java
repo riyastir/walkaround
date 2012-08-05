@@ -85,7 +85,8 @@ public class ServletAuthHelper {
     log.info("User context is now " + userContext);
   }
 
-  // TODO(ohler): Make /noauth use this.
+  // TODO: Make DeleteOAuthTokenHandler use this.
+  @SuppressWarnings("unused")
   private void clearOAuthTokenFromContext() {
     log.info("Clearing OAuth token from " + userContext);
     userContext.setOAuthCredentials(null);

@@ -97,7 +97,8 @@ public class RobotApi {
             log.warning("Response code 401: " + resp);
             return true;
           }
-          if (!EXPECTED_CONTENT_TYPE.equals(fetch.getSingleHeader(resp, "Content-Type"))) {
+          if (!EXPECTED_CONTENT_TYPE.equals(
+              OAuthedFetchService.getSingleHeader(resp, "Content-Type"))) {
             return false;
           }
           JSONObject result = parseJsonResponseBody(resp);
@@ -159,7 +160,7 @@ public class RobotApi {
     // The response looks like this:
     // [{"id":"op_id", "data":X}]
     // We return the single item in this array.
-    String body = fetch.getUtf8ResponseBody(resp, EXPECTED_CONTENT_TYPE);
+    String body = OAuthedFetchService.getUtf8ResponseBody(resp, EXPECTED_CONTENT_TYPE);
     try {
       JSONArray items = new JSONArray(body);
       if (items.length() != 1) {

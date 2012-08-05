@@ -16,8 +16,6 @@
 
 package com.google.walkaround.wave.server.conv;
 
-import java.util.logging.Logger;
-
 import com.google.appengine.api.taskqueue.Queue;
 import com.google.appengine.api.taskqueue.QueueFactory;
 import com.google.inject.PrivateModule;
@@ -32,7 +30,8 @@ import com.google.walkaround.wave.server.conv.PermissionCache.PermissionSource;
 import com.google.walkaround.wave.server.index.IndexTask;
 import com.google.walkaround.wave.server.model.WaveObjectStoreModel;
 import com.google.walkaround.wave.server.robot.NotifyAllRobotsPreCommitAction;
-import com.google.walkaround.wave.server.wavemanager.WaveManager;
+
+import java.util.logging.Logger;
 
 /**
  * Guice module that configures an object store for conversation wavelets.
@@ -54,7 +53,7 @@ public class ConvStoreModule extends PrivateModule {
 
     bind(SlobModel.class).to(WaveObjectStoreModel.class);
     bind(AccessChecker.class).to(ConvAccessChecker.class);
-    bind(PermissionSource.class).to(WaveManager.class);
+    bind(PermissionSource.class).to(ConvPermissionSource.class);
 
     Multibinder<PreCommitAction> preCommitActions =
         Multibinder.newSetBinder(binder(), PreCommitAction.class);

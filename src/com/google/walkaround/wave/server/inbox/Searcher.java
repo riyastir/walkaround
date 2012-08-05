@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.walkaround.wave.server.wavemanager;
+package com.google.walkaround.wave.server.inbox;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.net.UriEscapers;
@@ -40,7 +40,7 @@ import java.util.List;
  *
  * @author danilatos@google.com (Daniel Danilatos)
  */
-public class Searcher {
+class Searcher {
   @Inject WaveIndexer userIndex;
   @Inject ParticipantId participantId;
 
@@ -80,8 +80,7 @@ public class Searcher {
       try {
         return new RetryHelper().run(
             new RetryHelper.Body<List<InboxDisplayRecord>>() {
-              @Override public List<InboxDisplayRecord> run()
-                  throws RetryableFailure {
+              @Override public List<InboxDisplayRecord> run() throws RetryableFailure {
                 try {
                   return getWavesInner();
                 } catch (IOException e) {

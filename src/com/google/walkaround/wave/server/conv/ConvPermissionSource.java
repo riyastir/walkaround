@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.walkaround.wave.server.wavemanager;
+package com.google.walkaround.wave.server.conv;
 
 import com.google.inject.Inject;
 import com.google.walkaround.proto.ConvMetadata;
@@ -27,8 +27,6 @@ import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
 import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
 import com.google.walkaround.util.server.appengine.CheckedDatastore;
 import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTransaction;
-import com.google.walkaround.wave.server.conv.ConvMetadataStore;
-import com.google.walkaround.wave.server.conv.PermissionCache;
 import com.google.walkaround.wave.server.conv.PermissionCache.Permissions;
 import com.google.walkaround.wave.server.model.WaveObjectStoreModel.ReadableWaveletObject;
 
@@ -42,10 +40,9 @@ import java.util.logging.Logger;
  *
  * @author ohler@google.com (Christian Ohler)
  */
-// TODO(ohler): Rename to ConvPermissionSource and move to conv.
-public class WaveManager implements PermissionCache.PermissionSource {
+public class ConvPermissionSource implements PermissionCache.PermissionSource {
 
-  private static final Logger log = Logger.getLogger(WaveManager.class.getName());
+  private static final Logger log = Logger.getLogger(ConvPermissionSource.class.getName());
 
   private final CheckedDatastore datastore;
   private final ParticipantId participantId;
@@ -53,7 +50,7 @@ public class WaveManager implements PermissionCache.PermissionSource {
   private final ConvMetadataStore convMetadataStore;
 
   @Inject
-  public WaveManager(CheckedDatastore datastore,
+  public ConvPermissionSource(CheckedDatastore datastore,
       ParticipantId participantId,
       SlobFacilities convSlobFacilities,
       ConvMetadataStore convMetadataStore) {

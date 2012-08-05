@@ -148,7 +148,6 @@ public class WalkaroundAttachmentManager implements SimpleAttachmentManager {
       return;
     }
 
-    List<String> ids = new ArrayList<String>();
     for (int i = 0; i < MAX_INFO_REQUESTS && !infoQueue.isEmpty(); i++) {
       String id = infoQueue.remove();
       pendingInfoIds.add(id);

@@ -34,7 +34,6 @@ import org.waveprotocol.wave.model.testing.RandomProviderImpl;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -153,7 +152,7 @@ public class TransformQueueRandomTest extends TestCase {
       case XHR_RESPONSE:
         while (!xhrResponses.isEmpty()) {
           int responseVersion = xhrResponses.remove();
-          List<DocOp> ops = q.ackOpsIfVersionMatches(responseVersion);
+          q.ackOpsIfVersionMatches(responseVersion);
         }
         break;
       case CLIENT_RECEIVE:

@@ -17,14 +17,15 @@
 package com.google.walkaround.wave.server.udw;
 
 import com.google.appengine.api.datastore.Entity;
+
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.SortDirection;
-import com.google.appengine.repackaged.com.google.common.collect.Lists;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.walkaround.slob.shared.SlobId;
 import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
@@ -46,8 +47,8 @@ import java.util.logging.Logger;
  * @author danilatos@google.com (Daniel Danilatos)
  * @author ohler@google.com (Christian Ohler)
  */
-public class UserDataWaveletDirectory {
-  private static final Logger log = Logger.getLogger(UserDataWaveletDirectory.class.getName());
+public class UdwDirectory {
+  private static final Logger log = Logger.getLogger(UdwDirectory.class.getName());
 
   /** The first possible user id in the sort order */
   private static final StableUserId FIRST = new StableUserId("");
@@ -178,7 +179,7 @@ public class UserDataWaveletDirectory {
   private final Directory directory;
 
   @Inject
-  public UserDataWaveletDirectory(CheckedDatastore datastore) {
+  public UdwDirectory(CheckedDatastore datastore) {
     this.datastore = datastore;
     this.directory = new Directory(datastore);
   }

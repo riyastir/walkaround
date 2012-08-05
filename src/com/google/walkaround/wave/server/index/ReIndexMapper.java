@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.walkaround.wave.server.wavemanager;
+package com.google.walkaround.wave.server.index;
 
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Key;
@@ -27,8 +27,6 @@ import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
 import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
 import com.google.walkaround.wave.server.GuiceSetup;
 import com.google.walkaround.wave.server.conv.ConvStore;
-import com.google.walkaround.wave.server.index.WaveIndexer;
-import com.google.walkaround.wave.server.index.WaveletLockedException;
 
 import org.apache.hadoop.io.NullWritable;
 

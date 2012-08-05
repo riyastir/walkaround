@@ -42,7 +42,7 @@ import com.google.walkaround.wave.server.model.ClientIdGenerator;
 import com.google.walkaround.wave.server.model.InitialOps;
 import com.google.walkaround.wave.server.model.ServerMessageSerializer;
 import com.google.walkaround.wave.server.udw.UdwStore;
-import com.google.walkaround.wave.server.udw.UserDataWaveletDirectory;
+import com.google.walkaround.wave.server.udw.UdwDirectory;
 import com.google.walkaround.wave.shared.WaveSerializer;
 
 import org.waveprotocol.wave.model.operation.wave.WaveletOperation;
@@ -70,7 +70,7 @@ public class WaveletCreator {
       new WaveSerializer(new ServerMessageSerializer());
 
   private final WaveletDirectory waveletDirectory;
-  private final UserDataWaveletDirectory udwDirectory;
+  private final UdwDirectory udwDirectory;
   private final ParticipantId participantId;
   private final StableUserId userId;
   private final SlobStore convStore;
@@ -83,7 +83,7 @@ public class WaveletCreator {
   @Inject
   public WaveletCreator(
       WaveletDirectory waveletDirectory,
-      UserDataWaveletDirectory udwDirectory,
+      UdwDirectory udwDirectory,
       ParticipantId participantId,
       StableUserId userId,
       @ConvStore SlobStore convStore,

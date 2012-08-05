@@ -352,8 +352,6 @@ public class WaveSerializer {
           documentDiffMap.put(documentId, docDiff);
         }
 
-        long lastReadVersion = lastReadVersions.get(documentId, -1L);
-
         docDiff.addOperation(mutateDocument.getDocumentId(), version,
             OperationFactory.createDocumentOperation(mutateDocument.getDocumentOperation()));
       }
