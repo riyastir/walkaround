@@ -21,7 +21,7 @@
   <configuration name="(a) Re-index all waves">
     <property>
       <name>mapreduce.map.class</name>
-      <value>com.google.walkaround.wave.server.wavemanager.ReIndexMapper</value>
+      <value>com.google.walkaround.wave.server.index.ReIndexMapper</value>
     </property>
     <property>
       <name>mapreduce.inputformat.class</name>
