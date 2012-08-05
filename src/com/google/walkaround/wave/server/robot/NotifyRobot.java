@@ -51,6 +51,7 @@ import com.google.wave.api.ProtocolVersion;
 import com.google.wave.api.data.converter.EventDataConverter;
 import com.google.wave.api.data.converter.EventDataConverterManager;
 import com.google.wave.api.event.Event;
+import com.google.wave.api.event.EventType;
 import com.google.wave.api.impl.EventMessageBundle;
 import com.google.wave.api.robot.CapabilityFetchException;
 import com.google.wave.api.robot.RobotName;
@@ -193,15 +194,14 @@ class NotifyRobot implements DeferredTask {
       // 1. Generate the events.
       EventMessageBundle bundle = generateEventMessageBundle(robotId, waveletAndDeltas);
       List<Event> events = bundle.getEvents();
+      if (events.isEmpty()) {
+        log.info("No events generated, no need to notify robot");
+        updateRobotHasBeenNotified(convSlobId, robotId, lastSeen, waveletAndDeltas);
+        return;
+      }
       log.info(events.size() + " events generated");
       for (Event event : events) {
         log.info("Type of event generated: " + event.getType());
-      }
-
-      if (bundle.getEvents().isEmpty()) {
-        // No need to notify the robot.
-        updateRobotHasBeenNotified(convSlobId, robotId, lastSeen, waveletAndDeltas);
-        return;
       }
 
       // 2. Notify the robot of the event.
@@ -209,7 +209,7 @@ class NotifyRobot implements DeferredTask {
           connector.sendMessageBundle(bundle, robotId, ProtocolVersion.DEFAULT);
       log.info(operations.size() + " operation requests returned");
       for (OperationRequest request : operations) {
-        log.info(request.toString());
+        log.info("" + request);
       }
 
       // 3. Update the last version the robot has seen.
@@ -292,8 +292,14 @@ class NotifyRobot implements DeferredTask {
       try {
         capabilities = connector.fetchCapabilities(robotId, "");
       } catch (CapabilityFetchException e) {
-        log.log(Level.WARNING, "Error occured fetching capabilities", e);
+        log.log(Level.WARNING, "Error fetching capabilities", e);
         return new EventMessageBundle(robotId.getAddress(), "");
+      }
+      log.info("capabilities=" + capabilities);
+      if (capabilities.getCapabilitiesMap().containsKey(EventType.BLIP_SUBMITTED)) {
+        // See org.waveprotocol.box.server.robots.passive.EventGenerator for the list of
+        // supported events.
+        log.info("Note: Robot requests notifications on BLIP_SUBMITTED, which is not supported");
       }
 
       EventDataConverter converter = converterManager.getEventDataConverter(
