@@ -29,13 +29,13 @@ import com.google.appengine.api.taskqueue.TaskOptions;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
 import com.google.walkaround.util.server.RetryHelper.RetryableFailure;
 import com.google.walkaround.util.server.appengine.CheckedDatastore.CheckedTransaction;
+
+import javax.annotation.Nullable;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -43,8 +43,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import javax.annotation.Nullable;
 
 /**
  * A wrapper around App Engine's MemcacheService that provides stronger typing
@@ -95,6 +93,7 @@ public class MemcacheTable<K extends Serializable, V extends Serializable> {
       this.key = key;
     }
 
+    @SuppressWarnings("unused") // Unused at the moment but no reason not to expose.
     public String getTag() {
       return tag;
     }

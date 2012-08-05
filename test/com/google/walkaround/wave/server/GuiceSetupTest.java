@@ -21,7 +21,6 @@ import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestC
 import com.google.appengine.tools.development.testing.LocalMemcacheServiceTestConfig;
 import com.google.appengine.tools.development.testing.LocalServiceTestHelper;
 import com.google.inject.Guice;
-import com.google.inject.Injector;
 import com.google.inject.Stage;
 import com.google.inject.util.Modules;
 
@@ -52,7 +51,7 @@ public class GuiceSetupTest extends TestCase {
   public void testBindingsForServlets() {
     SystemProperty.environment.set(SystemProperty.Environment.Value.Development);
     // The test is that none of this throws any exceptions.
-    Injector injector = Guice.createInjector(Stage.PRODUCTION,
+    Guice.createInjector(Stage.PRODUCTION,
         Modules.combine(
             GuiceSetup.getRootModule(WEB_INF_DIR),
             GuiceSetup.getServletModule(),
@@ -66,7 +65,7 @@ public class GuiceSetupTest extends TestCase {
   public void testBindingsForTaskQueueTask() {
     SystemProperty.environment.set(SystemProperty.Environment.Value.Development);
     // The test is that none of this throws any exceptions.
-    Injector injector = Guice.createInjector(Stage.PRODUCTION,
+    Guice.createInjector(Stage.PRODUCTION,
         Modules.combine(
             GuiceSetup.getRootModule(WEB_INF_DIR),
             GuiceSetup.getTaskQueueTaskModule(),

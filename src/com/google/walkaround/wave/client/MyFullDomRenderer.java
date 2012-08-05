@@ -217,7 +217,6 @@ public class MyFullDomRenderer implements RenderingRules<UiBuilder> {
             return o1.getId().compareTo(o2.getId());
           }
         });
-        List<UiBuilder> orderedUis = CollectionUtils.newArrayList();
         for (Conversation conv : ordered) {
           nestedConversations.get(conv).outputHtml(out);
         }

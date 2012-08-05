@@ -16,28 +16,17 @@
 
 package com.google.walkaround.wave.client.rpc;
 
-import com.google.common.base.Preconditions;
 import com.google.walkaround.proto.ConnectResponse;
-import com.google.walkaround.proto.WalkaroundWaveletSnapshot;
-import com.google.walkaround.proto.WaveletDiffSnapshot;
 import com.google.walkaround.proto.jso.ConnectResponseJsoImpl;
 import com.google.walkaround.slob.shared.MessageException;
-import com.google.walkaround.slob.shared.SlobId;
 import com.google.walkaround.util.client.log.Logs;
 import com.google.walkaround.util.client.log.Logs.Level;
 import com.google.walkaround.util.client.log.Logs.Log;
-import com.google.walkaround.wave.client.ClientMessageSerializer;
 import com.google.walkaround.wave.client.rpc.WaveletMap.WaveletEntry;
-import com.google.walkaround.wave.shared.IdHack;
 import com.google.walkaround.wave.shared.SharedConstants.Params;
 import com.google.walkaround.wave.shared.SharedConstants.Services;
-import com.google.walkaround.wave.shared.WaveSerializer;
 
-import org.waveprotocol.wave.model.document.operation.DocOp;
 import org.waveprotocol.wave.model.util.CollectionUtils;
-import org.waveprotocol.wave.model.util.StringMap;
-import org.waveprotocol.wave.model.wave.data.DocumentFactory;
-import org.waveprotocol.wave.model.wave.data.impl.WaveletDataImpl;
 
 /**
  * Service that checks current version of wave.

@@ -26,7 +26,6 @@ import com.google.walkaround.util.server.RetryHelper.PermanentFailure;
 import org.waveprotocol.wave.model.wave.ParticipantId;
 
 import java.io.IOException;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.annotation.Nullable;
@@ -86,6 +85,8 @@ public class ServletAuthHelper {
     log.info("User context is now " + userContext);
   }
 
+  // TODO: Make DeleteOAuthTokenHandler use this.
+  @SuppressWarnings("unused")
   private void clearOAuthTokenFromContext() {
     log.info("Clearing OAuth token from " + userContext);
     userContext.setOAuthCredentials(null);

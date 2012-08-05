@@ -32,7 +32,6 @@ import com.google.walkaround.util.server.servlet.AbstractHandler;
 import com.google.walkaround.util.server.servlet.BadRequestException;
 import com.google.walkaround.wave.server.Flag;
 import com.google.walkaround.wave.server.FlagName;
-import com.google.walkaround.wave.server.StoreType;
 import com.google.walkaround.wave.server.gxp.Admin;
 import com.google.walkaround.wave.server.gxp.StoreViewFragment;
 

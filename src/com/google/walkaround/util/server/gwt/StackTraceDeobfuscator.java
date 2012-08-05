@@ -140,6 +140,8 @@ public class StackTraceDeobfuscator {
       String[] parts =
           Lists.newArrayList(Splitter.on(",").split(symbolData)).toArray(new String[0]);
       if (parts.length == 5) {
+        // This code is adapted from elsewhere, I don't understand it well enough to fix it.
+        @SuppressWarnings("unused")
         String[] ref = parse(
             parts[0].substring(0, parts[0].lastIndexOf(')') + 1));
 

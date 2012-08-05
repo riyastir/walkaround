@@ -100,14 +100,6 @@ public class SlobMessageRouter {
       this.listenerNum = listenerNum;
     }
 
-    public SlobId getId() {
-      return id;
-    }
-
-    public int getListenerNum() {
-      return listenerNum;
-    }
-
     @Override public String toString() {
       return "ListenerKey(" + id + ", " + listenerNum + ")";
     }
@@ -179,7 +171,6 @@ public class SlobMessageRouter {
       throws TooManyListenersException {
     log.info("Connecting " + clientId + " to " + objectId);
 
-    String channelToken;
     int maxAttempts = 10;
     for (int attempt = 0; attempt < maxAttempts; attempt++) {
       boolean success;

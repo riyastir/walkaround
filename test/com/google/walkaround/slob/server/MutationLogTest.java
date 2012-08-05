@@ -145,22 +145,22 @@ public class MutationLogTest extends TestCase {
         @Override
         public CheckedPreparedQuery prepare(Query q) {
           return new CheckedPreparedQuery() {
-            public CheckedIterator asIterator(final FetchOptions options)
+            @Override public CheckedIterator asIterator(final FetchOptions options)
                 throws PermanentFailure, RetryableFailure {
               return CheckedIterator.EMPTY;
             }
 
-            public List<Entity> asList(final FetchOptions options)
+            @Override public List<Entity> asList(final FetchOptions options)
                 throws PermanentFailure, RetryableFailure {
               return ImmutableList.of();
             }
 
-            public int countEntities(final FetchOptions options)
+            @Override public int countEntities(final FetchOptions options)
                 throws PermanentFailure, RetryableFailure {
               throw new AssertionError("Not implemented");
             }
 
-            public Entity asSingleEntity() throws PermanentFailure, RetryableFailure {
+            @Override public Entity asSingleEntity() throws PermanentFailure, RetryableFailure {
               throw new AssertionError("Not implemented");
             }
           };

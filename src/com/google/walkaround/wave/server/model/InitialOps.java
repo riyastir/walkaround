@@ -38,8 +38,6 @@ import org.waveprotocol.wave.model.testing.FakeDocument;
 import org.waveprotocol.wave.model.version.HashedVersion;
 import org.waveprotocol.wave.model.wave.ParticipantId;
 import org.waveprotocol.wave.model.wave.ParticipationHelper;
-import org.waveprotocol.wave.model.wave.data.ObservableWaveletData;
-import org.waveprotocol.wave.model.wave.data.ReadableWaveletData;
 import org.waveprotocol.wave.model.wave.data.impl.WaveViewDataImpl;
 import org.waveprotocol.wave.model.wave.data.impl.WaveletDataImpl;
 import org.waveprotocol.wave.model.wave.opbased.OpBasedWavelet;
@@ -80,18 +78,6 @@ public class InitialOps {
         random);
     final WaveViewDataImpl waveData = WaveViewDataImpl.create(IdHack.FAKE_WAVELET_NAME.waveId);
     final FakeDocument.Factory docFactory = BasicFactories.fakeDocumentFactory();
-    final ObservableWaveletData.Factory<?> waveletDataFactory =
-        new ObservableWaveletData.Factory<WaveletDataImpl>() {
-          private final ObservableWaveletData.Factory<WaveletDataImpl> inner =
-              WaveletDataImpl.Factory.create(docFactory);
-
-          @Override
-          public WaveletDataImpl create(ReadableWaveletData data) {
-            WaveletDataImpl wavelet = inner.create(data);
-            waveData.addWavelet(wavelet);
-            return wavelet;
-          }
-        };
     WaveletFactory<OpBasedWavelet> waveletFactory = new WaveletFactory<OpBasedWavelet>() {
       @Override
       public OpBasedWavelet create(WaveId waveId, WaveletId waveletId, ParticipantId creator) {

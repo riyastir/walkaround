@@ -56,6 +56,7 @@ public class WaveletHistoryConverter {
     this.nindoConverter = checkNotNull(nindoConverter, "Null nindoConverter");
   }
 
+  @Override
   public String toString() {
     return this.getClass().getSimpleName() + "(" + docConverters.size() + " entries in map)";
   }

@@ -70,7 +70,8 @@ public class RandomTest extends TestCase {
     int iterations = randomInt(random, minIterations, maxIterations);
     for (int i = 0; i < iterations; i++) {
       // busy loop
-      dummy++;
+      // dummy++ would cause Eclipse warning "value of the field is not used"
+      dummy = dummy + 1;
     }
   }
 

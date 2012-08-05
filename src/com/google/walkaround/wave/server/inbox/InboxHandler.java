@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.walkaround.wave.server.wavemanager;
+package com.google.walkaround.wave.server.inbox;
 
 import com.google.gxp.base.GxpContext;
 import com.google.gxp.html.HtmlClosure;

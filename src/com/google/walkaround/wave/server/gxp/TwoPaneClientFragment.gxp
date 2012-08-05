@@ -18,7 +18,7 @@
 -->
 <!DOCTYPE gxp:template SYSTEM
   'http://gxp.googlecode.com/svn/trunk/resources/xhtml.ent'>
-<gxp:template name='com.google.walkaround.wave.server.gxp.ClientFragment'
+<gxp:template name='com.google.walkaround.wave.server.gxp.TwoPaneClientFragment'
   xmlns='http://www.w3.org/1999/xhtml'
   xmlns:expr='http://google.com/2001/gxp/expressions'
   xmlns:gxp='http://google.com/2001/gxp'

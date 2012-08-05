@@ -22,7 +22,7 @@ import com.google.inject.Inject;
 import com.google.walkaround.util.server.servlet.AbstractHandler;
 import com.google.walkaround.wave.server.Flag;
 import com.google.walkaround.wave.server.FlagName;
-import com.google.walkaround.wave.server.gxp.ClientFragment;
+import com.google.walkaround.wave.server.gxp.TwoPaneClientFragment;
 
 import org.waveprotocol.wave.model.wave.ParticipantId;
 
@@ -35,10 +35,10 @@ import java.util.logging.Logger;
 /**
  * @author danilatos@google.com (Daniel Danilatos)
  */
-public class ClientHandler extends AbstractHandler {
+public class TwoPaneClientHandler extends AbstractHandler {
 
   @SuppressWarnings("unused")
-  private static final Logger log = Logger.getLogger(ClientHandler.class.getName());
+  private static final Logger log = Logger.getLogger(TwoPaneClientHandler.class.getName());
 
   @Inject ParticipantId participantId;
   @Inject @Flag(FlagName.ANNOUNCEMENT_HTML) String announcementHtml;
@@ -49,7 +49,7 @@ public class ClientHandler extends AbstractHandler {
     resp.setContentType("text/html");
     resp.setCharacterEncoding("UTF-8");
     page.write("Walkaround", participantId.getAddress(),
-        ClientFragment.getGxpClosure(announcementHtml()));
+        TwoPaneClientFragment.getGxpClosure(announcementHtml()));
   }
 
   private HtmlClosure announcementHtml() {

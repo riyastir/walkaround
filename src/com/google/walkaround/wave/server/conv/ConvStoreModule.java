@@ -29,7 +29,6 @@ import com.google.walkaround.slob.shared.SlobModel;
 import com.google.walkaround.wave.server.conv.PermissionCache.PermissionSource;
 import com.google.walkaround.wave.server.index.IndexTask;
 import com.google.walkaround.wave.server.model.WaveObjectStoreModel;
-import com.google.walkaround.wave.server.wavemanager.WaveManager;
 
 import java.util.logging.Logger;
 
@@ -53,7 +52,7 @@ public class ConvStoreModule extends PrivateModule {
 
     bind(SlobModel.class).to(WaveObjectStoreModel.class);
     bind(AccessChecker.class).to(ConvAccessChecker.class);
-    bind(PermissionSource.class).to(WaveManager.class);
+    bind(PermissionSource.class).to(ConvPermissionSource.class);
 
     Multibinder<PreCommitAction> preCommitActions =
         Multibinder.newSetBinder(binder(), PreCommitAction.class);

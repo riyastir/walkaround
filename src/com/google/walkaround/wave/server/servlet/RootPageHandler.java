@@ -19,8 +19,8 @@ package com.google.walkaround.wave.server.servlet;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.walkaround.util.server.servlet.AbstractHandler;
+import com.google.walkaround.wave.server.inbox.InboxHandler;
 import com.google.walkaround.wave.server.util.RequestUtil;
-import com.google.walkaround.wave.server.wavemanager.InboxHandler;
 
 import java.io.IOException;
 
@@ -33,9 +33,9 @@ import javax.servlet.http.HttpServletResponse;
  *
  * @author danilatos@google.com (Daniel Danilatos)
  */
-public class IndexHandler extends AbstractHandler {
+public class RootPageHandler extends AbstractHandler {
   // Providers because only one is needed in each code path.
-  @Inject private Provider<ClientHandler> clientHandler;
+  @Inject private Provider<TwoPaneClientHandler> clientHandler;
   @Inject private Provider<InboxHandler> inboxHandler;
 
   @Override

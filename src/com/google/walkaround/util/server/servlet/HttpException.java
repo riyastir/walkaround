@@ -27,6 +27,7 @@ package com.google.walkaround.util.server.servlet;
  */
 // TODO(ohler): Determine if it's worthwhile to make this a checked exception.
 public abstract class HttpException extends RuntimeException {
+  private static final long serialVersionUID = 12502799019479088L;
 
   public HttpException() {
   }
