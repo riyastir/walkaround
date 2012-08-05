@@ -605,8 +605,7 @@ public class Walkaround implements EntryPoint {
       @Override
       protected AsyncHolder<StageThree> createStageThreeLoader(final StageTwo two) {
         return new StageThree.DefaultProvider(two) {
-          @Override
-          protected void install() {
+          @Override protected void install() {
             // Inhibit if not live; super.install() seems to enable editing in Undercurrent.
             // Haven't studied this carefully though.
             if (isLive) {
@@ -614,8 +613,11 @@ public class Walkaround implements EntryPoint {
             }
           }
 
-          @Override
-          protected void create(final Accessor<StageThree> whenReady) {
+          @Override protected boolean getAttachmentButtonEnabled() {
+            return false;
+          }
+
+          @Override protected void create(final Accessor<StageThree> whenReady) {
             // Prepend an init wave flow onto the stage continuation.
             super.create(new Accessor<StageThree>() {
               @Override

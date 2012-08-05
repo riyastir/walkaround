@@ -69,8 +69,7 @@ dir third_party_src
     set -x
     svn co -r 1354765 -q https://svn.apache.org/repos/asf/incubator/wave/trunk
     cd trunk
-    patch -p0 <<EOF
-EOF
+    patch -p0 <../../../wave.patch
   )
   cd trunk
   (
