@@ -70,7 +70,7 @@ dir third_party_src
     svn co -r 1354765 -q https://svn.apache.org/repos/asf/incubator/wave/trunk
     cd trunk
     # TODO(ohler): submit to Apache Wave
-    patch -p0 < ../../../wave.patch
+    patch -p0 <../../../wave.patch
   )
   cd trunk
   (

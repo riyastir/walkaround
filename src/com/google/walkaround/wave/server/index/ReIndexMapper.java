@@ -16,8 +16,13 @@
 
 package com.google.walkaround.wave.server.index;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.taskqueue.DeferredTask;
+import com.google.appengine.api.taskqueue.QueueFactory;
+import com.google.appengine.api.taskqueue.TaskOptions;
 import com.google.appengine.tools.mapreduce.AppEngineMapper;
 import com.google.inject.Inject;
 import com.google.walkaround.slob.server.SlobFacilities;
@@ -48,7 +53,7 @@ public class ReIndexMapper extends AppEngineMapper<Key, Entity, NullWritable, Nu
     @Inject @ConvStore SlobFacilities facilities;
     @Inject WaveIndexer indexer;
 
-    void process(Context context, final Key key) throws PermanentFailure {
+    void process(final Key key) throws PermanentFailure {
       new RetryHelper().run(new RetryHelper.VoidBody() {
           @Override public void run() throws PermanentFailure, RetryableFailure {
             SlobId objectId = facilities.parseRootEntityKey(key);
@@ -63,16 +68,35 @@ public class ReIndexMapper extends AppEngineMapper<Key, Entity, NullWritable, Nu
     }
   }
 
+  private static class ReIndexTask implements DeferredTask {
+    private static final long serialVersionUID = 2322939563492683226L;
+    private final Key convRootEntityKey;
+
+    ReIndexTask(Key convRootEntityKey) {
+      this.convRootEntityKey = checkNotNull(convRootEntityKey, "Null convRootEntityKey");
+    }
+
+    @Override public String toString() {
+      return getClass().getSimpleName() + "(" + convRootEntityKey + ")";
+    }
+
+    @Override public void run() {
+      log.info(this + ": begin");
+      try {
+        GuiceSetup.getInjectorForTaskQueueTask().getInstance(Handler.class).process(convRootEntityKey);
+      } catch (PermanentFailure e) {
+        throw new RuntimeException(this + ": PermanentFailure", e);
+      }
+      log.info(this + ": success");
+    }
+  }
+
   @Override
   public void map(Key key, Entity value, Context context) throws IOException {
-    context.getCounter(getClass().getSimpleName(), "entities-seen").increment(1);
-    log.info("Re-indexing " + key);
-    try {
-      GuiceSetup.getInjectorForTaskQueueTask().getInstance(Handler.class).process(context, key);
-    } catch (PermanentFailure e) {
-      throw new IOException("PermanentFailure re-indexing key " + key, e);
-    }
-    context.getCounter(getClass().getSimpleName(), "entities-processed").increment(1);
+    context.getCounter(getClass().getSimpleName(), "wavelets").increment(1);
+    log.info("Scheduling re-index task for " + key);
+    QueueFactory.getQueue("reindex").add(TaskOptions.Builder.withPayload(new ReIndexTask(key)));
+    context.getCounter(getClass().getSimpleName(), "re-index tasks scheduled").increment(1);
   }
 
 }

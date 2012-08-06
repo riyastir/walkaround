@@ -253,3 +253,77 @@ Index: src/org/waveprotocol/box/server/robots/passive/OperationServiceRegistryIm
      super();
  
      // Register all the OperationProviders
+Index: src/org/waveprotocol/wave/client/wavepanel/impl/toolbar/EditToolbar.java
+===================================================================
+--- src/org/waveprotocol/wave/client/wavepanel/impl/toolbar/EditToolbar.java	(revision 1354765)
++++ src/org/waveprotocol/wave/client/wavepanel/impl/toolbar/EditToolbar.java	(working copy)
+@@ -137,7 +137,7 @@
+   }
+ 
+   /** Constructs the initial set of actions in the toolbar. */
+-  public void init() {
++  public void init(boolean enableAttachmentButton) {
+     ToolbarView group = toolbarUi.addGroup();
+     createBoldButton(group);
+     createItalicButton(group);
+@@ -172,8 +172,10 @@
+     group = toolbarUi.addGroup();
+     createInsertGadgetButton(group, user);
+ 
+-    group = toolbarUi.addGroup();
+-    createInsertAttachmentButton(group, user);
++    if (enableAttachmentButton) {
++      group = toolbarUi.addGroup();
++      createInsertAttachmentButton(group, user);
++    }
+   }
+ 
+   private void createBoldButton(ToolbarView toolbar) {
+Index: src/org/waveprotocol/wave/client/wavepanel/impl/toolbar/ToolbarSwitcher.java
+===================================================================
+--- src/org/waveprotocol/wave/client/wavepanel/impl/toolbar/ToolbarSwitcher.java	(revision 1354765)
++++ src/org/waveprotocol/wave/client/wavepanel/impl/toolbar/ToolbarSwitcher.java	(working copy)
+@@ -47,15 +47,15 @@
+    * Creates a new {@link ToolbarSwitcher} and initialises it.
+    */
+   public static ToolbarSwitcher install(WavePanel panel, EditSession editSession,
+-      ViewToolbar viewToolbar, EditToolbar editToolbar) {
++      ViewToolbar viewToolbar, EditToolbar editToolbar, boolean enableAttachmentButton) {
+     ToolbarSwitcher switcher = new ToolbarSwitcher(panel, editSession, viewToolbar, editToolbar);
+-    switcher.init();
++    switcher.init(enableAttachmentButton);
+     return switcher;
+   }
+ 
+-  private void init() {
++  private void init(boolean enableAttachmentButton) {
+     viewToolbar.init();
+-    editToolbar.init();
++    editToolbar.init(enableAttachmentButton);
+     editSession.addListener(this);
+     if (editSession.isEditing()) {
+       startEditSession(editSession.getEditor());
+Index: src/org/waveprotocol/wave/client/StageThree.java
+===================================================================
+--- src/org/waveprotocol/wave/client/StageThree.java	(revision 1354765)
++++ src/org/waveprotocol/wave/client/StageThree.java	(working copy)
+@@ -170,6 +170,10 @@
+           stageTwo.getReader());
+     }
+ 
++    protected boolean getAttachmentButtonEnabled() {
++      return true;
++    }
++
+     protected String getLocalDomain() {
+       return null;
+     }
+@@ -197,7 +201,7 @@
+       EditSession edit = getEditSession();
+       MenuController.install(actions, panel);
+       ToolbarSwitcher.install(stageTwo.getStageOne().getWavePanel(), getEditSession(),
+-          getViewToolbar(), getEditToolbar());
++          getViewToolbar(), getEditToolbar(), getAttachmentButtonEnabled());
+       WaveTitleHandler.install(edit, models);
+       ReplyIndicatorController.install(actions, edit, panel);
+       EditController.install(focus, actions, panel);

@@ -36,4 +36,9 @@
     <rate>1/s</rate>
     <max-concurrent-requests>1</max-concurrent-requests>
   </queue>
+  <queue>
+    <name>reindex</name>
+    <rate>${queue-rate}/s</rate>
+    <max-concurrent-requests>${queue-rate}</max-concurrent-requests>
+  </queue>
 </queue-entries>
