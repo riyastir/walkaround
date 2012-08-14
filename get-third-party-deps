@@ -67,7 +67,7 @@ dir third_party_src
   dir wave
   [[ -d trunk ]] || (
     set -x
-    svn co -r 1354765 -q https://svn.apache.org/repos/asf/incubator/wave/trunk
+    svn co -q -r 1354765 https://svn.apache.org/repos/asf/incubator/wave/trunk
     cd trunk
     patch -p0 <../../../wave.patch
   )
@@ -153,8 +153,7 @@ dir third_party_src
   dir appengine-mapreduce
   [[ -d appengine-mapreduce-read-only ]] || (
     set -x
-    svn co -q http://appengine-mapreduce.googlecode.com/svn/trunk/ appengine-mapreduce-read-only
-    svn up -q appengine-mapreduce-read-only
+    svn co -q -r 341 http://appengine-mapreduce.googlecode.com/svn/trunk/ appengine-mapreduce-read-only
   )
   # TODO(ohler): link our SDK in here
   cd appengine-mapreduce-read-only/java
